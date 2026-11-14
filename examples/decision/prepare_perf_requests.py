@@ -18,23 +18,21 @@ def main() -> None:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--samples', type=int, default=20)
     parser.add_argument(
-        '--choice-benchmark', choices=['banking77', 'arc'], default='banking77',
-        help='Use arc for services that cannot accept all 77 BANKING77 options.',
+        '--choice-benchmark', choices=['contract_nli', 'hellaswag'], default='contract_nli',
     )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    for kind, dataset in [('choice', args.choice_benchmark), ('noul', 'boolq'), ('score', 'stsb')]:
-        extra = {'extra_params': {'decision_kind': 'noul'}} if kind == 'noul' else {}
-        if dataset == 'arc':
-            extra['subset_list'] = ['ARC-Challenge']
+    for kind, dataset in [('choice', args.choice_benchmark), ('noul', 'open_decisions'), ('score', 'stsb')]:
         config = TaskConfig(model=args.model, eval_type=args.api + '_api', datasets=[dataset],
-                            dataset_args={dataset: extra}, limit=args.samples)
+                            limit=None if kind == 'noul' else args.samples)
         adapter = get_benchmark(dataset, config)
         bodies = []
         for samples in adapter.load_dataset().values():
             for sample in samples:
                 user = next(message for message in sample.input if message.role == 'user')
                 question = DecisionInput.model_validate(user.internal['systemone'])
+                if question.kind != kind:
+                    continue
                 body = (
                     build_systemone_request(question, args.model)
                     if args.api == 'systemone'
@@ -42,7 +40,7 @@ def main() -> None:
                 )
                 bodies.append(json.dumps(body, ensure_ascii=False))
         path = args.output / f'{kind}.jsonl'
-        path.write_text('\n'.join(bodies) + '\n', encoding='utf-8')
+        path.write_text('\n'.join(bodies[:args.samples]) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':

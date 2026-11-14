@@ -1,15 +1,12 @@
 from .adapters import (
     AgentAdapter,
     AgentLoopAdapter,
-    AudioLanguageAdapter,
     BrowserGymAdapter,
     DefaultDataAdapter,
     FunctionCallAdapter,
-    ImageEditAdapter,
     MultiChoiceAdapter,
     MultiTurnAdapter,
     NERAdapter,
-    Text2ImageAdapter,
     VisionLanguageAdapter,
 )
 from .benchmark import DataAdapter

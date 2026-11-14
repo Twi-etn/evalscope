@@ -7,7 +7,6 @@
 ## 何时使用
 
 - **评测成品 Agent CLI 在某 benchmark 上的能力**
-  例：Claude Code 在 SWE-bench Pro 上的代码修复得分、Codex 在 GAIA 上的工具调用能力。
 
 - **对比同一 Agent CLI 接到不同后端模型时的表现**
   例：把 claude-code 分别接到 qwen3-max、deepseek-v3、自训模型上跑同一套题，横评后端模型对 Agent 任务的支撑能力。
@@ -82,28 +81,6 @@ EvalScope 会在本地子进程里准备 Claude Code(必要时自动 `npm instal
 
 如果要让外部 CLI 使用自定义 Agent Skills，可以把 `ExternalAgentConfig.skills_dir` 设成本机目录。该目录的子目录应包含
 `SKILL.md`。EvalScope 会在启动 runner 前让这些 skills 可用，并在 `skill_prompt_nudge=True` 时加入简短提示。
-
-## 用例:SWE-bench Pro 上跑 Claude Code
-
-让 Claude Code 在容器里自主修复代码，样本结束后 EvalScope 自动从工作树取 `git diff` 作为最终补丁。
-
-```python
-task_config = TaskConfig(
-    model='qwen-plus',
-    api_url='...',
-    api_key='...',
-    eval_type='openai_api',
-    datasets=['swe_bench_pro'],
-    limit=3,
-    agent_config=ExternalAgentConfig(
-        framework='claude-code',
-        timeout=1800.0,
-    ),
-)
-run_task(task_config)
-```
-
-`swe_bench_pro` 会为每个样本自带 Docker 环境，所以 `environment` 留空即可。
 
 ## 准备工作
 
@@ -247,7 +224,6 @@ runner 会在隔离的 `DSH_HOME` 内配置 `evalscope-bridge` provider，并把
 
 **评测跑得慢 / 单样本超时**
 
-- `timeout` 是单样本上限，SWE-bench 类任务建议 1800–3600 秒。
 - `eval_batch_size` 提高并行度(注意宿主机资源)。
 
 (custom-runner)=

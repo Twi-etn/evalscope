@@ -44,7 +44,7 @@ SCENARIOS = [
     ),
     (
         'wer',
-        'torgo',
+        'librispeech-fixture',
         MetricSelector(name='wer', aggregation='identity'),
         [
             AggScore(score=0.0432, metric_name='wer', aggregation='identity', num=50),
@@ -54,7 +54,7 @@ SCENARIOS = [
     ),
     (
         'pass_at_1',
-        'humaneval',
+        'mbpp',
         MetricSelector(name='accuracy', aggregation='pass_at_k', dimensions={'k': 1}),
         [AggScore(score=0.75, metric_name='accuracy', aggregation='pass_at_k', dimensions={'k': 1}, num=164)],
         'quality.pass_at_k.ratio',
@@ -72,7 +72,7 @@ SCENARIOS = [
     ),
     (
         'official_points_100',
-        'arena_hard',
+        'general_arena',
         None,
         [AggScore(score=87.25, metric_name='weighted_score_percent', aggregation='identity', num=500)],
         'quality.score.points_100',
@@ -186,7 +186,7 @@ class TestDirectionsSurviveTheRoundTrip:
 
     def test_wer_stays_lower_is_better_after_a_round_trip(self) -> None:
         report = _build_report(
-            'torgo', MetricSelector(name='wer'), [
+            'librispeech-fixture', MetricSelector(name='wer'), [
                 AggScore(score=0.0432, metric_name='wer', aggregation='identity', num=50),
                 AggScore(score=0.0321, metric_name='cer', aggregation='identity', num=50),
             ]

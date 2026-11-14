@@ -1,6 +1,6 @@
 # 内置 AgentLoop 模式
 
-让常规基准（GSM8K、AIME、IFEval、SWE-bench 等）变成**多轮工具调用**任务，评测模型自身的工具使用与多步推理能力。EvalScope 在每一轮执行 **生成 → 解析 → 调用工具 → 观察 → 再生成**，直到模型提交最终答案或达到步数上限，整个轨迹记录到 `AgentTrace` 用于 [可视化回放](index.md#trace-可视化)。
+让常规基准（GSM8K、AIME、IFEval 等）变成**多轮工具调用**任务，评测模型自身的工具使用与多步推理能力。EvalScope 在每一轮执行 **生成 → 解析 → 调用工具 → 观察 → 再生成**，直到模型提交最终答案或达到步数上限，整个轨迹记录到 `AgentTrace` 用于 [可视化回放](index.md#trace-可视化)。
 
 > 想直接评测 Claude Code / Codex 等成品 Agent CLI，请参见 [外部 Agent Bridge 模式](bridge.md)。
 
@@ -10,10 +10,9 @@
   例：qwen-plus 在 GSM8K 上是否会主动调用 `python_exec` 验证计算，在 AIME 上能否逐步推导并自我检查。
 
 - **让模型在代码修复任务中自主探索**
-  例：在 SWE-bench 上让模型通过 `bash` 工具读代码、跑测试、提交补丁，全程无需人工介入。
 
 - **接入 MCP 生态工具，扩展模型能力边界**
-  例：给模型挂上 `fetch`、Brave Search 等 MCP 服务器，评测 GAIA 等需要联网检索的 benchmark。
+  例：给模型挂上 `fetch`、Brave Search 等 MCP 服务器，评测 WideSearch 等需要联网检索的 benchmark。
 
 ## 快速开始
 
@@ -104,11 +103,11 @@ pip install evalscope[mcp]
 `evalscope[mcp]` 自带 `mcp` Python SDK 和 `mcp-server-fetch`（通用 HTTP 抓取，无需 API key）。其他 MCP server 按需安装或通过 `uvx` / `npx` 即调即用。
 
 如果要看搜索类 benchmark 如何组合搜索 MCP 与 fetch/browser 类工具，请参考
-[DeepSearchQA](../../third_party/deepsearchqa.md) 和 [WideSearch](../../third_party/wide_search.md) 使用指南。
+[WideSearch](../../third_party/wide_search.md) 使用指南。
 
 ### 快速开始
 
-给 GAIA 评测挂上 HTTP 抓取和远端 MCP 工具：
+给 WideSearch 评测挂上 HTTP 抓取和远端 MCP 工具：
 
 ```python
 import sys
@@ -120,7 +119,7 @@ task_config = TaskConfig(
     model='qwen3-max',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     eval_type='openai_api',
-    datasets=['gaia'],
+    datasets=['wide_search'],
     agent_config=NativeAgentConfig(
         mcp_servers=[
             # 本地启动 MCP 服务器进程
@@ -137,7 +136,6 @@ task_config = TaskConfig(
             ),
         ],
     ),
-    dataset_args={'gaia': {'subset_list': ['2023_level1']}},
     limit=5,
 )
 run_task(task_config)
@@ -184,43 +182,6 @@ EvalScope 支持三种 MCP 传输协议，按场景选用：
 - 远端服务同时提供 `/mcp` 和 `/sse` 时，优先选 `/mcp`（Streamable HTTP）。
 ```
 
-## 用例：SWE-bench Agentic
-
-`swe_bench_*_agentic` 系列（`swe_bench_verified_agentic`、`swe_bench_verified_mini_agentic`、`swe_bench_lite_agentic`）由基准自己管理每个样本的 Docker 环境和必需的 `bash` 工具。显式设置的 `NativeAgentConfig` 仍可覆盖策略、步数上限等循环配置。`dataset_args.extra_params` 只用于镜像准备等基准专属参数。
-
-```python
-from evalscope.api.agent import NativeAgentConfig
-
-task_config = TaskConfig(
-    model='qwen-plus',
-    api_url='...',
-    api_key='...',
-    eval_type='openai_api',
-    datasets=['swe_bench_verified_mini_agentic'],
-    agent_config=NativeAgentConfig(
-        strategy='swe_bench_toolcall',
-        max_steps=250,
-    ),
-    dataset_args={
-        'swe_bench_verified_mini_agentic': {
-            'extra_params': {
-                'build_docker_images': True,
-                'pull_remote_images_if_available': True,
-            },
-        },
-    },
-    limit=3,
-    generation_config={'max_tokens': 4096, 'temperature': 0.0},
-)
-run_task(task_config)
-```
-
-不支持 function calling 的模型可用 `NativeAgentConfig(strategy='swe_bench_backticks')`。常用 `extra_params` 包括 `build_docker_images`、`pull_remote_images_if_available`、`force_arch`。完整说明见对应 benchmark 文档。
-
-```{important}
-前置依赖：`pip install evalscope[swe_bench]`，本机已装好 Docker。
-```
-
 ## 常见问题
 
 **模型完全没有调用工具**
@@ -232,4 +193,3 @@ run_task(task_config)
 **`max_steps` 应该设多大**
 
 - 数学/简单 QA：`3`–`10` 通常够用。
-- 代码修复/SWE-bench 类：沿用默认 `250`，过低会大量出现 `max_steps_exceeded`。

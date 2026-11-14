@@ -3,7 +3,7 @@
     "weight": 1.0,
     "datasets": [
         {
-            "name": "chinese_simpleqa",
+            "name": "simple_qa",
             "weight": 0.3,
             "task_type": "knowledge",
             "tags": [
@@ -13,7 +13,7 @@
             "hierarchy": []
         },
         {
-            "name": "aa_lcr",
+            "name": "docmath",
             "weight": 0.3,
             "task_type": "long_context",
             "tags": [

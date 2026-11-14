@@ -122,7 +122,7 @@ Use the relevant source pointers below when the task touches that area; this is 
 
 **Registry decorators**: `@register_benchmark`, `@register_model_api`, `@register_metric`, `@register_aggregation`, `@register_filter`, `@register_evaluator`.
 
-**Adapter base classes** (extend, don't reinvent): `DefaultDataAdapter`, `MultiChoiceAdapter`, `VisionLanguageAdapter`, `Text2ImageAdapter`, `ImageEditAdapter`, `NERAdapter`, `AgentAdapter`. Optional capabilities via mixins: `LLMJudgeMixin`, `CodeExecutionSandboxMixin`.
+**Adapter base classes** (extend, don't reinvent): `DefaultDataAdapter`, `MultiChoiceAdapter`, `VisionLanguageAdapter`, `NERAdapter`, `AgentAdapter`. Optional capabilities via mixins: `LLMJudgeMixin`, `CodeExecutionSandboxMixin`.
 
 **Non-native backends** live under `evalscope/backend/` (OpenCompass, VLMEvalKit, RAGEval) and are dispatched from `run.py` with their own BackendManager.
 

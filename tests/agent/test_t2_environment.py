@@ -13,7 +13,6 @@ Test plan:
 
 import os
 import sys
-import tempfile
 import time
 import types
 from typing import Any, Dict, List, Optional
@@ -28,7 +27,6 @@ from evalscope.api.agent import (
     AgentLoop,
     AgentTrace,
     EventType,
-    ExecResult,
     ToolExecutor,
 )
 from evalscope.api.agent.types import NativeAgentConfig
@@ -36,12 +34,10 @@ from evalscope.api.messages import ChatMessageAssistant, ChatMessageUser
 from evalscope.api.model.model_output import ChatCompletionChoice, ModelOutput
 from evalscope.api.registry import (
     AGENT_TOOL_INFO_REGISTRY,
-    ENVIRONMENT_REGISTRY,
     get_environment,
     list_agent_tools,
     list_environments,
     resolve_tool_infos,
-    resolve_tools,
 )
 from evalscope.api.tool import ToolCall, ToolInfo
 from evalscope.api.tool.tool_call import ToolFunction
@@ -424,131 +420,6 @@ class TestEnclaveEnvironmentInterpreter:
                 sandbox_config={'image': 'python:3.11-slim'},
                 interpreter='bash -lc',
             )
-
-    def test_swe_bench_agentic_adapter_uses_login_interpreter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from evalscope.benchmarks.swe_bench.swe_bench_agentic_adapter import _SWEBenchAgenticAdapterBase
-
-        _allow_enclave_construction(monkeypatch)
-        adapter = object.__new__(_SWEBenchAgenticAdapterBase)
-        adapter.working_dir = '/testbed'
-        adapter.force_arch = ''
-        adapter._task_config = TaskConfig(
-            model='dummy',
-            agent_config=NativeAgentConfig(command_timeout=45),
-            sandbox={
-                'default_config': {
-                    'image': 'custom/base:latest',
-                    'network_enabled': False,
-                }
-            },
-        )
-        sample = types.SimpleNamespace(metadata={'docker_image': 'swebench/example:latest', 'instance_id': 'example'})
-
-        env = adapter.build_environment(sample)
-
-        assert env._interpreter == ['bash', '-lc']
-        assert env._timeout == 45
-        assert 'environment' not in env._sandbox_config_dict
-        assert env._sandbox_config_dict['image'] == 'swebench/example:latest'
-        assert env._sandbox_config_dict['network_enabled'] is False
-        assert env._sandbox_config_dict['env_vars'] == {
-            'PAGER': 'cat',
-            'MANPAGER': 'cat',
-            'LESS': '-R',
-            'PIP_PROGRESS_BAR': 'off',
-            'TQDM_DISABLE': '1',
-        }
-
-    def test_swe_bench_pro_adapter_uses_login_interpreter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from evalscope.benchmarks.swe_bench_pro.swe_bench_pro_agentic_adapter import SWEBenchProAgenticAdapter
-
-        _allow_enclave_construction(monkeypatch)
-        adapter = object.__new__(SWEBenchProAgenticAdapter)
-        adapter.working_dir = '/app'
-        adapter._task_config = TaskConfig(model='dummy', agent_config=NativeAgentConfig(command_timeout=46))
-        sample = types.SimpleNamespace(
-            metadata={'docker_image': 'jefzda/sweap-images:example', 'instance_id': 'example'}
-        )
-
-        env = adapter.build_environment(sample)
-
-        assert env._interpreter == ['bash', '-lc']
-        assert env._timeout == 46
-        assert 'environment' not in env._sandbox_config_dict
-        assert env._sandbox_config_dict['env_vars'] == {
-            'PAGER': 'cat',
-            'MANPAGER': 'cat',
-            'LESS': '-R',
-            'PIP_PROGRESS_BAR': 'off',
-            'TQDM_DISABLE': '1',
-        }
-
-    def test_gaia_adapter_uses_env_vars_sandbox_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from evalscope.benchmarks.gaia.gaia_adapter import GaiaAdapter
-
-        _allow_enclave_construction(monkeypatch)
-        adapter = object.__new__(GaiaAdapter)
-        adapter._task_config = TaskConfig(
-            model='dummy',
-            agent_config=NativeAgentConfig(command_timeout=180),
-            sandbox={
-                'default_config': {
-                    'image': 'custom/gaia:latest',
-                    'network_enabled': False,
-                }
-            },
-        )
-        adapter._host_files_dir = None
-        sample = types.SimpleNamespace(metadata={'task_id': 'example'})
-
-        env = adapter.build_environment(sample)
-
-        assert env._timeout == 180
-        assert 'environment' not in env._sandbox_config_dict
-        assert env._sandbox_config_dict['image'] == 'custom/gaia:latest'
-        assert env._sandbox_config_dict['network_enabled'] is False
-        assert env._sandbox_config_dict['env_vars'] == {
-            'PAGER': 'cat',
-            'MANPAGER': 'cat',
-            'PIP_PROGRESS_BAR': 'off',
-            'TQDM_DISABLE': '1',
-        }
-
-    def test_gdpval_adapter_uses_env_vars_sandbox_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from evalscope.api.benchmark import BenchmarkMeta
-        from evalscope.benchmarks.gdpval.gdpval_adapter import GDPvalAdapter
-
-        _allow_enclave_construction(monkeypatch)
-        adapter = object.__new__(GDPvalAdapter)
-        adapter._benchmark_meta = BenchmarkMeta(name='gdpval', dataset_id='dummy')
-        adapter._task_config = TaskConfig(
-            model='dummy',
-            agent_config=NativeAgentConfig(command_timeout=181),
-            sandbox={
-                'default_config': {
-                    'image': 'custom/gdpval:latest',
-                    'network_enabled': False,
-                }
-            },
-        )
-        adapter.docker_image = 'custom/gdpval:latest'
-        adapter._current_output_dir = None
-        adapter._ensure_docker_image = lambda: None
-        sample = types.SimpleNamespace(id='example', metadata={'task_id': 'example'})
-
-        env = adapter.build_environment(sample)
-
-        sandbox_env = env._env
-        assert sandbox_env._timeout == 181
-        assert 'environment' not in sandbox_env._sandbox_config_dict
-        assert sandbox_env._sandbox_config_dict['image'] == 'custom/gdpval:latest'
-        assert sandbox_env._sandbox_config_dict['network_enabled'] is False
-        assert sandbox_env._sandbox_config_dict['env_vars'] == {
-            'PAGER': 'cat',
-            'MANPAGER': 'cat',
-            'PIP_PROGRESS_BAR': 'off',
-            'TQDM_DISABLE': '1',
-        }
 
     def test_job_bench_selects_legacy_docker_environment(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from evalscope.benchmarks.job_bench.job_bench_adapter import JobBenchAdapter
@@ -947,7 +818,6 @@ class TestDefaultAdapterEnvPath:
     def test_tool_infos_merged_into_ctx(self):
         """When agent_config.tools=['bash'], bash ToolInfo is passed to the model."""
         from evalscope.api.benchmark.adapters.default_data_adapter import DefaultDataAdapter
-        from evalscope.api.dataset import Sample
 
         # Build a minimal adapter bypassing __init__
         adapter = DefaultDataAdapter.__new__(DefaultDataAdapter)
@@ -977,7 +847,6 @@ class TestDefaultAdapterEnvPath:
     def test_environment_extra_forwarded(self):
         """environment_extra is forwarded to the environment constructor."""
         from evalscope.api.benchmark.adapters.default_data_adapter import DefaultDataAdapter
-        from evalscope.api.dataset import Sample
 
         adapter = DefaultDataAdapter.__new__(DefaultDataAdapter)
         cfg = NativeAgentConfig(

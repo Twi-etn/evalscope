@@ -60,8 +60,8 @@ evalscope eval \
 ## 指标与输出
 
 系统会在五个“观察视角”输出报告：
-1. subset_level：原始数据集中子集（如 ARC-Challenge / ARC-Easy）。
-2. dataset_level：同一数据集所有子集汇总（如 arc）。
+1. subset_level：原始数据集中子集（如 MMLU abstract_algebra / anatomy）。
+2. dataset_level：同一数据集所有子集汇总（如 mmlu）。
 3. task_level：同一任务类型（如 reasoning）。
 4. tag_level：样本 tags 维度（语言、模式等；Schema 名称可并入 tags）。
 5. category_level：自定义分组（如 reasoning_index）。
@@ -78,15 +78,15 @@ evalscope eval \
 +-----------+--------------+---------------+------------+-------+
 | task_type | dataset_name |  subset_name  | micro_avg. | count |
 +-----------+--------------+---------------+------------+-------+
-| reasoning |     arc      | ARC-Challenge |    0.8     |   5   |
-| reasoning |     arc      |   ARC-Easy    |    1.0     |   4   |
+| reasoning |     mmlu     |    anatomy    |    0.8     |   5   |
+| reasoning |     mmlu     |abstract_algebra|    1.0     |   4   |
 | reasoning |    ceval     |     logic     |    0.0     |   1   |
 +-----------+--------------+---------------+------------+-------+
 2025-11-24 18:44:50 - evalscope - data_collection_adapter.py - generate_report - 171 - INFO: dataset_level Report:
 +-----------+--------------+------------+------------+---------------+-------+
 | task_type | dataset_name | micro_avg. | macro_avg. | weighted_avg. | count |
 +-----------+--------------+------------+------------+---------------+-------+
-| reasoning |     arc      |   0.8889   |    0.9     |    0.8889     |   9   |
+| reasoning |     mmlu     |   0.8889   |    0.9     |    0.8889     |   9   |
 | reasoning |    ceval     |    0.0     |    0.0     |      0.0      |   1   |
 +-----------+--------------+------------+------------+---------------+-------+
 2025-11-24 18:44:50 - evalscope - data_collection_adapter.py - generate_report - 171 - INFO: task_level Report:

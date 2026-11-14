@@ -107,7 +107,7 @@ def test_enumeration_exposes_the_whole_shipped_catalog() -> None:
     """Guards against a discovery change silently shrinking the registry."""
     names = set(BENCHMARK_REGISTRY.keys())
 
-    assert len(names) >= 250, f'registry unexpectedly small: {len(names)} benchmarks'
+    assert len(names) >= 190, f'registry unexpectedly small: {len(names)} benchmarks'
     assert {SIMPLE_NAME, SUFFIXED_NAME, *MULTI_NAME_SIBLINGS} <= names
 
 
@@ -210,7 +210,7 @@ def test_importing_evalscope_does_not_load_every_adapter(fresh_interpreter: Dict
     """Guards the regression this lazy registry exists to prevent.
 
     Thresholds are deliberately loose: they catch a return to eager loading of all
-    ~240 adapters without pinning an exact module count.
+    the adapter catalog without pinning an exact module count.
     """
     assert fresh_interpreter['registered_after_import'] == 0, (
         'importing evalscope should register no benchmark up front'
@@ -230,7 +230,7 @@ def test_resolving_one_benchmark_loads_only_a_few_modules(fresh_interpreter: Dic
 
 
 def test_full_enumeration_still_loads_the_whole_catalog(fresh_interpreter: Dict[str, Any]) -> None:
-    assert fresh_interpreter['registered_after_enumeration'] >= 250
+    assert fresh_interpreter['registered_after_enumeration'] >= 190
 
 
 def test_subpackage_attributes_are_not_shadowed_by_star_imports(fresh_interpreter: Dict[str, Any]) -> None:
@@ -273,7 +273,7 @@ def test_an_unindexed_name_falls_back_to_loading_everything() -> None:
     )
 
     assert measured['resolved'] is True
-    assert measured['registered'] >= 250, 'fallback should have loaded the whole catalog'
+    assert measured['registered'] >= 190, 'fallback should have loaded the whole catalog'
 
 
 def test_invalid_index_shape_falls_back_to_an_empty_mapping(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -304,7 +304,7 @@ def test_a_mismatched_index_entry_falls_back_to_loading_everything() -> None:
     )
 
     assert measured['resolved'] is True
-    assert measured['registered'] >= 250, 'mismatched index should have triggered a full load'
+    assert measured['registered'] >= 190, 'mismatched index should have triggered a full load'
 
 
 def test_lazy_registry_serializes_concurrent_first_resolution() -> None:

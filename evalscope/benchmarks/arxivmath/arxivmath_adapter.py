@@ -83,6 +83,6 @@ class ArxivMathAdapter(DefaultDataAdapter):
         )
 
     def extract_answer(self, prediction: str, task_state: TaskState) -> str:
-        from evalscope.benchmarks.hmmt.utils import extract_hmmt_answer
+        from evalscope.metrics.math.parser import extract_answer
 
-        return extract_hmmt_answer(prediction)
+        return extract_answer(prediction)

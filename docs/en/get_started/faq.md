@@ -123,7 +123,7 @@ task_config = TaskConfig(
 1.  Set `temperature=0` in `generation_config`.
 2.  Set a fixed `seed` parameter.
 
-**Q: When evaluating `humaneval` and other code generation tasks, scores are much lower than expected?**
+**Q: When evaluating `mbpp` and other code generation tasks, scores are much lower than expected?**
 
 **A:**
 1.  **Check model type**: Use Instruct or Chat models. Base models may have issues like repetition due to not following instructions.
@@ -152,10 +152,6 @@ Reference documentation: [Judge Model Parameters](https://evalscope.readthedocs.
     judge={'strategy': 'llm_recall', 'models': {'model_id': '...', 'api_url': '...', 'api_key': '...'}}
     ```
     `llm_recall` only calls the judge model when the rule-based score is not perfect, so it adds no across-the-board overhead.
-
-**Q: `Connection error` when evaluating `alpaca_eval`?**
-
-**A:** `alpaca_eval` requires a Judge Model for scoring. It uses OpenAI API by default, and connection will fail if related keys are not configured. Specify one through `--judge`.
 
 **Q: How to continue from checkpoint after evaluation interruption?**
 

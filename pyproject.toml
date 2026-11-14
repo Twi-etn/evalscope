@@ -63,26 +63,17 @@ maritime_ocr_bench = {file = ["evalscope/benchmarks/maritime_ocr_bench/requireme
 miniwob          = {file = ["evalscope/benchmarks/miniwob/requirements.txt"]}
 ifeval           = {file = ["evalscope/benchmarks/ifeval/requirements.txt"]}
 ifbench          = {file = ["evalscope/benchmarks/ifbench/requirements.txt"]}
-lawbench         = {file = ["evalscope/benchmarks/lawbench/requirements.txt"]}
 multi_if         = {file = ["evalscope/benchmarks/multi_if/requirements.txt"]}
 olympiad_bench   = {file = ["evalscope/benchmarks/olympiad_bench/requirements.txt"]}
 needle_haystack  = {file = ["evalscope/benchmarks/needle_haystack/requirements.txt"]}
 openai_mrcr      = {file = ["evalscope/benchmarks/openai_mrcr/requirements.txt"]}
 general_arena    = {file = ["evalscope/benchmarks/general_arena/requirements.txt"]}
-arena_hard       = {file = ["evalscope/benchmarks/arena_hard/requirements.txt"]}
-air_bench        = {file = ["evalscope/benchmarks/air_bench/requirements.txt"]}
 caption          = {file = ["evalscope/benchmarks/caption/requirements.txt"]}
 refcoco          = {file = ["evalscope/benchmarks/refcoco/requirements.txt"]}
-swe_bench        = {file = ["requirements/sandbox.txt", "evalscope/benchmarks/swe_bench/requirements.txt"]}
-swe_atlas_qna    = {file = ["evalscope/benchmarks/swe_atlas_qna/requirements.txt"]}
 wmt              = {file = ["evalscope/benchmarks/wmt/requirements.txt"]}
-torgo            = {file = ["evalscope/benchmarks/torgo/requirements.txt"]}
 terminal_bench   = {file = ["evalscope/benchmarks/terminal_bench/requirements.txt"]}
-deep_swe         = {file = ["evalscope/benchmarks/deep_swe/requirements.txt"]}
 toolathlon       = {file = ["evalscope/benchmarks/toolathlon/requirements.txt"]}
 bfcl             = {file = ["evalscope/benchmarks/bfcl/requirements.txt"]}
-agentdojo        = {file = ["evalscope/benchmarks/agentdojo/requirements.txt"]}
-cybench          = {file = ["requirements/sandbox.txt", "evalscope/benchmarks/cybench/requirements.txt"]}
 wide_search      = {file = ["evalscope/benchmarks/wide_search/requirements.txt"]}
 vtcbench         = {file = ["evalscope/benchmarks/vtcbench/requirements.txt"]}
 all = {file = [
@@ -131,8 +122,6 @@ ignore = ["E501"]
 "tests/**/*.py" = ["E402"]
 "__init__.py" = ["F401"]
 "!evalscope/{utils,cli,report,perf}/**/*.py" = ["F401"]
-# Trailing whitespace in the official SWE-Atlas prompt text must be preserved.
-"evalscope/benchmarks/swe_atlas_qna/prompts.py" = ["W291", "W293"]
 
 [tool.ruff.format]
 exclude = ["tests/**/*.py"]

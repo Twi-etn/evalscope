@@ -136,24 +136,16 @@ def get_category_from_adapter_class(adapter_cls) -> str:
         adapter_cls: DataAdapter subclass (not an instance)
 
     Returns:
-        Category string: 'aigc', 'vlm', 'agent', 'llm', or 'unknown'
+        Category string: 'vlm', 'agent', 'llm', or 'unknown'
     """
-    from evalscope.api.benchmark import (
-        AgentAdapter,
-        AudioLanguageAdapter,
-        ImageEditAdapter,
-        Text2ImageAdapter,
-        VisionLanguageAdapter,
-    )
+    from evalscope.api.benchmark import AgentAdapter, VisionLanguageAdapter
 
     if adapter_cls is None:
         return 'unknown'
     try:
-        if issubclass(adapter_cls, (Text2ImageAdapter, ImageEditAdapter)):
-            return 'aigc'
-        elif issubclass(adapter_cls, (VisionLanguageAdapter, AudioLanguageAdapter)):
+        if issubclass(adapter_cls, VisionLanguageAdapter):
             return 'vlm'
-        elif issubclass(adapter_cls, AgentAdapter):
+        if issubclass(adapter_cls, AgentAdapter):
             return 'agent'
     except TypeError:
         return 'unknown'
@@ -167,7 +159,7 @@ def get_adapter_category(adapter) -> str:
         adapter: DataAdapter instance
 
     Returns:
-        Category string: 'aigc', 'vlm', 'agent', or 'llm'
+        Category string: 'vlm', 'agent', or 'llm'
     """
     return get_category_from_adapter_class(adapter.__class__)
 

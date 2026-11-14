@@ -104,34 +104,6 @@ dataset_args={
 +---------+-----------+---------------+--------------+-------+---------+---------+
 ```
 
-### 评测代码能力
-
-我们使用[LiveCodeBench](https://www.modelscope.cn/datasets/evalscope/livecodebench_code_generation_lite_parquet)来评测模型的代码能力，需进行如下配置：
-
-```python
-# ...
-datasets=['live_code_bench'],
-dataset_args={
-    'live_code_bench': {
-        'extra_params': {
-            'start_date': '2024-08-01',
-            'end_date': '2025-02-28'
-        },
-        "filters": {"remove_until": "</think>"}  # 过滤掉模型推理过程中的思考部分
-    }
-},
-```
-
-输出结果如下：
-
-```text
-+---------+-----------------+----------+----------------+-------+---------+---------+
-| Model   | Dataset         | Metric   | Subset         |   Num |   Score | Cat.0   |
-+=========+=================+==========+================+=======+=========+=========+
-| qwq-32b | live_code_bench | Pass@1   | release_latest |   279 |  0.6237 | default |
-+---------+-----------------+----------+----------------+-------+---------+---------+
-```
-
 ## 评测结果可视化
 
 EvalScope支持可视化结果，可以查看模型具体的输出。

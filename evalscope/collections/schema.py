@@ -118,7 +118,7 @@ if __name__ == '__main__':
             CollectionSchema(
                 name='english',
                 datasets=[
-                    DatasetInfo(name='arc', weight=1, tags=['en']),
+                    DatasetInfo(name='hellaswag', weight=1, tags=['en']),
                 ],
             ),
             CollectionSchema(

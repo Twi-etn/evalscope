@@ -13,7 +13,7 @@ pip install -U 'evalscope[service]'
 export DASHSCOPE_API_KEY='<your-bailian-api-key>'
 ```
 
-下面使用 `decision-model-preview` 评测 C-Eval 的计算机网络子集和 BANKING77，各取 5 个样本：
+下面使用 `decision-model-preview` 评测 C-Eval 的计算机网络子集和 ContractNLI，各取 5 个样本：
 
 ```python
 import os
@@ -25,7 +25,7 @@ run_task(TaskConfig(
     eval_type='systemone_api',
     api_url='https://trial.cn-beijing.maas.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['ceval', 'banking77'],
+    datasets=['ceval', 'contract_nli'],
     dataset_args={
         'ceval': {
             'subset_list': ['computer_network'],
@@ -51,7 +51,7 @@ TypeSafe Jev 使用相同的评测类型，只需更换模型、地址和密钥�
 export TYPESAFE_API_KEY='<your-typesafe-api-key>'
 ```
 
-下面在 BoolQ 上评测两个样本：
+下面在 HellaSwag 上评测两个样本：
 
 ```python
 import os
@@ -63,7 +63,7 @@ run_task(TaskConfig(
     eval_type='systemone_api',
     api_url='https://api.typesafe.ai/v1',
     api_key=os.environ['TYPESAFE_API_KEY'],
-    datasets=['boolq'],
+    datasets=['hellaswag'],
     limit=2,
     eval_batch_size=1,
 ))
@@ -93,14 +93,12 @@ run_task(TaskConfig(
 
 | 任务 | 基准名称 |
 | --- | --- |
-| 知识与考试 | `mmlu`、`ceval`、`cmmlu`、`mmlu_pro`、`arc`、`gpqa_diamond`、`super_gpqa` |
-| 常识与推理 | `hellaswag`、`winogrande`、`musr` |
-| 阅读理解与文本推断 | `anli`、`boolq` |
-| 文本分类 | `banking77`、`contract_nli` |
+| 知识与考试 | `mmlu`、`ceval`、`cmmlu`、`mmlu_pro`、`gpqa_diamond`、`super_gpqa` |
+| 常识与推理 | `hellaswag`、`winogrande` |
+| 文本分类 | `contract_nli` |
 | 回答偏好 | `reward_bench` |
 | 自定义选择题 | `general_mcq` |
 
-其中 BoolQ 默认也是两选一的 Choice。如果希望直接评测“是”的概率，可在 `dataset_args` 中为它设置 `extra_params={'decision_kind': 'noul'}`；同一 `extra_params` 中的 `decision_threshold` 控制是非判断阈值，默认 0.5。
 
 原生决策题基准则保留各自的题型和评分规则，使用零样本评测：
 
@@ -114,10 +112,6 @@ run_task(TaskConfig(
 公共数据默认从 ModelScope 下载；可通过各基准的 `local_path` 指定本地数据，或通过 `dataset_revision` 固定数据版本。当前 EvalScope 的 System One 接入仅支持文本决策，不支持图片、音频、视频、多选题、Agent、工具调用或 LLM judge。
 
 ```{dropdown} 部分基准的评测口径
-- ARC-C 对应 `arc` 的 `ARC-Challenge` 子集。
-- ANLI 包含 `r1`、`r2`、`r3`，各轮使用 test 评测、对应 train 提供示例。
-- BoolQ 使用原版 validation 数据。
-- BANKING77 保留全部 77 类，不裁剪候选项。
 - ContractNLI 使用 `evalscope/contract-nli` 的 `contractnli_b` 配置及完整合同，仅评三分类，不评证据定位。
 - RewardBench 使用 v1 filtered 数据，确定性打乱回答位置；总体准确率按样本数加权，不是官方榜单的类别加权分数。
 - GPQA 和 SuperGPQA 按各自基准规则保留固定示例。
@@ -134,7 +128,7 @@ run_task(TaskConfig(
 | `ece` | 按概率分组后，预测概率与对应事件实际发生比例的偏差，越低越好 |
 | `mae` | 按概率计算的 Score 分数与标准分数的平均绝对误差，越低越好 |
 
-具体指标取决于题型和基准。例如 BANKING77 还报告 `macro_f1`，STS-B 以连续分数的 MAE 为主；OpenDecisions 的综合指标说明见[最佳实践](../best_practice/decision_evaluation.md)。
+具体指标取决于题型和基准。例如 STS-B 以连续分数的 MAE 为主；OpenDecisions 的综合指标说明见[最佳实践](../best_practice/decision_evaluation.md)。
 
 启动 Web UI，打开 `http://127.0.0.1:9000`，在“评估”页面选择报告，再从“预测浏览”逐题查看预测、标准答案和概率分布：
 

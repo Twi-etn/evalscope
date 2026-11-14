@@ -5,10 +5,10 @@ model-generated code inside isolated sandboxes.  Two execution paths share
 the same service layer:
 
 * **Code execution pool** — a warm pool of long-lived sandboxes used by code
-  benchmarks (e.g. HumanEval, MBPP) through the
+  benchmarks (e.g. MBPP) through the
   `CodeExecutionSandboxMixin`.
 * **Per-sample** — one sandbox per sample created by Agent environments
-  (e.g. `EnclaveAgentEnvironment`) for SWE-bench-style benchmarks.
+  (e.g. `EnclaveAgentEnvironment`) for agent benchmarks.
 
 Both paths are backed by the process-wide `SandboxService` defined in
 `evalscope.api.sandbox`, which caches `SandboxManager` instances keyed on
@@ -36,7 +36,7 @@ from evalscope import TaskConfig
 from evalscope.config import SandboxTaskConfig
 
 task = TaskConfig(
-    datasets=['humaneval'],
+    datasets=['mbpp'],
     sandbox=SandboxTaskConfig(
         enabled=True,
         engine='docker',          # 'docker' | 'volcengine'
@@ -74,7 +74,7 @@ sandbox:
 
 ## Per-sample overrides (agent benchmarks)
 
-Agent benchmarks that need a different sandbox per sample (e.g. SWE-bench
+Agent benchmarks that need a different sandbox per sample (e.g. WideSearch
 Pro, which pins an image per instance) can override `build_sandbox_config`
 on their adapter:
 
@@ -96,7 +96,7 @@ has the final word if the user wants to override per-run.
 | Lifetime         | Reused across samples              | Fresh container per sample    |
 | Warmup           | `manager.initialize_pool`          | None                          |
 | Execution API    | `PoolHandle.execute_tool`          | `SandboxHandle.execute_tool`  |
-| Typical use      | Code benchmark scoring             | SWE-bench, agent tool use     |
+| Typical use      | Code benchmark scoring             | Agent tool use     |
 
 Managers are shared across both paths when `(engine, manager_config)`
 match, so you only pay for one connection even if a benchmark uses both.

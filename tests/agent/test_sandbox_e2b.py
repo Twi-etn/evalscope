@@ -151,8 +151,8 @@ def mapping_script() -> ModuleType:
        st.booleans())
 def test_mapping_roundtrip(mapping: dict[str, str], bom: bool) -> None:
     module = mapping_script()
-    rows = [{'源镜像': k, '转换后镜像': v, '数据集': 'SWE-bench Verified', 'extra': 'ignored'} for k, v in mapping.items()]
-    rows += [{'源镜像': 'empty', '转换后镜像': '', '数据集': 'SWE-bench Verified'},
+    rows = [{'源镜像': k, '转换后镜像': v, '数据集': 'TB 2.1', 'extra': 'ignored'} for k, v in mapping.items()]
+    rows += [{'源镜像': 'empty', '转换后镜像': '', '数据集': 'TB 2.1'},
              {'源镜像': 'excluded', '转换后镜像': 'image', '数据集': 'Other'}]
     with tempfile.TemporaryDirectory() as root:
         csv_path, out = Path(root) / 'input.csv', Path(root) / 'mapping.gz'
@@ -172,7 +172,7 @@ def test_mapping_roundtrip(mapping: dict[str, str], bom: bool) -> None:
         if mapping:
             key = next(iter(mapping))
             with pytest.raises(ValueError, match=key):
-                module.build_mapping(rows + [{'源镜像': key, '转换后镜像': mapping[key] + 'x', '数据集': 'SWE-bench Verified'}], module.DEFAULT_DATASETS)
+                module.build_mapping(rows + [{'源镜像': key, '转换后镜像': mapping[key] + 'x', '数据集': 'TB 2.1'}], module.DEFAULT_DATASETS)
 
 
 def test_mapping_cli_errors(tmp_path: Path) -> None:
@@ -187,7 +187,7 @@ def test_bundled_mapping_injection() -> None:
     load_e2b_image_mapping.cache_clear()
     original = {'api_key': 'placeholder'}
     first, second = with_e2b_image_mapping(original), with_e2b_image_mapping(original)
-    assert len(first['image_mapping']) == 3518
+    assert len(first['image_mapping']) == 90
     assert first['image_mapping'] is second['image_mapping']
     assert load_e2b_image_mapping.cache_info().misses == 1
     assert original == {'api_key': 'placeholder'}
@@ -380,7 +380,7 @@ def test_e2b_service_mapping_and_shutdown(monkeypatch: pytest.MonkeyPatch) -> No
     async def run():
         first = await service._get_or_create_manager(SandboxEngine.E2B, original)
         second = await service._get_or_create_manager(SandboxEngine.E2B, original)
-        assert first is second and len(first.config.image_mapping) == 3518
+        assert first is second and len(first.config.image_mapping) == 90
         assert 'image_mapping' not in str(service._managers.keys())
     from evalscope.utils.asyncio_runtime import AsyncioLoopRunner
     try:
@@ -468,28 +468,20 @@ def test_structural_engine_boundary() -> None:
 
 
 @pytest.mark.parametrize('engine', ['docker', 'e2b', 'volcengine'])
-@pytest.mark.parametrize('site', ['swe', 'pro', 'atlas', 'wide', 'gaia', 'office', 'job', 'gdp', 'skills'])
+@pytest.mark.parametrize('site', ['wide', 'job', 'skills'])
 def test_migrated_environment_sites(site: str, engine: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from evalscope.api.dataset import Sample
-    from evalscope.benchmarks.gaia.gaia_adapter import GaiaAdapter
-    from evalscope.benchmarks.gdpval.gdpval_adapter import GDPvalAdapter
     from evalscope.benchmarks.job_bench.job_bench_adapter import JobBenchAdapter
-    from evalscope.benchmarks.officeqa.officeqa_adapter import OfficeQAAdapter
     from evalscope.benchmarks.skillsbench.skillsbench_adapter import SkillsBenchAdapter
-    from evalscope.benchmarks.swe_atlas_qna.swe_atlas_qna_adapter import SweAtlasQnAAdapter
-    from evalscope.benchmarks.swe_bench.swe_bench_agentic_adapter import SWEBenchVerifiedAgenticAdapter
-    from evalscope.benchmarks.swe_bench_pro.swe_bench_pro_agentic_adapter import SWEBenchProAgenticAdapter
     from evalscope.benchmarks.wide_search.wide_search_adapter import WideSearchAdapter
-    classes = dict(swe=SWEBenchVerifiedAgenticAdapter, pro=SWEBenchProAgenticAdapter, atlas=SweAtlasQnAAdapter,
-                   wide=WideSearchAdapter, gaia=GaiaAdapter, office=OfficeQAAdapter, job=JobBenchAdapter,
-                   gdp=GDPvalAdapter, skills=SkillsBenchAdapter)
+    classes = dict(wide=WideSearchAdapter, job=JobBenchAdapter, skills=SkillsBenchAdapter)
     adapter = classes[site].__new__(classes[site])
     adapter._benchmark_meta = SimpleNamespace(name=site)
     adapter._task_config = task_stub(engine)
     adapter._task_config.agent_config = SimpleNamespace(environment='docker')
     adapter._task_sandbox_config = lambda: {}
     adapter._native_command_timeout = lambda: 120
-    adapter.working_dir = '/testbed' if site == 'swe' else '/app'
+    adapter.working_dir = '/app'
     adapter.force_arch = ''
     adapter._host_files_dir = None
     adapter._corpus_dir = str(tmp_path)
@@ -505,15 +497,10 @@ def test_migrated_environment_sites(site: str, engine: str, tmp_path: Path, monk
         seen.append(kwargs)
         return SimpleNamespace(**kwargs)
     monkeypatch.setattr('evalscope.agent.environments.enclave.EnclaveAgentEnvironment', env)
-    monkeypatch.setattr('evalscope.benchmarks.swe_atlas_qna.swe_atlas_qna_adapter.SweAtlasEnclaveEnvironment', env)
     if site == 'skills':
         monkeypatch.setattr('evalscope.benchmarks.skillsbench.skillsbench_adapter.EnclaveAgentEnvironment', env)
-    unsupported = site in ['gaia', 'office', 'job', 'gdp', 'skills']
-    if site == 'gdp':
-        adapter._ensure_docker_image = MagicMock(side_effect=AssertionError('must not build before rejecting remote engine'))
-        if engine == 'docker':
-            adapter._ensure_docker_image.side_effect = None
-        monkeypatch.setattr('evalscope.benchmarks.gdpval.gdpval_adapter.build_reference_volumes', lambda sample: {})
+    unsupported = site in ['job', 'skills']
+
     def build():
         if site == 'skills':
             # load() must reject remote engines before touching any task Dockerfile.
@@ -525,13 +512,7 @@ def test_migrated_environment_sites(site: str, engine: str, tmp_path: Path, monk
         with pytest.raises(SandboxConfigError, match=engine):
             build()
         assert not seen
-        if site == 'gdp':
-            adapter._ensure_docker_image.assert_not_called()
     else:
         build()
         assert len(seen) == 1 and seen[0]['engine'] == resolve_engine(engine)
         assert ('manager_config' in seen[0]) == (engine == 'e2b')
-        if site in ['swe', 'pro', 'atlas']:
-            assert seen[0]['interpreter'] == ['bash', '-lc'] or seen[0]['interpreter'] == ('bash', '-lc')
-        if site == 'gaia':
-            assert 'volumes' not in seen[0]['sandbox_config']

@@ -3,7 +3,7 @@ from dotenv import dotenv_values
 
 env = dotenv_values('.env')
 
-from evalscope.constants import EvalType, JudgeStrategy, OutputType
+from evalscope.constants import EvalType, JudgeStrategy
 from evalscope.utils.logger import get_logger
 from tests.common import TestBenchmark
 
@@ -45,58 +45,6 @@ class TestCodeBenchmark(TestBenchmark):
             'sandbox_type': 'docker',
             'debug': True,
         }
-
-    def test_humaneval(self):
-        """Test Humaneval dataset."""
-        self._run_dataset_test('humaneval', limit=5, repeats=2)
-
-    def test_humaneval_remote_sandbox(self):
-        """Test Humaneval dataset with remote sandbox manager."""
-        sandbox_manager_config = {'base_url': 'http://localhost:8000'}
-        self._run_dataset_test('humaneval', limit=5, sandbox_manager_config=sandbox_manager_config)
-
-    def test_humaneval_volcengine_sandbox(self):
-        sandbox_type='volcengine'
-        use_sandbox=True
-        sandbox_manager_config={
-            'base_url': 'http://127.0.0.1:8080',
-        }
-        self._run_dataset_test('humaneval', limit=5, sandbox_type=sandbox_type, use_sandbox=use_sandbox, sandbox_manager_config=sandbox_manager_config)
-
-    def test_live_code_bench(self):
-        """Test Live Code Bench dataset."""
-        dataset_args = {
-            'subset_list': ['v5'],
-            'review_timeout': 6,
-            'extra_params': {
-                'start_date': '2024-08-01',
-                'end_date': '2025-02-28'
-            },
-        }
-        self._run_dataset_test('live_code_bench', limit=5, dataset_args=dataset_args, use_cache='outputs/20250918_200232', rerun_review=True)
-
-    def test_live_code_bench_remote_sandbox(self):
-        """Test Live Code Bench dataset."""
-        dataset_args = {
-            'subset_list': ['v5'],
-            'review_timeout': 6,
-            'extra_params': {
-                'start_date': '2024-08-01',
-                'end_date': '2025-02-28'
-            },
-        }
-        sandbox_manager_config = {'base_url': 'http://localhost:8000'}
-        self._run_dataset_test('live_code_bench', limit=20, dataset_args=dataset_args, sandbox_manager_config=sandbox_manager_config, use_cache='outputs/20250918_200232_2', rerun_review=True)
-
-    def test_scicode(self):
-        """Test SciCode dataset."""
-        dataset_args = {
-            'extra_params': {
-                'provide_background': False
-            }
-        }
-
-        self._run_dataset_test('scicode', dataset_args, repeats=2, limit=3, stream=True, rerun_review=True)
 
     def test_mbpp(self):
         """Test MBPP dataset."""
@@ -177,10 +125,6 @@ class TestCodeBenchmark(TestBenchmark):
         }
         self._run_dataset_test('terminal_bench_v2_1', dataset_args, limit=5, use_sandbox=False, rerun_review=True, model='qwen3-coder-plus', eval_batch_size=2)
 
-    def test_humaneval_plus(self):
-        """Test Humaneval+ dataset."""
-        self._run_dataset_test('humaneval_plus', limit=10)
-
     def test_mbpp_plus(self):
         """Test MBPP+ dataset."""
         self._run_dataset_test('mbpp_plus', limit=10)
@@ -214,33 +158,3 @@ class TestCodeBenchmark(TestBenchmark):
         ],
         }
         self._run_dataset_test('multiple_humaneval', dataset_args=dataset_args, limit=10, sandbox_type=sandbox_type, use_sandbox=use_sandbox, sandbox_manager_config=sandbox_manager_config)
-
-    def test_bigcodebench(self):
-        """Test BigCodeBench dataset (instruct mode)."""
-        dataset_args = {
-            'extra_params': {
-                'split': 'instruct',
-                'calibrate': True,
-            }
-        }
-        self._run_dataset_test('bigcodebench', dataset_args=dataset_args, limit=5)
-
-    def test_bigcodebench_complete(self):
-        """Test BigCodeBench dataset (complete mode)."""
-        dataset_args = {
-            'extra_params': {
-                'split': 'complete',
-                'calibrate': True,
-            }
-        }
-        self._run_dataset_test('bigcodebench', dataset_args=dataset_args, limit=5)
-
-    def test_bigcodebench_hard(self):
-        """Test BigCodeBench-Hard dataset."""
-        dataset_args = {
-            'extra_params': {
-                'split': 'instruct',
-                'calibrate': True,
-            }
-        }
-        self._run_dataset_test('bigcodebench_hard', dataset_args=dataset_args, limit=5)

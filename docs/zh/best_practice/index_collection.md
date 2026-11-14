@@ -10,7 +10,7 @@
     
 *   AIME25：数学竞赛题，代表“数学推理”能力；
     
-*   LiveCodeBench：Python 代码生成，代表“编程能力”。
+*   MBPPPlus：Python 代码生成，代表“编程能力”。
     
 
 这些榜单就像是模型的“高考成绩单”，它们当然重要，因为它们确立了模型在不同领域里的基准智力水平（SOTA）。但问题在于，能在不同学科考出高分的模型，是否就能胜任实际的“岗位工作”？在模型使用的过程中，可能很多人都会遇到过类似这样的困惑：
@@ -80,15 +80,15 @@ rag_schema = CollectionSchema(
     datasets=[
         # 1. 知识问答能力，幻觉 (30%)
         DatasetInfo(
-            name='chinese_simpleqa', 
+            name='simple_qa',
             weight=0.3, 
             task_type='knowledge', 
-            tags=['rag', 'zh']
+            tags=['rag', 'en']
         ),
         
         # 2. 长文本检索能力 (30%)
         DatasetInfo(
-            name='aa_lcr', 
+            name='docmath',
             weight=0.3, 
             task_type='long_context', 
             tags=['rag', 'en']
@@ -169,7 +169,7 @@ task_cfg = TaskConfig(
     generation_config={
         'temperature': 0.0 # 评测通常设为 0 以保证结果可复现
     },
-    # 使用强大的模型作为 judge 进行自动评分 (chinese_simpleqa 需要)
+    # 使用强大的模型作为 judge 进行自动评分 (simple_qa 需要)
     judge={'models': {
         'model_id': 'qwen3-max',
         'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
@@ -241,19 +241,14 @@ EvalScope 的 Index 构建能力非常灵活，除了 RAG，你还可以构�
 ```python
 schema = CollectionSchema(name='code_index', datasets=[
     # 基础 Python 代码生成，给予较高的权重（60%）
-    DatasetInfo(name='humaneval', weight=0.6, task_type='code', tags=['python']),
+    DatasetInfo(name='mbpp', weight=0.6, task_type='code', tags=['python']),
     
     # 真实场景代码竞赛题，包含特定时间段的数据，40% 权重
     DatasetInfo(
-        name='live_code_bench', 
+        name='mbpp_plus',
         weight=0.4, 
         task_type='code', 
-        tags=['complex'], 
-        args={
-            'subset_list': ['v5'], 
-            'review_timeout': 6,
-            'extra_params': {'start_date': '2024-08-01', 'end_date': '2025-02-28'}
-        }
+        tags=['complex']
     ),
 ])
 
@@ -271,7 +266,7 @@ schema = CollectionSchema(name='reasoning_index', datasets=[
         DatasetInfo(name='aime25', weight=0.5, tags=['en']),
     ]),
     CollectionSchema(name='logic', weight=0.5, datasets=[
-        DatasetInfo(name='arc', weight=0.5, tags=['en']),
+        DatasetInfo(name='hellaswag', weight=0.5, tags=['en']),
         DatasetInfo(name='ceval', weight=0.5, tags=['zh'], args={'subset_list': ['logic']}),
     ]),
 ])

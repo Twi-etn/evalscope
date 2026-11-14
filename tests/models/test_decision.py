@@ -331,26 +331,6 @@ def test_general_decision_reads_named_jsonl_files(
     assert all('expected' not in payload and 'continuous' not in payload for payload in calls)
 
 
-@pytest.mark.parametrize('provider', ['systemone_api', 'autotrust_api'])
-def test_boolq_explicit_noul_and_threshold(provider: str) -> None:
-    from evalscope.api.evaluator import TaskState
-    from evalscope.api.model import ModelOutput
-
-    config = TaskConfig(model='test', eval_type=provider, datasets=['boolq'],
-                        dataset_args={'boolq': {'extra_params': {'decision_kind': 'noul', 'decision_threshold': 0.8}}})
-    adapter = get_benchmark('boolq', config)
-    sample = adapter.record_to_sample({'passage': 'Paris is in France.', 'question': 'Is Paris in France?', 'answer': True})
-    messages = adapter.build_systemone_messages(sample, 'default')
-    assert messages[-1].internal['systemone']['kind'] == 'noul'
-    a = DecisionAnswer(type='noul', noul=0.7, probabilities={'no': 0.3, 'yes': 0.7})
-    state = TaskState(model='test', sample=sample, messages=messages)
-    state.output = ModelOutput.from_content('test', 'ANSWER: yes')
-    state.output.metadata = {'decision': a.model_dump()}
-    result = adapter.match_score('yes', 'yes', 'A', state)
-    assert result.value['acc'] == 0
-    assert result.metadata['decision']['probabilities'][1] == 0.7
-
-
 def test_jevbench_public_reference_boundaries() -> None:
     fixture = json.loads((Path(__file__).parent / 'data/jevbench_official.json').read_text())
     for case in fixture['cases']:

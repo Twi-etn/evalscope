@@ -25,8 +25,8 @@ Example:
   "tags": ["en", "reasoning"],
   "task_type": "question_answering",
   "weight": 1.0,
-  "dataset_name": "arc",
-  "subset_name": "ARC-Easy"
+  "dataset_name": "hellaswag",
+  "subset_name": "default"
 }
 ```
 
@@ -74,7 +74,7 @@ from evalscope.collections import CollectionSchema, DatasetInfo
 schema = CollectionSchema(
     name='reasoning_index',
     datasets=[
-        DatasetInfo(name='arc', weight=2.0, task_type='reasoning', tags=['en']),
+        DatasetInfo(name='hellaswag', weight=2.0, task_type='reasoning', tags=['en']),
         DatasetInfo(name='ceval', weight=3.0, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}),
     ],
 )
@@ -89,7 +89,7 @@ sampler = WeightedSampler(schema)
 mixed_data = sampler.sample(10)  # N=10
 dump_jsonl_data(mixed_data, 'outputs/weighted_mixed_data.jsonl')
 ```
-Expected: arc : ceval ≈ 2 : 3 → 4 : 6
+Expected: hellaswag : ceval ≈ 2 : 3 → 4 : 6
 
 ### Stratified Sampling (Preserving Source Data Size Distribution)
 ```python
@@ -100,7 +100,7 @@ sampler = StratifiedSampler(schema)
 mixed_data = sampler.sample(10)
 dump_jsonl_data(mixed_data, 'outputs/stratified_mixed_data.jsonl')
 ```
-Expected: Approximately allocated by original sample sizes (example: if arc=2000, ceval=10 → roughly 9 : 1)
+Expected: Approximately allocated by original sample sizes (example: if hellaswag=2000, ceval=10 → roughly 9 : 1)
 
 ### Uniform Sampling (Aligning Capability Comparison)
 ```python
@@ -111,7 +111,7 @@ sampler = UniformSampler(schema)
 mixed_data = sampler.sample(10)
 dump_jsonl_data(mixed_data, 'outputs/uniform_mixed_data.jsonl')
 ```
-Expected: arc : ceval = 5 : 5
+Expected: hellaswag : ceval = 5 : 5
 
 
 ## Common Issues

@@ -14,7 +14,6 @@ from evalscope.report import get_report_list
 # (benchmark, module whose optional-dependency check is skipped: report building does not need it)
 CASES = [
     ('bfcl_v3', 'evalscope.benchmarks.bfcl.v3.bfcl_v3_adapter'),
-    ('acebench', None),
     ('ocr_bench_v2', 'evalscope.benchmarks.ocr_bench.ocr_bench_v2.ocr_bench_v2_adapter'),
 ]
 N = 10

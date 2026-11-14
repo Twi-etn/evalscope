@@ -60,8 +60,8 @@ Set `use_cache` to the previous output directory and `rerun_review=True` to reta
 ## Metrics & Output
 
 The system outputs reports from five "observation perspectives":
-1. **subset_level**: Subsets within original datasets (e.g., ARC-Challenge / ARC-Easy).
-2. **dataset_level**: Aggregation of all subsets from the same dataset (e.g., arc).
+1. **subset_level**: Subsets within original datasets (e.g., MMLU abstract_algebra / anatomy).
+2. **dataset_level**: Aggregation of all subsets from the same dataset (e.g., mmlu).
 3. **task_level**: Same task type (e.g., reasoning).
 4. **tag_level**: Sample tags dimension (language, mode, etc.; Schema names can be merged into tags).
 5. **category_level**: Custom grouping (e.g., reasoning_index).
@@ -78,15 +78,15 @@ The system outputs reports from five "observation perspectives":
 +-----------+--------------+---------------+------------+-------+
 | task_type | dataset_name |  subset_name  | micro_avg. | count |
 +-----------+--------------+---------------+------------+-------+
-| reasoning |     arc      | ARC-Challenge |    0.8     |   5   |
-| reasoning |     arc      |   ARC-Easy    |    1.0     |   4   |
+| reasoning |     mmlu     |    anatomy    |    0.8     |   5   |
+| reasoning |     mmlu     |abstract_algebra|    1.0     |   4   |
 | reasoning |    ceval     |     logic     |    0.0     |   1   |
 +-----------+--------------+---------------+------------+-------+
 2025-11-24 18:44:50 - evalscope - data_collection_adapter.py - generate_report - 171 - INFO: dataset_level Report:
 +-----------+--------------+------------+------------+---------------+-------+
 | task_type | dataset_name | micro_avg. | macro_avg. | weighted_avg. | count |
 +-----------+--------------+------------+------------+---------------+-------+
-| reasoning |     arc      |   0.8889   |    0.9     |    0.8889     |   9   |
+| reasoning |     mmlu     |   0.8889   |    0.9     |    0.8889     |   9   |
 | reasoning |    ceval     |    0.0     |    0.0     |      0.0      |   1   |
 +-----------+--------------+------------+------------+---------------+-------+
 2025-11-24 18:44:50 - evalscope - data_collection_adapter.py - generate_report - 171 - INFO: task_level Report:

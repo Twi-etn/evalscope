@@ -37,10 +37,10 @@ evalscope eval --model your-model-name --api-url $OPENAI_API_BASE_URL --api-key 
 ## ✨ Key Features
 
 - **📚 Comprehensive Evaluation Benchmarks**: Built-in multiple industry-recognized evaluation benchmarks including MMLU, C-Eval, GSM8K, and more.
-- **🧩 Multi-modal and Multi-domain Support**: Supports evaluation of various model types including Large Language Models (LLM), Vision Language Models (VLM), Embedding, Reranker, AIGC, and more.
+- **🧩 Multi-modal and Multi-domain Support**: Supports evaluation of various model types including Large Language Models (LLM), Vision Language Models (VLM), Embedding, Reranker, and more.
 - **🧭 System One Evaluation**: Evaluate text Choice decision models via `--eval-type systemone_api`, with task instructions, few-shot examples and structured probabilities/confidence. See the [usage guide](https://evalscope.readthedocs.io/en/latest/user_guides/systemone.html).
 - **🚀 Multi-backend Integration**: Seamlessly integrates multiple evaluation backends including OpenCompass, VLMEvalKit, RAGEval to meet different evaluation needs.
-- **🤖 Agent Evaluation Mode**: Drives benchmarks (e.g. GSM8K, AIME, SWE-bench Agentic) inside a controlled multi-turn AgentLoop with pluggable strategies and tools, plus Docker or [E2B remote sandboxes](https://evalscope.readthedocs.io/en/latest/user_guides/sandbox.html#e2b); full per-sample Agent Trace is recorded and visualizable.
+- **🤖 Agent Evaluation Mode**: Drives benchmarks (e.g. GSM8K, AIME) inside a controlled multi-turn AgentLoop with pluggable strategies and tools, plus Docker or [E2B remote sandboxes](https://evalscope.readthedocs.io/en/latest/user_guides/sandbox.html#e2b); full per-sample Agent Trace is recorded and visualizable.
 - **⚡ Inference Performance Testing**: Provides powerful model service stress testing tools, supporting multiple performance metrics such as TTFT, TPOT.
 - **📊 Interactive Reports**: Provides a Web Dashboard for multi-dimensional model comparison, report overview and detailed inspection.
 - **⚔️ Arena Mode**: Supports multi-model battles (Pairwise Battle), intuitively ranking and evaluating models.
@@ -77,21 +77,20 @@ For details, please refer to [📖 Visualizing Evaluation Results](https://evals
 
 ## 🎉 What's New
 
-- 🔥 **[2026.11.12]** Added **E2B remote sandboxes** with support for official E2B and Aliyun Agent Sandbox. Run benchmarks such as SWE-bench Agentic, HumanEval and LiveCodeBench in the cloud without local Docker. See the [sandbox guide](https://evalscope.readthedocs.io/en/latest/user_guides/sandbox.html#e2b).
-- 🔥 **[2026.10.09]** Added **System One Choice evaluation** and **ANLI**, **BoolQ**, **BANKING77**, **ContractNLI**, **RewardBench v1** benchmarks. All five default to ModelScope and also support standard LLM evaluation. See [System One Evaluation](https://evalscope.readthedocs.io/en/latest/user_guides/systemone.html).
+- 🔥 **[2026.11.12]** Added **E2B remote sandboxes** with support for official E2B and Aliyun Agent Sandbox. Run MBPP in the cloud without local Docker. See the [sandbox guide](https://evalscope.readthedocs.io/en/latest/user_guides/sandbox.html#e2b).
+- 🔥 **[2026.10.09]** Added **System One Choice evaluation** and **ContractNLI**, **RewardBench v1** benchmarks. Both default to ModelScope and also support standard LLM evaluation. See [System One Evaluation](https://evalscope.readthedocs.io/en/latest/user_guides/systemone.html).
 - 🔥 **[2026.08.24] v1.11.0** Introduced published evaluation versions for reproducible benchmark results; improved report semantics and incomplete-run handling; strengthened multimodal media loading and task-config validation.
 - 🔥 **[2026.08.13]** Improved evaluation reports with unified metric semantics and more reliable Agent Trace step grouping and tool-call/result linking.
-- 🔥 **[2026.08.10]** Added **AutomationBench**, **JobBench**, **MiniWoB**, **OmniDocBench-v1.6**, **PerceptionBench**, **ScreenSpot-Pro**, **PLawBench**, **PMC-VQA**, **HiPhO**, **LogicVista**, and **CC-OCR-V2** benchmarks.
-- 🔥 **[2026.07.21]** Added **Claw-Eval**, **ResearchRubrics**, **Toolathlon** (agent), **TVBench** (video), **WideSearch**, and **PerspectiveGap** benchmarks.
-- 🔥 **[2026.07.03]** Added **CharXiv** & **BabyVision** (chart understanding, visual cognition) and **ERQA** & **WorldVQA** (entity-recognition QA with LLM-judge + CoT) multimodal benchmarks.
-- 🔥 **[2026.06.23]** Major agent & code evaluation expansion: added **BigCodeBench**, **SWE-bench Multilingual**, **BrowseComp**, **MCP-Atlas**, **GDPval** benchmarks; added **OpenCode** / **OpenHands** runners; refactored adapter architecture with `AudioLanguageAdapter`, unified `FunctionCallAdapter`, and public `run_agent_loop` API.
+- 🔥 **[2026.08.10]** Added **JobBench**, **MiniWoB**, **OmniDocBench-v1.6**, **PerceptionBench**, **ScreenSpot-Pro**, **PLawBench**, **PMC-VQA**, **HiPhO**, **LogicVista**, and **CC-OCR-V2** benchmarks.
+- 🔥 **[2026.07.21]** Added **ResearchRubrics**, **Toolathlon** (agent), **TVBench** (video), **WideSearch**, and **PerspectiveGap** benchmarks.
+- 🔥 **[2026.07.03]** Added **CharXiv** & **BabyVision** (chart understanding, visual cognition) and  **WorldVQA** (entity-recognition QA with LLM-judge + CoT) multimodal benchmarks.
+- 🔥 **[2026.06.23]** Major agent & code evaluation expansion: added **BrowseComp** and **MCP-Atlas** benchmarks; added **OpenCode** / **OpenHands** runners; refactored adapter architecture with unified `FunctionCallAdapter`, and public `run_agent_loop` API.
 - 🔥 **[2026.06.16]** Added full-reference **image quality metrics** (SSIM, PSNR, etc.), long-context benchmarks (**LoCoMo QA**, **LongMemEval**), **Caption** & **Maritime-OCR-Bench** benchmarks; perf module now supports unified `--data-source` and parallelized request generation.
 - 🔥 **[2026.06.02]** Refactored **RAG evaluation** module: upgraded to MTEB 2.x and RAGAS 0.4.x, with unified Pydantic-based configs. See the [RAGEval guide](https://evalscope.readthedocs.io/en/latest/user_guides/backend/rageval_backend/index.html).
 - 🔥 **[2026.05.27]** Added **Trie agentic trace replay** for perf benchmarking: three new dataset plugins (`trie_agentic_coding` / `trie_code_qa` / `trie_office_work`) replay real multi-turn agent traces with per-turn token caps and tool-call latency simulation. Also introduced a `--duration` wall-clock budget for all benchmark modes and a `Turn` dataclass for per-turn overrides.
 - 🔥 **[2026.05.27]** Added **Vendor Verifier benchmarks** (`k2_verifier`, `kimi_verifier`, `minimax_verifier`) for validating whether third-party API deployments faithfully reproduce official model behavior, with a shared `FunctionCallAdapter` base class.
-- 🔥 **[2026.05.26]** Added the [GAIA](https://evalscope.readthedocs.io/en/latest/third_party/gaia.html) agent benchmark (multi-turn ReAct + `bash` in a Docker sandbox, official rule-based scorer) and generic [MCP server](https://evalscope.readthedocs.io/en/latest/user_guides/agent/native.html#mcp-server-tools) support — any `NativeAgentConfig`-driven benchmark can now plug in stdio / HTTP / SSE MCP servers (`fetch`, web search, GitHub, ...) without per-benchmark wiring.
 - 🔥 **[2026.05.22]** Introduced the **External Agent Bridge** mode: evaluate off-the-shelf agent CLIs such as Anthropic's [Claude Code](https://github.com/anthropics/claude-code) and OpenAI's [Codex](https://github.com/openai/codex) directly through EvalScope. The bridge transparently forwards each CLI's LLM traffic (Anthropic Messages / OpenAI Chat / OpenAI Responses, including SSE streaming) to your evaluation model, while recording the full trajectory as an `agent_trace`. Bring-your-own-runner via `@register_runner`. See the [External Agent Bridge guide](https://evalscope.readthedocs.io/en/latest/user_guides/agent/bridge.html).
-- 🔥 **[2026.05.19]** Added support for [SWE-bench_Pro](https://evalscope.readthedocs.io/en/latest/third_party/swe_bench_pro.html) and [τ³-bench](https://evalscope.readthedocs.io/en/latest/third_party/tau3_bench.html): SWE-bench_Pro is a more challenging multilingual long-horizon software-engineering benchmark from Scale AI (recommended over the original SWE-bench for less data contamination and broader language coverage; per-instance Docker images are pulled directly from DockerHub, no local image build required); τ³-bench is the v1.0.0 release of the tau-bench family, extending τ²-bench with a new `banking_knowledge` retrieval domain (RAG), 75+ task fixes across existing domains, and pluggable retrieval pipelines (BM25 / embeddings / rerankers / sandbox shell).
+- 🔥 **[2026.05.19]** Added support for [τ³-bench](https://evalscope.readthedocs.io/en/latest/third_party/tau3_bench.html).
 
 <details><summary>More historical updates</summary>
 
@@ -109,47 +108,40 @@ For details, please refer to [📖 Visualizing Evaluation Results](https://evals
 - 🔥 **[2026.01.13]** Added support for Embedding and Rerank model service stress testing.
 - 🔥 **[2025.12.26]** Added support for Terminal-Bench-2.0, which evaluates AI Agent performance on 89 real-world multi-step terminal tasks.
 - 🔥 **[2025.12.18]** Added support for SLA auto-tuning model API services.
-- 🔥 **[2025.12.16]** Added support for audio evaluation benchmarks such as Fleurs, LibriSpeech; added support for multilingual code evaluation benchmarks such as MultiplE, MBPP.
+- 🔥 **[2025.12.16]** Added support for multilingual code evaluation benchmarks such as MultiplE, MBPP.
 - 🔥 **[2025.12.02]** Added support for custom multimodal VQA evaluation; added support for visualizing model service stress testing in ClearML.
-- 🔥 **[2025.11.26]** Added support for OpenAI-MRCR, GSM8K-V, MGSM, MicroVQA, IFBench, SciCode benchmarks.
+- 🔥 **[2025.11.26]** Added support for OpenAI-MRCR, GSM8K-V, MGSM, MicroVQA, IFBench benchmarks.
 - 🔥 **[2025.11.18]** Added support for custom Function-Call (tool invocation) datasets to test whether models can timely and correctly call tools.
-- 🔥 **[2025.11.14]** Added support for SWE-bench_Verified, SWE-bench_Lite, SWE-bench_Verified_mini code evaluation benchmarks.
-- 🔥 **[2025.11.12]** Added `pass@k`, `vote@k`, `pass^k` and other metric aggregation methods; added support for multimodal evaluation benchmarks such as A_OKVQA, CMMU, ScienceQA, V*Bench.
+- 🔥 **[2025.11.12]** Added `pass@k`, `vote@k`, `pass^k` and other metric aggregation methods; added support for multimodal evaluation benchmarks such as CMMU, ScienceQA, V*Bench.
 - 🔥 **[2025.11.07]** Added support for τ²-bench, an extended and enhanced version of τ-bench that includes a series of code fixes and adds telecom domain troubleshooting scenarios.
 - 🔥 **[2025.10.30]** Added support for BFCL-v4, enabling evaluation of agent capabilities including web search and long-term memory.
 - 🔥 **[2025.10.27]** Added support for LogiQA, HaluEval, MathQA, MRI-QA, PIQA, QASC, CommonsenseQA and other evaluation benchmarks. Thanks to @[penguinwang96825](https://github.com/penguinwang96825) for the code implementation.
 - 🔥 **[2025.10.26]** Added support for Conll-2003, CrossNER, Copious, GeniaNER, HarveyNER, MIT-Movie-Trivia, MIT-Restaurant, OntoNotes5, WNUT2017 and other Named Entity Recognition evaluation benchmarks. Thanks to @[penguinwang96825](https://github.com/penguinwang96825) for the code implementation.
 - 🔥 **[2025.10.21]** Optimized sandbox environment usage in code evaluation, supporting both local and remote operation modes.
-- 🔥 **[2025.10.20]** Added support for evaluation benchmarks including PolyMath, SimpleVQA, MathVerse, MathVision, AA-LCR; optimized evalscope perf performance to align with vLLM Bench.
+- 🔥 **[2025.10.20]** Added support for evaluation benchmarks including PolyMath, SimpleVQA, MathVerse, MathVision; optimized evalscope perf performance to align with vLLM Bench.
 - 🔥 **[2025.10.14]** Added support for OCRBench, OCRBench-v2, DocVQA, InfoVQA, ChartQA, and BLINK multimodal image-text evaluation benchmarks.
-- 🔥 **[2025.09.22]** Code evaluation benchmarks (HumanEval, LiveCodeBench) now support running in a sandbox environment.
-- 🔥 **[2025.09.19]** Added support for multimodal image-text evaluation benchmarks including RealWorldQA, AI2D, MMStar, MMBench, and OmniBench, as well as pure text evaluation benchmarks such as Multi-IF, HealthBench, and AMC.
+- 🔥 **[2025.09.19]** Added support for multimodal image-text evaluation benchmarks including RealWorldQA, AI2D, MMStar, MMBench,, as well as pure text evaluation benchmarks such as Multi-IF.
 - 🔥 **[2025.09.05]** Added support for vision-language multimodal model evaluation tasks, such as MathVista and MMMU.
-- 🔥 **[2025.09.04]** Added support for image editing task evaluation, including the [GEdit-Bench](https://modelscope.cn/datasets/stepfun-ai/GEdit-Bench) benchmark.
 - 🔥 **[2025.08.22]** Version 1.0 Refactoring. Break changes, please [refer to](https://evalscope.readthedocs.io/en/latest/get_started/basic_usage.html#switching-to-version-v1-0).
 - 🔥 **[2025.07.18]** The model stress testing now supports randomly generating image-text data for multimodal model evaluation.
 - 🔥 **[2025.07.16]** Support for [τ-bench](https://github.com/sierra-research/tau-bench) has been added.
-- 🔥 **[2025.07.14]** Support for "Humanity's Last Exam" ([Humanity's-Last-Exam](https://modelscope.cn/datasets/cais/hle)).
 - 🔥 **[2025.07.03]** Refactored Arena Mode.
 - 🔥 **[2025.06.28]** Optimized custom dataset evaluation; enhanced LLM judge usage.
 - 🔥 **[2025.06.19]** Added support for the [BFCL-v3](https://modelscope.cn/datasets/AI-ModelScope/bfcl_v3) benchmark.
 - 🔥 **[2025.06.02]** Added support for the Needle-in-a-Haystack test.
-- 🔥 **[2025.05.29]** Added support for two long document evaluation benchmarks: DocMath and FRAMES.
+- 🔥 **[2025.05.29]** Added support for long document evaluation benchmarks: DocMath.
 - 🔥 **[2025.05.16]** Model service performance stress testing now supports setting various levels of concurrency.
-- 🔥 **[2025.05.13]** Added support for the ToolBench-Static dataset, DROP and Winogrande benchmarks.
+- 🔥 **[2025.05.13]** Added support for the ToolBench-Static dataset, Winogrande benchmarks.
 - 🔥 **[2025.04.29]** Added Qwen3 Evaluation Best Practices.
-- 🔥 **[2025.04.27]** Support for text-to-image evaluation.
 - 🔥 **[2025.04.10]** Model service stress testing tool now supports the `/v1/completions` endpoint.
 - 🔥 **[2025.04.08]** Support for evaluating embedding model services compatible with the OpenAI API has been added.
-- 🔥 **[2025.03.27]** Added support for AlpacaEval and ArenaHard evaluation benchmarks.
 - 🔥 **[2025.03.20]** The model inference service stress testing now supports generating prompts of specified length using random values.
-- 🔥 **[2025.03.13]** Added support for the LiveCodeBench code evaluation benchmark.
-- 🔥 **[2025.03.11]** Added support for the SimpleQA and Chinese SimpleQA evaluation benchmarks.
+- 🔥 **[2025.03.11]** Added support for the SimpleQA evaluation benchmarks.
 - 🔥 **[2025.03.07]** Added support for the QwQ-32B model evaluation.
 - 🔥 **[2025.03.04]** Added support for the SuperGPQA dataset.
 - 🔥 **[2025.03.03]** Added support for evaluating the IQ and EQ of models.
 - 🔥 **[2025.02.27]** Added support for evaluating the reasoning efficiency of models.
-- 🔥 **[2025.02.25]** Added support for MuSR and ProcessBench benchmarks.
+- 🔥 **[2025.02.25]** Added support for ProcessBench benchmarks.
 - 🔥 **[2025.02.18]** Supports the AIME25 dataset.
 - 🔥 **[2025.02.13]** Added support for evaluating DeepSeek distilled models.
 - 🔥 **[2025.01.20]** Support for visualizing evaluation results.
@@ -194,7 +186,7 @@ evalscope eval \
  --api-url $OPENAI_API_BASE_URL \
  --api-key $OPENAI_API_KEY \
  --eval-type openai_api \
- --datasets gsm8k arc \
+ --datasets gsm8k \
  --limit 5
 ```
 
@@ -205,7 +197,7 @@ Evaluate a local model (auto-downloaded from ModelScope):
 ```bash
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
- --datasets gsm8k arc \
+ --datasets gsm8k \
  --limit 5
 ```
 
@@ -219,7 +211,7 @@ task_cfg = TaskConfig(
     api_url='https://your-openai-compatible-endpoint/v1',
     api_key='your_api_key',
     eval_type='openai_api',
-    datasets=['gsm8k', 'arc'],
+    datasets=['gsm8k'],
     limit=5
 )
 
@@ -235,7 +227,7 @@ from evalscope.run import run_task
 
 task_cfg = {
     'model': 'Qwen/Qwen2.5-0.5B-Instruct',
-    'datasets': ['gsm8k', 'arc'],
+    'datasets': ['gsm8k'],
     'limit': 5
 }
 run_task(task_cfg=task_cfg)
@@ -246,7 +238,6 @@ run_task(task_cfg=task_cfg)
 model: Qwen/Qwen2.5-0.5B-Instruct
 datasets:
   - gsm8k
-  - arc
 limit: 5
 ```
 ```python
@@ -263,10 +254,6 @@ After evaluation completion, you will see a report in the terminal in the follow
 │ Model                 │ Dataset   │ Metric     │ Subset        │   Num │ Score   │
 ├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
 │ Qwen2.5-0.5B-Instruct │ gsm8k     │ Accuracy ↑ │ main          │     5 │ 40%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Easy      │     5 │ 80%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Challenge │     5 │ 40%     │
 └───────────────────────┴───────────┴────────────┴───────────────┴───────┴─────────┘
 ```
 

@@ -12,10 +12,6 @@ from evalscope.benchmarks.charxiv.charxiv_adapter import DESCRIPTIVE_CONTRACT
 from evalscope.benchmarks.charxiv.utils import DESCRIPTIVE_GRADING_ICL
 from evalscope.benchmarks.cmmu.cmmu_adapter import GRADE_CONTRACT as CMMU_CONTRACT
 from evalscope.benchmarks.cmmu.prompt import EVALUATION_SYSTEM_PROMPT
-from evalscope.benchmarks.deepsearchqa.utils import GRADE_CONTRACT as DEEPSEARCH_CONTRACT
-from evalscope.benchmarks.deepsearchqa.utils import build_grader_prompt
-from evalscope.benchmarks.image_edit.gedit import vie_prompts
-from evalscope.benchmarks.image_edit.gedit.gedit_adapter import GEDIT_CONTRACT
 from evalscope.benchmarks.job_bench.job_bench_adapter import _rubric_verdict_model
 from evalscope.benchmarks.job_bench.utils import build_judge_prompt
 from evalscope.benchmarks.researchrubrics.utils import (
@@ -31,15 +27,6 @@ from evalscope.config import TaskConfig
 from evalscope.constants import ScoreStatus
 from evalscope.evaluation_versioning import SHARED_SCORING_VERSION
 from tests.api.judge.helpers import ScriptedJudge, make_state
-
-
-def test_deepsearch_prompt_example_is_a_complete_schema_valid_object() -> None:
-    prompt = build_grader_prompt('Name two countries.', 'Belgium, France', 'Set Answer', 'Belgium, France, Italy')
-    example = prompt.split('**Example (Partial):**')[1].split('**Now, proceed')[0].strip()
-
-    assert DEEPSEARCH_CONTRACT.parse(example).ok
-    assert '```' not in prompt
-    assert 'return NULL' not in prompt
 
 
 @pytest.mark.parametrize('template', [BINARY_USER_PROMPT, SYNTHESIS_USER_PROMPT, CHUNK_USER_PROMPT])
@@ -149,7 +136,6 @@ def test_plawbench_missing_dataset_section_is_excluded_before_reduction() -> Non
 
 @pytest.mark.parametrize(('benchmark_name', 'legacy_instruction', 'json_instruction'), [
     ('simple_qa', 'Simply reply with either', 'Set the JSON `verdict` field'),
-    ('chinese_simpleqa', '请只回复A、B、C之一', '将所选标签填入 JSON 的 `verdict` 字段'),
     ('simple_vqa', 'Simply reply with either', 'Set the JSON `verdict` field'),
 ])
 def test_three_way_qa_requests_require_a_json_verdict(
@@ -234,15 +220,6 @@ def test_job_bench_output_example_matches_the_declared_criteria_count(criteria_c
     assert f'exactly {criteria_count} items' in prompt
 
 
-def test_gedit_output_example_is_json_and_matches_the_schema() -> None:
-    prompt = vie_prompts._context_no_delimit
-    example = prompt[prompt.index('{'):]
-
-    result = GEDIT_CONTRACT.parse(example)
-
-    assert result.ok, result.error
-
-
 def _job_bench_state(tmp_path: Path) -> TaskState:
     output_dir = tmp_path / 'jobbench_output'
     output_dir.mkdir()
@@ -290,43 +267,6 @@ def test_job_bench_incomplete_or_ambiguous_criteria_are_excluded(reply: str, tmp
     adapter.llm_judge = ScriptedJudge([reply])
 
     score = adapter.score_with_judge_contracts('artifact', 'artifact', '', _job_bench_state(tmp_path))
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
-    assert score.judge_summary.failures == {'parse_error': 1}
-
-
-def _gedit_state() -> TaskState:
-    state = make_state('edited', '')
-    state.metadata = {'input_image': 'source', 'image_path': 'edited', 'instruction': 'edit'}
-    return state
-
-
-def test_gedit_valid_rating_pair_passes_through_the_executor() -> None:
-    adapter = get_benchmark('gedit', TaskConfig(
-        model='m', datasets=['gedit'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]},
-    ))
-    adapter.llm_judge = ScriptedJudge(['{"score":[5,10]}', '{"score":[5,10]}'])
-
-    score = adapter.score_with_judge_contracts('edited', 'edited', '', _gedit_state())
-
-    assert score.status.is_usable
-    assert score.value == {'semantic_consistency': 5.0, 'perceptual_similarity': 5.0, 'normalized_score': 5.0}
-
-
-@pytest.mark.parametrize('reply', [
-    '{"score":[100,100]}',
-    '{"score":[-1,-1]}',
-    '{"score":[10]}',
-    '{"score":[10,10,0]}',
-])
-def test_gedit_invalid_rating_pairs_are_excluded(reply: str) -> None:
-    adapter = get_benchmark('gedit', TaskConfig(
-        model='m', datasets=['gedit'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]},
-    ))
-    adapter.llm_judge = ScriptedJudge([reply, reply])
-
-    score = adapter.score_with_judge_contracts('edited', 'edited', '', _gedit_state())
 
     assert score.status is ScoreStatus.EXCLUDED
     assert score.value == {}
@@ -387,8 +327,6 @@ def test_wide_search_non_integer_or_out_of_range_column_scores_are_rejected(repl
 def test_strict_judge_scoring_versions_are_advanced() -> None:
     assert SHARED_SCORING_VERSION == 'v1.3'
     expected_versions = {
-        'deepsearchqa': 'v1.1',
-        'gedit': 'v1.1',
         'job_bench': 'v1.1',
         'plawbench': 'v1.1',
     }

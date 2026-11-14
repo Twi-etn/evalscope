@@ -15,6 +15,5 @@ For multimodal evaluation, the Native backend is recommended. It already support
 llm.md
 vlm.md
 agent.md
-aigc.md
 other/index.md
 :::

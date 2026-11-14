@@ -1,6 +1,5 @@
 """Smoke tests for migrated Native judge adapters."""
 
-import json
 from typing import Any, List
 
 import pytest
@@ -25,35 +24,6 @@ class TransportFailingJudge(ScriptedJudge):
     def generate(self, messages):
         self.calls.append(messages)
         raise RuntimeError('judge transport unavailable')
-
-
-@pytest.mark.parametrize(('judge', 'expected'), [
-    (ScriptedJudge(['{"explanation": "The condition is preserved.", "criteria_met": true}']), 1.0),
-    (ScriptedJudge(['{"explanation": "The condition is omitted.", "criteria_met": false}']), 0.0),
-    (ScriptedJudge(['not JSON']), None),
-    (ScriptedJudge(['[ERROR] judge transport unavailable']), None),
-    (TransportFailingJudge(), None),
-])
-def test_health_bench_contract_preserves_zero_verdicts_and_excludes_invalid_replies(
-    judge: ScriptedJudge, expected: float | None,
-) -> None:
-    config = TaskConfig(model='m', datasets=['health_bench'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
-    adapter = get_benchmark('health_bench', config)
-    adapter.llm_judge = judge
-    state = make_state('The outcomes apply under different conditions.', '')
-    state.metadata = {
-        'prompt': [{'role': 'user', 'content': 'Explain the conditional recommendations.'}],
-        'rubrics': [{'criterion': 'Preserves each condition.', 'points': 5, 'tags': ['axis:accuracy']}],
-    }
-
-    score = adapter.score_with_judge_contracts(state.output.completion, state.output.completion, '', state)
-
-    assert len(judge.calls) == 1
-    if expected is None:
-        assert score.status is ScoreStatus.EXCLUDED and score.value == {}
-    else:
-        assert score.status is ScoreStatus.SUCCESS
-        assert score.value == {'overall_score': expected, 'accuracy': expected}
 
 
 @pytest.mark.parametrize('answers', [[], [''], [' '], [r'\frac{'], ['1', r'\frac{']])
@@ -90,69 +60,6 @@ def test_hipho_valid_answers_keep_partial_credit_and_judge_fallback(
 
     assert score.status is ScoreStatus.SUCCESS and score.main_value == expected
     assert len(judge.calls) == calls
-
-
-def make_one_million_state(adapter) -> TaskState:
-    sample = adapter.record_to_sample(
-        {
-            'id': 'sample-id',
-            'case_id': 1,
-            'language': 'global',
-            'system_prompt': '',
-            'question': 'Write a professional answer.',
-            'tags': {
-                'topics': ['Law'],
-                'time_sensitivity': {'time_sensitivity': 'Time-agnostic', 'year_month': 'NA', 'day': 'NA'},
-            },
-            'rubrics': [
-                {
-                    'rubric_number': 1,
-                    'rubric_detail': 'Includes the requested analysis.',
-                    'rubric_weight': 10,
-                    'rubric_tag': 'Analytical Reasoning',
-                }
-            ],
-        }
-    )
-    sample.id = 0
-    sample.group_id = 0
-    return TaskState(
-        model='m', sample=sample, output=ModelOutput.from_content('m', 'Professional answer.'), completed=True
-    )
-
-
-def test_one_million_bench_valid_verdict_scores_the_sample() -> None:
-    config = TaskConfig(
-        model='m', datasets=['one_million_bench'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]}
-    )
-    adapter = get_benchmark('one_million_bench', config)
-    adapter.llm_judge = ScriptedJudge(
-        [
-            json.dumps(
-                {'results': [{'rubric_id': 1, 'status': '是', 'justification': 'The requested analysis is present.'}]},
-                ensure_ascii=False,
-            )
-        ]
-    )
-
-    score = adapter.calculate_metrics(make_one_million_state(adapter)).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert score.value == {'expert_score': 1.0, 'pass_rate': 1.0}
-
-
-@pytest.mark.parametrize('judge', [ScriptedJudge(['not JSON']), TransportFailingJudge()])
-def test_one_million_bench_judge_failure_excludes_the_sample(judge) -> None:
-    config = TaskConfig(
-        model='m', datasets=['one_million_bench'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]}
-    )
-    adapter = get_benchmark('one_million_bench', config)
-    adapter.llm_judge = judge
-
-    score = adapter.calculate_metrics(make_one_million_state(adapter)).score
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
 
 
 def make_prbench_adapter() -> PRBenchAdapter:
@@ -237,7 +144,7 @@ def test_prbench_transport_failure_excludes_the_sample() -> None:
     assert score.metadata['judge_attempts'][0]['status'] == 'transport_error'
 
 
-@pytest.mark.parametrize('benchmark_name', ['simple_qa', 'chinese_simpleqa', 'simple_vqa'])
+@pytest.mark.parametrize('benchmark_name', ['simple_qa', 'simple_vqa'])
 def test_three_way_judge_parse_failure_excludes_the_sample(benchmark_name: str) -> None:
     config = TaskConfig(model='m', datasets=[benchmark_name], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
     adapter = get_benchmark(benchmark_name, config)
@@ -250,7 +157,7 @@ def test_three_way_judge_parse_failure_excludes_the_sample(benchmark_name: str) 
     assert score.metadata['judge_attempts'][0]['status'] == 'parse_error'
 
 
-@pytest.mark.parametrize('benchmark_name', ['simple_qa', 'chinese_simpleqa', 'simple_vqa'])
+@pytest.mark.parametrize('benchmark_name', ['simple_qa', 'simple_vqa'])
 def test_three_way_judge_transport_failure_excludes_the_sample(benchmark_name: str) -> None:
     config = TaskConfig(model='m', datasets=[benchmark_name], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
     adapter = get_benchmark(benchmark_name, config)
@@ -282,14 +189,8 @@ def test_generic_pattern_contract_supports_simple_judge_benchmarks(benchmark_nam
     ('aime24', '{"verdict": "Yes"}', 'verdict', 'Respond with only "Yes" or "No"'),
     ('aime25', '{"verdict": "Yes"}', 'verdict', 'Respond with only "Yes" or "No"'),
     ('aime26', '{"verdict": "Yes"}', 'verdict', 'Respond with only "Yes" or "No"'),
-    ('aa_lcr', '{"verdict": "CORRECT"}', 'verdict', 'Reply only with CORRECT or INCORRECT'),
-    ('hle', '{"reasoning": "matches", "verdict": "C"}', 'reasoning', 'GRADE: C'),
-    ('drivel_writing', '{"reasoning": "matches", "rating": 4}', 'reasoning', 'After providing your explanation'),
-    ('alpaca_eval', '{"verdict": "M"}', 'verdict', 'no quotes, no spaces, no new lines'),
-    ('arena_hard', '{"reasoning": "equal", "verdict": "A=B"}', 'reasoning', 'After providing your explanation'),
     ('general_arena', '{"reasoning": "equal", "verdict": "A=B"}', 'reasoning', 'After providing your explanation'),
     ('docmath', '{"reasoning": "equal", "verdict": "YES"}', 'reasoning', 'Your output must follow'),
-    ('frames', '{"reasoning": "equal", "verdict": "YES"}', 'reasoning', 'Your output must follow'),
     ('longmemeval', '{"verdict": "yes"}', 'verdict', 'Please answer yes'),
 ])
 @pytest.mark.parametrize('envelope', ['{reply}', '```json\n{reply}\n```', 'Explanation first.\n{reply}'])
@@ -364,53 +265,6 @@ def test_math_recall_retains_rule_evidence_when_judge_format_fails(envelope: str
         assert score.metadata['judge_unavailable'] == 'excluded'
 
 
-def test_arena_hard_swap_is_driven_by_the_executor():
-    config = TaskConfig(model='m', datasets=['arena_hard'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
-    adapter = get_benchmark('arena_hard', config)
-    adapter.llm_judge = ScriptedJudge(['{"verdict": "A>B"}', '{"verdict": "B>A"}'])
-
-    state = make_state('candidate', 'baseline')
-    score = adapter.calculate_metrics(state).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert len(score.metadata['judge_attempts']) == 2
-    assert score.metadata['battle_result']['games'] == [{'score': 'A>B'}, {'score': 'B>A'}]
-    assert score.judge_summary.status is ScoreStatus.SUCCESS
-
-
-def test_position_swap_off_keeps_one_official_pairwise_game():
-    config = TaskConfig(
-        model='m',
-        datasets=['arena_hard'],
-        judge={
-            'strategy': 'llm',
-            'models': [{'model_id': 'j'}],
-            'position_swap': 'off',
-        },
-    )
-    adapter = get_benchmark('arena_hard', config)
-    adapter.llm_judge = ScriptedJudge(['{"verdict": "A>B"}'])
-
-    score = adapter.calculate_metrics(make_state('candidate', 'baseline')).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert len(score.metadata['judge_attempts']) == 1
-    assert score.metadata['battle_result']['games'] == [{'score': 'A>B'}]
-
-
-def test_arena_hard_preserves_each_placement_game_after_candidate_summary():
-    config = TaskConfig(model='m', datasets=['arena_hard'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
-    adapter = get_benchmark('arena_hard', config)
-    # Original: candidate B wins. Swapped: candidate A loses. The candidate summary is a tie,
-    # but the official battle stream must retain the two non-tie games.
-    adapter.llm_judge = ScriptedJudge(['{"verdict": "B>A"}', '{"verdict": "B>A"}'])
-
-    score = adapter.calculate_metrics(make_state('candidate', 'baseline')).score
-
-    assert score.value['score'] == 0.5
-    assert score.metadata['battle_result']['games'] == [{'score': 'B>A'}, {'score': 'B>A'}]
-
-
 def test_position_swap_on_is_ignored_for_non_pairwise_contracts():
     config = TaskConfig(
         model='m',
@@ -427,40 +281,6 @@ def test_position_swap_on_is_ignored_for_non_pairwise_contracts():
     score = adapter.calculate_metrics(make_state('Shakespeare', 'Shakespeare')).score
 
     assert score.status is ScoreStatus.SUCCESS
-    assert len(score.metadata['judge_attempts']) == 1
-
-
-def test_position_swap_on_overrides_alpaca_eval_official_single_pass():
-    config = TaskConfig(
-        model='m',
-        datasets=['alpaca_eval'],
-        judge={
-            'strategy': 'llm',
-            'models': [{'model_id': 'j'}],
-            'position_swap': 'on',
-        },
-    )
-    adapter = get_benchmark('alpaca_eval', config)
-    adapter.llm_judge = ScriptedJudge(['{"verdict": "M"}', '{"verdict": "m"}'])
-
-    score = adapter.calculate_metrics(make_state('candidate', 'baseline')).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert score.value['win_rate'] == 1.0
-    assert len(score.metadata['judge_attempts']) == 2
-    assert score.metadata['non_official_position_swap'] is True
-
-
-@pytest.mark.parametrize(('reply', 'expected'), [('{"verdict": "M"}', 1.0), ('{"verdict": "m"}', 0.0)])
-def test_alpaca_eval_counts_a_win_as_one_and_a_loss_as_zero(reply: str, expected: float) -> None:
-    config = TaskConfig(model='m', datasets=['alpaca_eval'], judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]})
-    adapter = get_benchmark('alpaca_eval', config)
-    adapter.llm_judge = ScriptedJudge([reply])
-
-    score = adapter.calculate_metrics(make_state('candidate', 'baseline')).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert score.value['win_rate'] == expected
     assert len(score.metadata['judge_attempts']) == 1
 
 
@@ -745,142 +565,3 @@ def test_mask_judge_failure_excludes_the_sample(judge) -> None:
 
     assert score.status is ScoreStatus.EXCLUDED
     assert score.value == {}
-
-
-@pytest.mark.parametrize('name', ['agentharm', 'agentharm_benign'])
-@pytest.mark.parametrize(
-    'reply,usable',
-    [
-        ('{"verdict":"pass","refusal":false}', True),
-        ('pass', False),
-        ('{malformed', False),
-        ('[ERROR] judge unavailable', False),
-    ],
-)
-def test_agentharm_judge_contract_excludes_invalid_cases(name: str, reply: str, usable: bool) -> None:
-    from tests.benchmark.test_agentharm import make_adapter, task_state, tool_turn
-
-    adapter = make_adapter(name)
-    messages = tool_turn('post_on_x', {'content': 'fixture'}, call_id='post')
-    messages.append(ChatMessageAssistant(content='Done.'))
-    state = task_state(adapter, '1-1', messages)
-    adapter.llm_judge = ScriptedJudge([reply])
-    score = adapter.calculate_metrics(state).score
-    assert score.status is (ScoreStatus.SUCCESS if usable else ScoreStatus.EXCLUDED)
-    if usable:
-        assert score.value['task_completion_score'] == 1 / 8
-    else:
-        assert score.value == {} and score.judge_summary.coverage == 0
-
-
-def make_swe_atlas_qna_adapter():
-    config = TaskConfig(
-        model='m',
-        datasets=['swe_atlas_qna'],
-        judge={'strategy': 'llm', 'models': [{'model_id': 'j'}]},
-    )
-    return get_benchmark('swe_atlas_qna', config)
-
-
-def make_swe_atlas_qna_state(adapter) -> TaskState:
-    sample = adapter.record_to_sample({
-        'task_id': 'task-1',
-        'prompt': 'Where is retries handled?',
-        'reference_answer': 'In retry.py.',
-        'repository_base_commit': 'abc123',
-        'docker_image': 'ghcr.io/scaleapi/swe-atlas:swe_atlas_QnA_kovidgoyal_kitty_1.0',
-        'rubric': [
-            {
-                'id': 'r1',
-                'title': 'Names retry.py.',
-                'annotations': {'type': 'positive hli verifier'},
-            }
-        ],
-    })
-    sample.id = 0
-    sample.metadata['_sandbox_state'] = {'setup_returncode': 0, 'check_returncode': 0, 'tree_status': ''}
-    return TaskState(
-        model='m', sample=sample, output=ModelOutput.from_content('m', 'Retries are in retry.py.'), completed=True
-    )
-
-
-def test_swe_atlas_qna_valid_official_verdict_scores_the_sample() -> None:
-    adapter = make_swe_atlas_qna_adapter()
-    adapter.llm_judge = ScriptedJudge([
-        json.dumps({
-            'ratings': [
-                {
-                    'rubric_statement': 'Names retry.py.',
-                    'status': 'YES',
-                    'score': '1',
-                    'justification': 'The answer names retry.py.',
-                }
-            ]
-        })
-    ])
-
-    score = adapter.calculate_metrics(make_swe_atlas_qna_state(adapter)).score
-
-    assert score.status is ScoreStatus.SUCCESS
-    assert score.value == {'resolved': 1.0, 'rubric_pass_rate': 1.0}
-
-
-@pytest.mark.parametrize(
-    'reply',
-    [
-        'not JSON',
-        '[ERROR] judge transport unavailable',
-        '{"status":"YES","justification":"missing ratings envelope"}',
-    ],
-)
-def test_swe_atlas_qna_invalid_judge_reply_excludes_the_sample(reply: str) -> None:
-    adapter = make_swe_atlas_qna_adapter()
-    adapter.llm_judge = ScriptedJudge([reply])
-
-    score = adapter.calculate_metrics(make_swe_atlas_qna_state(adapter)).score
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
-    assert score.metadata['judge_attempts'][0]['status'] == 'parse_error'
-
-
-def test_swe_atlas_qna_transport_failure_excludes_the_sample() -> None:
-    adapter = make_swe_atlas_qna_adapter()
-    adapter.llm_judge = TransportFailingJudge()
-
-    score = adapter.calculate_metrics(make_swe_atlas_qna_state(adapter)).score
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
-    assert score.metadata['judge_attempts'][0]['status'] == 'transport_error'
-
-
-def test_swe_atlas_qna_environment_failure_skips_judge_and_excludes() -> None:
-    adapter = make_swe_atlas_qna_adapter()
-    judge = ScriptedJudge(['not JSON'])
-    adapter.llm_judge = judge
-    state = make_swe_atlas_qna_state(adapter)
-    state.metadata['_sandbox_state'] = {'setup_returncode': 1, 'setup_error': 'unknown revision'}
-
-    score = adapter.calculate_metrics(state).score
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
-    assert score.explanation == 'unknown revision'
-    assert judge.calls == []
-
-
-def test_swe_atlas_qna_empty_rubric_skips_judge_and_excludes() -> None:
-    adapter = make_swe_atlas_qna_adapter()
-    judge = ScriptedJudge(['not JSON'])
-    adapter.llm_judge = judge
-    state = make_swe_atlas_qna_state(adapter)
-    state.metadata['rubric'] = []
-
-    score = adapter.calculate_metrics(state).score
-
-    assert score.status is ScoreStatus.EXCLUDED
-    assert score.value == {}
-    assert score.explanation == 'rubric must contain at least one item'
-    assert score.metadata['excluded_reason'] == 'rubric must contain at least one item'
-    assert judge.calls == []

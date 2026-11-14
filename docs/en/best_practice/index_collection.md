@@ -10,7 +10,7 @@ In these charts, we often see those familiar benchmark names:
     
 *   AIME25: Math competition problems, representing "mathematical reasoning" capability;
     
-*   LiveCodeBench: Python code generation, representing "programming ability".
+*   MBPPPlus: Python code generation, representing "programming ability".
     
 
 These rankings are like the model's "college entrance exam report card." They are certainly important because they establish the model's baseline intelligence level (SOTA) across different domains. But the question is: can a model that scores high across different subjects handle actual "job requirements"? During model usage, many people may have encountered similar confusion:
@@ -80,15 +80,15 @@ rag_schema = CollectionSchema(
     datasets=[
         # 1. Knowledge Q&A capability, hallucination (30%)
         DatasetInfo(
-            name='chinese_simpleqa', 
+            name='simple_qa',
             weight=0.3, 
             task_type='knowledge', 
-            tags=['rag', 'zh']
+            tags=['rag', 'en']
         ),
         
         # 2. Long context retrieval capability (30%)
         DatasetInfo(
-            name='aa_lcr', 
+            name='docmath',
             weight=0.3, 
             task_type='long_context', 
             tags=['rag', 'en']
@@ -169,7 +169,7 @@ task_cfg = TaskConfig(
     generation_config={
         'temperature': 0.0 # Usually set to 0 for reproducible results in evaluation
     },
-    # Use a powerful model as judge for automatic scoring (required for chinese_simpleqa)
+    # Use a powerful model as judge for automatic scoring (required for simple_qa)
     judge={
         'strategy': 'auto',
         'models': {
@@ -239,24 +239,19 @@ EvalScope's Index building capability is very flexible. Besides RAG, you can als
 
 ### Case A: Code Completion and Analysis Index
 
-Focus on Python code generation capability and real issue fixing ability, with greater emphasis on Python capability.
+Compare Python code generation on the basic and expanded MBPP test suites.
 
 ```python
 schema = CollectionSchema(name='code_index', datasets=[
     # Basic Python code generation, given higher weight (60%)
-    DatasetInfo(name='humaneval', weight=0.6, task_type='code', tags=['python']),
+    DatasetInfo(name='mbpp', weight=0.6, task_type='code', tags=['python']),
     
-    # Real-world code competition problems, containing data from specific time periods, 40% weight
+    # Code correctness with the expanded MBPPPlus tests (40%)
     DatasetInfo(
-        name='live_code_bench', 
+        name='mbpp_plus',
         weight=0.4, 
         task_type='code', 
-        tags=['complex'], 
-        args={
-            'subset_list': ['v5'], 
-            'review_timeout': 6,
-            'extra_params': {'start_date': '2024-08-01', 'end_date': '2025-02-28'}
-        }
+        tags=['complex']
     ),
 ])
 
@@ -274,7 +269,7 @@ schema = CollectionSchema(name='reasoning_index', datasets=[
         DatasetInfo(name='aime25', weight=0.5, tags=['en']),
     ]),
     CollectionSchema(name='logic', weight=0.5, datasets=[
-        DatasetInfo(name='arc', weight=0.5, tags=['en']),
+        DatasetInfo(name='hellaswag', weight=0.5, tags=['en']),
         DatasetInfo(name='ceval', weight=0.5, tags=['zh'], args={'subset_list': ['logic']}),
     ]),
 ])

@@ -739,69 +739,6 @@ def test_msr_vtt_explicit_official_hf_source_loads_official_split(monkeypatch) -
     assert captured == {'split': 'test', 'subset': 'test_1k'}
 
 
-def test_aa_lcr_document_archive_uses_resolved_hub_source(tmp_path, monkeypatch) -> None:
-    import zipfile
-
-    from evalscope.api.registry import get_benchmark
-    from evalscope.benchmarks.aa_lcr import aa_lcr_adapter as aa_lcr_module
-    from evalscope.config import TaskConfig
-
-    archive_path = tmp_path / 'documents.zip'
-    with zipfile.ZipFile(archive_path, 'w') as archive:
-        archive.writestr('lcr/document.txt', 'content')
-    captured = {}
-
-    class CapturingDatasetHub:
-        def __init__(self, **kwargs):
-            captured.update(kwargs)
-
-        def download_file(self, file_path):
-            captured['file_path'] = file_path
-            return str(archive_path)
-
-    monkeypatch.setattr(aa_lcr_module, 'DatasetHub', CapturingDatasetHub)
-    monkeypatch.setattr(aa_lcr_module, 'DEFAULT_EVALSCOPE_CACHE_DIR', str(tmp_path / 'cache'))
-    adapter = get_benchmark(
-        'aa_lcr',
-        TaskConfig(datasets=['aa_lcr'], dataset_hub=HubType.HUGGINGFACE),
-    )
-
-    extracted_dir = adapter._ensure_text_dir_downloaded()
-
-    assert captured['data_id_or_path'] == 'ArtificialAnalysis/AA-LCR'
-    assert captured['data_source'] == HubType.HUGGINGFACE
-    assert captured['revision'] is None
-    assert captured['file_path'] == 'extracted_text/AA-LCR_extracted-text.zip'
-    assert (extracted_dir / 'document.txt').read_text(encoding='utf-8') == 'content'
-
-
-def test_swe_bench_oracle_loader_uses_selected_hub_and_own_revision(monkeypatch) -> None:
-    from evalscope.api.benchmark import DefaultDataAdapter
-    from evalscope.api.dataset import Sample
-    from evalscope.benchmarks.swe_bench import swe_bench_adapter as swe_module
-
-    captured = {}
-
-    class CapturingRemoteDataLoader:
-        def __init__(self, **kwargs):
-            captured.update(kwargs)
-
-        def load(self):
-            return [Sample(input='problem', metadata={'instance_id': 'id', 'text': 'context'})]
-
-    adapter = object.__new__(swe_module.SWEBenchVerifiedAdapter)
-    adapter.inference_dataset_id = 'princeton-nlp/SWE-bench_oracle'
-    adapter.inference_dataset_revision = 'oracle-revision'
-    adapter._task_config = type('Config', (), {'dataset_hub': HubType.HUGGINGFACE})()
-    monkeypatch.setattr(swe_module, 'RemoteDataLoader', CapturingRemoteDataLoader)
-    monkeypatch.setattr(DefaultDataAdapter, 'load', lambda self: 'main-dataset')
-
-    assert swe_module.SWEBenchVerifiedAdapter.load(adapter) == 'main-dataset'
-    assert captured['data_id_or_path'] == 'princeton-nlp/SWE-bench_oracle'
-    assert captured['data_source'] == HubType.HUGGINGFACE
-    assert captured['version'] == 'oracle-revision'
-
-
 def test_download_snapshot_resolves_existing_local_path(tmp_path) -> None:
     snapshot_dir = tmp_path / 'dataset'
     snapshot_dir.mkdir()

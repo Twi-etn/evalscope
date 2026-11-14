@@ -37,10 +37,10 @@ evalscope eval --model your-model-name --api-url $OPENAI_API_BASE_URL --api-key 
 ## ✨ 主要特性
 
 - **📚 全面的评测基准**: 内置 MMLU, C-Eval, GSM8K 等多个业界公认的评测基准。
-- **🧩 多模态与多领域支持**: 支持大语言模型 (LLM)、多模态 (VLM)、Embedding、Reranker、AIGC 等多种模型的评测。
+- **🧩 多模态与多领域支持**: 支持大语言模型 (LLM)、多模态 (VLM)、Embedding、Reranker等多种模型的评测。
 - **🧭 System One 评测**: 通过 `--eval-type systemone_api` 评测文本 Choice 决策模型，支持任务指令、few-shot 示例，并保留概率与置信度。详见[使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/systemone.html)。
 - **🚀 多后端集成**: 无缝集成 OpenCompass, VLMEvalKit, RAGEval 等多种评测后端，满足不同评测需求。
-- **🤖 Agent 评测模式**: 在受控的多轮 AgentLoop 中驱动 GSM8K、AIME、SWE-bench Agentic 等基准；支持可插拔的策略和工具，以及 Docker 或 [E2B 远端沙箱](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html#e2b)，每条样本完整记录 Agent Trace 并可在仪表盘中按步骤回放。
+- **🤖 Agent 评测模式**: 在受控的多轮 AgentLoop 中驱动 GSM8K、AIME 等基准；支持可插拔的策略和工具，以及 Docker 或 [E2B 远端沙箱](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html#e2b)，每条样本完整记录 Agent Trace 并可在仪表盘中按步骤回放。
 - **⚡ 推理性能测试**: 提供强大的模型服务压力测试工具，支持 TTFT, TPOT 等多项性能指标。
 - **📊 交互式报告**: 提供 Web Dashboard，支持多维度模型对比、报告概览和详情查阅。
 - **⚔️ 竞技场模式**: 支持多模型对战 (Pairwise Battle)，直观地对模型进行排名和评估。
@@ -77,21 +77,20 @@ EvalScope 提供交互式 Web Dashboard，支持多维度模型对比和深入�
 
 ## 🎉 内容更新
 
-- 🔥 **[2026.11.12]** 新增 **E2B 远端沙箱**，支持官方 E2B 和阿里云 Agent Sandbox。SWE-bench Agentic、HumanEval、LiveCodeBench 等基准可在云端运行，本机无需安装 Docker。详见[沙箱使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html#e2b)。
-- 🔥 **[2026.10.09]** 新增 **System One Choice 评测**，以及 **ANLI**、**BoolQ**、**BANKING77**、**ContractNLI**、**RewardBench v1** 评测基准。五个新增基准均默认从 ModelScope 加载，也支持普通 LLM 评测。详见 [System One 评测](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/systemone.html)。
+- 🔥 **[2026.11.12]** 新增 **E2B 远端沙箱**，支持官方 E2B 和阿里云 Agent Sandbox。MBPP 等基准可在云端运行，本机无需安装 Docker。详见[沙箱使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html#e2b)。
+- 🔥 **[2026.10.09]** 新增 **System One Choice 评测**，以及 **ContractNLI**、**RewardBench v1** 评测基准。两个新增基准均默认从 ModelScope 加载，也支持普通 LLM 评测。详见 [System One 评测](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/systemone.html)。
 - 🔥 **[2026.08.24] v1.11.0** 引入可发布的评测版本标识，保障基准结果可复现；优化评测报告语义与不完整运行处理，并增强多模态媒体加载和任务配置校验。
 - 🔥 **[2026.08.13]** 评测报告升级：统一指标语义，并改善 Agent Trace 步骤分组与工具调用/结果关联的可靠性。
-- 🔥 **[2026.08.10]** 新增 **AutomationBench**、**JobBench**、**MiniWoB**、**OmniDocBench-v1.6**、**PerceptionBench**、**ScreenSpot-Pro**、**PLawBench**、**PMC-VQA**、**HiPhO**、**LogicVista** 和 **CC-OCR-V2** 基准。
-- 🔥 **[2026.07.21]** 新增 **Claw-Eval**、**ResearchRubrics**、**Toolathlon**（Agent）、**TVBench**（视频）、**WideSearch**、**PerspectiveGap** 基准。
-- 🔥 **[2026.07.03]** 新增 **CharXiv** & **BabyVision**（图表理解、视觉认知）及 **ERQA** & **WorldVQA**（实体识别 QA，支持 LLM judge + CoT）多模态基准。
-- 🔥 **[2026.06.23]** Agent 与代码评测大幅扩展：新增 **BigCodeBench**、**SWE-bench Multilingual**、**BrowseComp**、**MCP-Atlas**、**GDPval** 基准；新增 **OpenCode** / **OpenHands** runner；适配器架构重构，引入 `AudioLanguageAdapter`、统一 `FunctionCallAdapter`、公开 `run_agent_loop` API。
+- 🔥 **[2026.08.10]** 新增 **JobBench**、**MiniWoB**、**OmniDocBench-v1.6**、**PerceptionBench**、**ScreenSpot-Pro**、**PLawBench**、**PMC-VQA**、**HiPhO**、**LogicVista** 和 **CC-OCR-V2** 基准。
+- 🔥 **[2026.07.21]** 新增 **ResearchRubrics**、**Toolathlon**（Agent）、**TVBench**（视频）、**WideSearch**、**PerspectiveGap** 基准。
+- 🔥 **[2026.07.03]** 新增 **CharXiv** & **BabyVision**（图表理解、视觉认知）及  **WorldVQA**（实体识别 QA，支持 LLM judge + CoT）多模态基准。
+- 🔥 **[2026.06.23]** Agent 与代码评测大幅扩展：新增 **BrowseComp**、**MCP-Atlas** 基准；新增 **OpenCode** / **OpenHands** runner；适配器架构重构，统一 `FunctionCallAdapter`、公开 `run_agent_loop` API。
 - 🔥 **[2026.06.16]** 新增全参考**图像质量指标**（SSIM、PSNR 等）、长上下文基准（**LoCoMo QA**、**LongMemEval**）、**Caption** & **Maritime-OCR-Bench** 基准；Perf 模块支持统一 `--data-source` 参数及并行化请求生成。
 - 🔥 **[2026.06.02]** **RAG 评测**模块重构：升级 MTEB 2.x 与 RAGAS 0.4.x，配置统一为 Pydantic 模型。参考[RAGEval 使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/backend/rageval_backend/index.html)。
 - 🔥 **[2026.05.27]** 新增 **Trie agentic 轨迹回放**压测：三个数据集插件（`trie_agentic_coding` / `trie_code_qa` / `trie_office_work`）可回放真实多轮 Agent 轨迹，支持逐轮 token 上限和工具调用延迟模拟；同时新增 `--duration` 墙钟时间预算（适用于所有压测模式）和 `Turn` 数据类。
 - 🔥 **[2026.05.27]** 新增 **Vendor Verifier 基准**（`k2_verifier`、`kimi_verifier`、`minimax_verifier`），用于验证第三方 API 部署是否忠实复现官方模型行为，共享 `FunctionCallAdapter` 基类。
-- 🔥 **[2026.05.26]** 新增 [GAIA](https://evalscope.readthedocs.io/zh-cn/latest/third_party/gaia.html) agent 基准（Docker sandbox 内多轮 ReAct + `bash`，复用官方规则评分器）和通用 [MCP 服务器](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/agent/native.html#mcp-工具接入)接入 —— 任何基于 `NativeAgentConfig` 的 benchmark 都可直接挂载 stdio / HTTP / SSE 的 MCP server（`fetch`、网页搜索、GitHub 等），无需 benchmark 端改动。
 - 🔥 **[2026.05.22]** 新增 **外部 Agent Bridge** 模式：可直接评测 Anthropic [Claude Code](https://github.com/anthropics/claude-code)、OpenAI [Codex](https://github.com/openai/codex) 等成品 Agent CLI。Bridge 透明转发 CLI 的 LLM 请求（Anthropic Messages / OpenAI Chat / OpenAI Responses，含 SSE 流式响应）到评测模型，同时把完整交互轨迹录制为 `agent_trace`；通过 `@register_runner` 可接入任意第三方 CLI。详见[外部 Agent Bridge 指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/agent/bridge.html)。
-- 🔥 **[2026.05.19]** 新增对 [SWE-bench_Pro](https://evalscope.readthedocs.io/zh-cn/latest/third_party/swe_bench_pro.html) 与 [τ³-bench](https://evalscope.readthedocs.io/zh-cn/latest/third_party/tau3_bench.html) 的支持：SWE-bench_Pro 是 Scale AI 推出的更具挑战性的多语言、长周期软件工程基准，相比原始 SWE-bench 数据污染更少、覆盖语言更广，**推荐替代原始 SWE-bench 使用**，每个实例的 Docker 镜像直接从 DockerHub 拉取，无需本地构建；τ³-bench 是 tau-bench 系列的 v1.0.0 版本，在 τ²-bench 基础上新增 `banking_knowledge` 知识检索领域（RAG）、修复 75+ 项任务，并提供可插拔的检索流水线（BM25 / 稠密嵌入 / 重排序器 / 沙箱 shell）。
+- 🔥 **[2026.05.19]** 新增对 [τ³-bench](https://evalscope.readthedocs.io/zh-cn/latest/third_party/tau3_bench.html)。
 
 <details><summary>更多历史更新</summary>
 
@@ -110,47 +109,40 @@ EvalScope 提供交互式 Web Dashboard，支持多维度模型对比和深入�
 - 🔥 **[2026.01.13]** 支持Embedding和Rerank模型服务压测，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/examples.html#embedding)
 - 🔥 **[2025.12.26]** 支持Terminal-Bench-2.0，用于评估 AI Agent在 89 个真实世界的多步骤终端任务上的表现，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/third_party/terminal_bench.html)
 - 🔥 **[2025.12.18]** 支持SLA自动调优模型API服务，自动测试模型服务在特定时延、TTFT、吞吐量下的最高并发，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/sla_auto_tune.html)
-- 🔥 **[2025.12.16]** 支持Fleurs、LibriSpeech等音频评测基准；支持MultiplE、MBPP等多语言代码评测基准。
+- 🔥 **[2025.12.16]** 支持等音频评测基准；支持MultiplE、MBPP等多语言代码评测基准。
 - 🔥 **[2025.12.02]** 支持自定义多模态VQA评测，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/advanced_guides/custom_dataset/vlm.html) ；支持模型服务压测在 ClearML 上可视化，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/examples.html#clearml)。
-- 🔥 **[2025.11.26]** 新增支持 OpenAI-MRCR、GSM8K-V、MGSM、MicroVQA、IFBench、SciCode 评测基准。
+- 🔥 **[2025.11.26]** 新增支持 OpenAI-MRCR、GSM8K-V、MGSM、MicroVQA、IFBench 评测基准。
 - 🔥 **[2025.11.18]** 支持自定义 Function-Call（工具调用）数据集，来测试模型能否适时并正确调用工具，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/advanced_guides/custom_dataset/llm.html#fc)
-- 🔥 **[2025.11.14]** 新增支持SWE-bench_Verified, SWE-bench_Lite, SWE-bench_Verified_mini 代码评测基准，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/third_party/swe_bench.html)。
-- 🔥 **[2025.11.12]** 新增`pass@k`、`vote@k`、`pass^k`等指标聚合方法；新增支持A_OKVQA, CMMU, ScienceQ, V*Bench等多模态评测基准。
+- 🔥 **[2025.11.12]** 新增`pass@k`、`vote@k`、`pass^k`等指标聚合方法；新增支持CMMU, ScienceQ, V*Bench等多模态评测基准。
 - 🔥 **[2025.11.07]** 新增支持τ²-bench，是 τ-bench 的扩展与增强版本，包含一系列代码修复，并新增了电信（telecom）领域的故障排查场景，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/third_party/tau2_bench.html)。
 - 🔥 **[2025.10.30]** 新增支持BFCL-v4，支持agent的网络搜索和长期记忆能力的评测，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/third_party/bfcl_v4.html)。
 - 🔥 **[2025.10.27]** 新增支持LogiQA, HaluEval, MathQA, MRI-QA, PIQA, QASC, CommonsenseQA等评测基准。感谢 @[penguinwang96825](https://github.com/penguinwang96825) 提供代码实现。
 - 🔥 **[2025.10.26]** 新增支持Conll-2003, CrossNER, Copious, GeniaNER, HarveyNER, MIT-Movie-Trivia, MIT-Restaurant, OntoNotes5, WNUT2017 等命名实体识别评测基准。感谢 @[penguinwang96825](https://github.com/penguinwang96825) 提供代码实现。
 - 🔥 **[2025.10.21]** 优化代码评测中的沙箱环境使用，支持在本地和远程两种模式下运行，具体参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html)。
-- 🔥 **[2025.10.20]** 新增支持PolyMath, SimpleVQA, MathVerse, MathVision, AA-LCR 等评测基准；优化evalscope perf表现，对齐vLLM Bench，具体参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/vs_vllm_bench.html)。
+- 🔥 **[2025.10.20]** 新增支持PolyMath, SimpleVQA, MathVerse, MathVision 等评测基准；优化evalscope perf表现，对齐vLLM Bench，具体参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/vs_vllm_bench.html)。
 - 🔥 **[2025.10.14]** 新增支持OCRBench, OCRBench-v2, DocVQA, InfoVQA, ChartQA, BLINK 等图文多模态评测基准。
-- 🔥 **[2025.09.22]** 代码评测基准(HumanEval, LiveCodeBench)支持在沙箱环境中运行，要使用该功能需先安装[ms-enclave](https://github.com/modelscope/ms-enclave)。
-- 🔥 **[2025.09.19]** 新增支持RealWorldQA、AI2D、MMStar、MMBench、OmniBench等图文多模态评测基准，和Multi-IF、HealthBench、AMC等纯文本评测基准。
+- 🔥 **[2025.09.19]** 新增支持RealWorldQA、AI2D、MMStar、MMBench等图文多模态评测基准，和Multi-IF等纯文本评测基准。
 - 🔥 **[2025.09.05]** 支持视觉-语言多模态大模型的评测任务，例如：MathVista、MMMU，更多支持数据集请[参考](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/vlm.html)。
-- 🔥 **[2025.09.04]** 支持图像编辑任务评测，支持[GEdit-Bench](https://modelscope.cn/datasets/stepfun-ai/GEdit-Bench) 评测基准，使用方法[参考](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/aigc/image_edit.html)。
 - 🔥 **[2025.08.22]** Version 1.0 重构，不兼容的更新请[参考](https://evalscope.readthedocs.io/zh-cn/latest/get_started/basic_usage.html#v1-0)。
 - 🔥 **[2025.07.18]** 模型压测支持随机生成图文数据，用于多模态模型压测，使用方法[参考](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/examples.html#id4)。
 - 🔥 **[2025.07.16]** 支持[τ-bench](https://github.com/sierra-research/tau-bench)，用于评估 AI Agent在动态用户和工具交互的实际环境中的性能和可靠性，使用方法[参考](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/llm.html#bench)。
-- 🔥 **[2025.07.14]** 支持"人类最后的考试"([Humanity's-Last-Exam](https://modelscope.cn/datasets/cais/hle))，这一高难度评测基准，使用方法[参考](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/llm.html#humanity-s-last-exam)。
 - 🔥 **[2025.07.03]** 重构了竞技场模式，支持自定义模型对战，输出模型排行榜，以及对战结果可视化，使用[参考](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/arena.html)。
 - 🔥 **[2025.06.28]** 优化自定义数据集评测，支持无参考答案评测；优化LLM裁判使用，预置"无参考答案直接打分" 和 "判断答案是否与参考答案一致"两种模式，使用[参考](https://evalscope.readthedocs.io/zh-cn/latest/advanced_guides/custom_dataset/llm.html#qa)
 - 🔥 **[2025.06.19]** 新增支持[BFCL-v3](https://modelscope.cn/datasets/AI-ModelScope/bfcl_v3)评测基准，用于评测模型在多种场景下的函数调用能力，使用[参考](https://evalscope.readthedocs.io/zh-cn/latest/third_party/bfcl_v3.html)。
 - 🔥 **[2025.06.02]** 新增支持大海捞针测试（Needle-in-a-Haystack），指定`needle_haystack`即可进行测试，并在`outputs/reports`文件夹下生成对应的heatmap，直观展现模型性能，使用[参考](https://evalscope.readthedocs.io/zh-cn/latest/third_party/needle_haystack.html)。
-- 🔥 **[2025.05.29]** 新增支持[DocMath](https://modelscope.cn/datasets/yale-nlp/DocMath-Eval/summary)和[FRAMES](https://modelscope.cn/datasets/iic/frames/summary)两个长文档评测基准，使用注意事项请查看[文档](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/index.html)
+- 🔥 **[2025.05.29]** 新增支持[DocMath](https://modelscope.cn/datasets/yale-nlp/DocMath-Eval/summary)长文档评测基准，使用注意事项请查看[文档](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/index.html)
 - 🔥 **[2025.05.16]** 模型服务性能压测支持设置多种并发，并输出性能压测报告，[参考示例](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/quick_start.html#id3)。
 - 🔥 **[2025.05.13]** 新增支持[ToolBench-Static](https://modelscope.cn/datasets/AI-ModelScope/ToolBench-Static)数据集，评测模型的工具调用能力，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/third_party/toolbench.html)；支持[DROP](https://modelscope.cn/datasets/AI-ModelScope/DROP/dataPeview)和[Winogrande](https://modelscope.cn/datasets/AI-ModelScope/winogrande_val)评测基准，评测模型的推理能力。
 - 🔥 **[2025.04.29]** 新增Qwen3评测最佳实践，[欢迎阅读📖](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/qwen3.html)
-- 🔥 **[2025.04.27]** 支持文生图评测：支持MPS、HPSv2.1Score等8个指标，支持EvalMuse、GenAI-Bench等评测基准，参考[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/aigc/t2i.html)
 - 🔥 **[2025.04.10]** 模型服务压测工具支持`/v1/completions`端点（也是vLLM基准测试的默认端点）
 - 🔥 **[2025.04.08]** 支持OpenAI API兼容的Embedding模型服务评测，查看[使用文档](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/backend/rageval_backend/mteb.html#configure-evaluation-parameters)
-- 🔥 **[2025.03.27]** 新增支持[AlpacaEval](https://www.modelscope.cn/datasets/AI-ModelScope/alpaca_eval/dataPeview)和[ArenaHard](https://modelscope.cn/datasets/AI-ModelScope/arena-hard-auto-v0.1/summary)评测基准，使用注意事项请查看[文档](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/index.html)
 - 🔥 **[2025.03.20]** 模型推理服务压测支持random生成指定范围长度的prompt，参考[使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/stress_test/examples.html#random)
-- 🔥 **[2025.03.13]** 新增支持[LiveCodeBench](https://www.modelscope.cn/datasets/evalscope/livecodebench_code_generation_lite_parquet/summary)代码评测基准，指定`live_code_bench`即可使用；支持QwQ-32B 在LiveCodeBench上评测，参考[最佳实践](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/eval_qwq.html)。
-- 🔥 **[2025.03.11]** 新增支持[SimpleQA](https://modelscope.cn/datasets/AI-ModelScope/SimpleQA/summary)和[Chinese SimpleQA](https://modelscope.cn/datasets/AI-ModelScope/Chinese-SimpleQA/summary)评测基准，用与评测模型的事实正确性，指定`simple_qa`和`chinese_simpleqa`使用。同时支持指定裁判模型，参考[相关参数说明](https://evalscope.readthedocs.io/zh-cn/latest/get_started/parameters.html)。
+- 🔥 **[2025.03.11]** 新增支持[SimpleQA](https://modelscope.cn/datasets/AI-ModelScope/SimpleQA/summary)评测基准，用与评测模型的事实正确性，指定`simple_qa`和`chinese_simpleqa`使用。同时支持指定裁判模型，参考[相关参数说明](https://evalscope.readthedocs.io/zh-cn/latest/get_started/parameters.html)。
 - 🔥 **[2025.03.07]** 新增QwQ-32B模型评测最佳实践，评测了模型的推理能力以及推理效率，参考[📖QwQ-32B模型评测最佳实践](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/eval_qwq.html)。
 - 🔥 **[2025.03.04]** 新增支持[SuperGPQA](https://modelscope.cn/datasets/m-a-p/SuperGPQA/summary)数据集，其覆盖 13 个门类、72 个一级学科和 285 个二级学科，共 26,529 个问题，指定`super_gpqa`即可使用。
 - 🔥 **[2025.03.03]** 新增支持评测模型的智商和情商，参考[📖智商和情商评测最佳实践](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/iquiz.html)，来测测你家的AI有多聪明？
 - 🔥 **[2025.02.27]** 新增支持评测推理模型的思考效率，参考[📖思考效率评测最佳实践](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/think_eval.html)，该实现参考了[Overthinking](https://doi.org/10.48550/arXiv.2412.21187) 和 [Underthinking](https://doi.org/10.48550/arXiv.2501.18585)两篇工作。
-- 🔥 **[2025.02.25]** 新增支持[MuSR](https://modelscope.cn/datasets/AI-ModelScope/MuSR)和[ProcessBench](https://www.modelscope.cn/datasets/Qwen/ProcessBench/summary)两个模型推理相关评测基准，datasets分别指定`musr`和`process_bench`即可使用。
+- 🔥 **[2025.02.25]** 新增支持 [ProcessBench](https://modelscope.cn/datasets/Qwen/ProcessBench/summary) 推理评测基准。
 - 🔥 **[2025.02.18]** 支持AIME25数据集，包含15道题目（Grok3 在该数据集上得分为93分）
 - 🔥 **[2025.02.13]** 支持DeepSeek蒸馏模型评测，包括AIME24, MATH-500, GPQA-Diamond数据集，参考[最佳实践](https://evalscope.readthedocs.io/zh-cn/latest/best_practice/deepseek_r1_distill.html)；支持指定`eval_batch_size`参数，加速模型评测
 - 🔥 **[2025.01.20]** 支持可视化评测结果，包括单模型评测结果和多模型评测结果对比，参考[📖可视化评测结果](https://evalscope.readthedocs.io/zh-cn/latest/get_started/visualization.html)
@@ -195,7 +187,7 @@ evalscope eval \
  --api-url $OPENAI_API_BASE_URL \
  --api-key $OPENAI_API_KEY \
  --eval-type openai_api \
- --datasets gsm8k arc \
+ --datasets gsm8k \
  --limit 5
 ```
 
@@ -206,7 +198,7 @@ evalscope eval \
 ```bash
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
- --datasets gsm8k arc \
+ --datasets gsm8k \
  --limit 5
 ```
 
@@ -220,7 +212,7 @@ task_cfg = TaskConfig(
     api_url='https://your-openai-compatible-endpoint/v1',
     api_key='your_api_key',
     eval_type='openai_api',
-    datasets=['gsm8k', 'arc'],
+    datasets=['gsm8k'],
     limit=5
 )
 
@@ -236,7 +228,7 @@ from evalscope.run import run_task
 
 task_cfg = {
     'model': 'Qwen/Qwen2.5-0.5B-Instruct',
-    'datasets': ['gsm8k', 'arc'],
+    'datasets': ['gsm8k'],
     'limit': 5
 }
 run_task(task_cfg=task_cfg)
@@ -247,7 +239,6 @@ run_task(task_cfg=task_cfg)
 model: Qwen/Qwen2.5-0.5B-Instruct
 datasets:
   - gsm8k
-  - arc
 limit: 5
 ```
 ```python
@@ -264,10 +255,6 @@ run_task(task_cfg="config.yaml")
 │ Model                 │ Dataset   │ Metric     │ Subset        │   Num │ Score   │
 ├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
 │ Qwen2.5-0.5B-Instruct │ gsm8k     │ Accuracy ↑ │ main          │     5 │ 40%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Easy      │     5 │ 80%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Challenge │     5 │ 40%     │
 └───────────────────────┴───────────┴────────────┴───────────────┴───────┴─────────┘
 ```
 

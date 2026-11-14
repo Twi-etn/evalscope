@@ -122,15 +122,6 @@ class TestVLMBenchmark(TestBenchmark):
         }
         self._run_dataset_test('mm_star', dataset_args=dataset_args)
 
-    def test_omni_bench(self):
-        dataset_args = {
-            'extra_params': {
-                'use_image': True, # Whether to use image input, if False, use text alternative image content.
-                'use_audio': True, # Whether to use audio input, if False, use text alternative audio content.
-            }
-        }
-        self._run_dataset_test('omni_bench', dataset_args=dataset_args, model='qwen-omni-turbo')
-
     def test_olympiad_bench(self):
         dataset_args = {
             'subset_list': [
@@ -324,12 +315,6 @@ class TestVLMBenchmark(TestBenchmark):
         }
         self._run_dataset_test('cmmu', dataset_args=dataset_args, use_cache='outputs/20251112_163342', limit=10, rerun_review=True, eval_batch_size=1)
 
-    def test_a_okvqa_bench(self):
-        dataset_args = {
-            # 'subset_list': ['default']
-        }
-        self._run_dataset_test('a_okvqa', dataset_args=dataset_args, limit=10)
-
     def test_vstar_bench(self):
         dataset_args = {
             # 'subset_list': ['default']
@@ -347,22 +332,6 @@ class TestVLMBenchmark(TestBenchmark):
             # 'subset_list': ['default']
         }
         self._run_dataset_test('gsm8k_v', dataset_args=dataset_args, limit=20)
-
-    def test_fleurs(self):
-        dataset_args = {
-            'subset_list': [
-                'cmn_hans_cn',
-                'en_us',
-                # 'yue_hant_hk',
-            ]
-        }
-        self._run_dataset_test('fleurs', dataset_args=dataset_args, limit=100, model='qwen3-omni-flash', use_cache='outputs/20251209_110609', ignore_errors=True, rerun_review=True)
-
-    def test_librispeech(self):
-        dataset_args = {
-            # 'subset_list': ['default']
-        }
-        self._run_dataset_test('librispeech', dataset_args=dataset_args, limit=5, model='qwen3-omni-flash', ignore_errors=True, rerun_review=True)
 
     def test_refcoco_load(self):
         dataset_args = {
@@ -417,21 +386,6 @@ class TestVLMBenchmark(TestBenchmark):
     def test_tir_bench_load(self):
         self._run_dataset_load_test('tir_bench')
 
-    def test_air_bench_foundation(self):
-        dataset_args = {
-            # 'subset_list': ['Music_AQA_music_avqa'],
-        }
-        self._run_dataset_test('air_bench_foundation', dataset_args=dataset_args, limit=2, model='qwen3-omni-flash', ignore_errors=True)
-
-    def test_air_bench_chat(self):
-        dataset_args = {
-            'extra_params': {
-                'tasks': ['speech_QA'],
-                'do_swap': False,
-            },
-        }
-        self._run_dataset_test('air_bench_chat', dataset_args=dataset_args, limit=2, model='qwen3-omni-flash', ignore_errors=True)
-
     def test_mvbench(self):
         dataset_args={
             'subset_list': ['action_antonym'],
@@ -456,27 +410,6 @@ class TestVLMBenchmark(TestBenchmark):
         }
         self._run_dataset_test('tvbench', dataset_args=dataset_args, limit=5, use_mock=True)
 
-    def test_common_voice_15(self):
-        dataset_args = {
-            'subset_list': ['en'],
-        }
-        self._run_dataset_test('common_voice_15', dataset_args=dataset_args, limit=5, model='qwen3-omni-flash')
-
-    def test_wenet_speech(self):
-        dataset_args = {
-            'subset_list': ['dev'],
-        }
-        self._run_dataset_test('wenet_speech', dataset_args=dataset_args, limit=5, model='qwen3-omni-flash')
-
-    def test_mmau(self):
-        dataset_args = {
-            'subset_list': ['test_mini'],
-        }
-        self._run_dataset_test('mmau', dataset_args=dataset_args, limit=5, model='qwen3-omni-flash')
-
-    def test_erqa(self):
-        self._run_dataset_test('erqa', limit=5)
-
     def test_world_vqa(self):
         self._run_dataset_test('world_vqa', limit=5)
 
@@ -487,14 +420,6 @@ class TestVLMBenchmark(TestBenchmark):
     def test_baby_vision(self):
         """Test BabyVision visual perception benchmark."""
         self._run_dataset_test('baby_vision', limit=5)
-
-    def test_emb_spatial_bench(self):
-        """Test EmbSpatial-Bench embodied spatial reasoning benchmark."""
-        self._run_dataset_test('emb_spatial_bench', limit=5)
-
-    def test_emb_spatial_bench_mock(self):
-        """Test EmbSpatial-Bench with mock LLM."""
-        self._run_dataset_test('emb_spatial_bench', limit=5, use_mock=True)
 
     def test_measure_bench(self):
         """Test MeasureBench instrument reading benchmark."""
@@ -588,14 +513,6 @@ class TestVLMBenchmark(TestBenchmark):
     def test_pmc_vqa_mock(self):
         """Test PMC-VQA with mock LLM."""
         self._run_dataset_test('pmc_vqa', limit=5, use_mock=True)
-
-    def test_medxpertqa(self):
-        """Test MedXpertQA expert-level medical reasoning benchmark."""
-        self._run_dataset_test('medxpertqa', limit=5)
-
-    def test_medxpertqa_mock(self):
-        """Test the Text and MM subsets of MedXpertQA with mock LLM."""
-        self._run_dataset_test('medxpertqa', limit=5, use_mock=True)
 
     def test_count_qa(self):
         """Test CountQA object counting benchmark."""

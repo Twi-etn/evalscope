@@ -11,7 +11,7 @@
 | [E2B 远端沙箱](#e2b) | 使用云端环境，无需本机 Docker 或自建服务器 | 准备官方 E2B 或阿里云的账号与沙箱 API key |
 | [VolcEngine SandboxFusion](#sandboxfusion) | 连接已有的 SandboxFusion 服务 | 准备可访问的服务地址 |
 
-以下示例需要 Python 3.11 或更高版本。代码评测基准（如 [HumanEval](../benchmarks/humaneval.md)）通常已配置好运行镜像；[Agent 评测](agent/index.md) 的环境要求请查阅对应基准文档。
+以下示例需要 Python 3.11 或更高版本。代码评测基准（如 [MBPP](../benchmarks/mbpp.md)）通常已配置好运行镜像；[Agent 评测](agent/index.md) 的环境要求请查阅对应基准文档。
 
 (local-docker)=
 ## 快速开始：本地 Docker
@@ -23,7 +23,7 @@ pip install 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 ```
 
-以下示例使用 Docker 在 HumanEval 上评测 5 个样本：
+以下示例使用 Docker 在 MBPP 上评测 5 个样本：
 
 ```python
 import os
@@ -35,7 +35,7 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['humaneval'],
+    datasets=['mbpp'],
     limit=5,
     eval_batch_size=4,
     generation_config={'max_tokens': 4096, 'temperature': 0},
@@ -76,21 +76,19 @@ run_task(task_config)
 
 ### 安装依赖并准备密钥
 
-下面以 SWE-bench 为例，安装评测和沙箱依赖：
 
 ```bash
-pip install -U 'evalscope[swe_bench]'
+pip install -U 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 export E2B_API_KEY='<your-sandbox-api-key>'
 ```
 
 示例使用 DashScope，模型密钥通过 `DASHSCOPE_API_KEY` 传入。你也可以使用任意 OpenAI 兼容服务，将下方的 `model`、`api_url` 和 `api_key` 替换为对应配置。`E2B_API_KEY` 用于创建沙箱，需填写所选沙箱服务商提供的密钥。
 
-如果运行其他代码评测基准，可将安装命令中的 `[swe_bench]` 换成 `[sandbox]`；无需再单独安装 `ms-enclave[e2b]`。
 
 ### 运行评测
 
-以下脚本使用官方 E2B 评测一个 SWE-bench Agentic 样本。模型会在沙箱中查看仓库、修改代码并提交补丁，EvalScope 随后运行测试评分。基准已指定运行镜像，无需手动下载。
+以下示例在 E2B 上评测一条 MBPP 样本。
 
 ```python
 import os
@@ -104,10 +102,9 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['swe_bench_verified_agentic'],
+    datasets=['mbpp'],
     limit=1,
     eval_batch_size=1,
-    agent_config={'mode': 'native', 'max_steps': 80},
     sandbox={
         'enabled': True,
         'engine': 'e2b',
@@ -141,9 +138,7 @@ manager_config = {
 
 模板保存沙箱启动时的运行环境。首次使用某个镜像时，EvalScope 会自动构建模板；后续可复用模板，创建新的独立沙箱。评测结束后释放沙箱，模板保留供后续使用。
 
-SWE-bench 单镜像实测：新建模板约需 10–22 秒，复用后约 1–2 秒即可执行命令（中位数），具体耗时因镜像和网络而异。
 
-阿里云不能直接从 Docker Hub 构建模板。EvalScope 为下表中的 SWE-bench 和 SWE-Atlas 镜像提供了内置映射，会自动选择预先准备的阿里云镜像，不会现场转换或上传。其他非阿里云地址不使用这张映射表。
 
 自定义镜像没有映射时，请先准备包含基准依赖的模板，再将模板名或 ID 填入 `sandbox.default_config.template`。指定模板后会跳过镜像映射和构建，环境及资源规格以该模板为准。
 
@@ -151,14 +146,9 @@ SWE-bench 单镜像实测：新建模板约需 10–22 秒，复用后约 1–2 
 
 | 基准 | 官方 E2B | 阿里云 Agent Sandbox |
 | --- | --- | --- |
-| SWE-bench Verified、Verified Mini、Lite，以及对应的 Agentic 版本 | 支持 | 支持 |
-| [SWE-bench Multilingual Agentic](../benchmarks/swe_bench_multilingual_agentic.md)、[SWE-bench Pro](../benchmarks/swe_bench_pro.md) | 支持 | 支持 |
-| [SWE-Atlas QnA](../benchmarks/swe_atlas_qna.md) | 支持 | 支持 |
 | [WideSearch](../benchmarks/wide_search.md) | 支持 | 支持，自动选择 `base` 模板（Python 3.13） |
-| [HumanEval](../benchmarks/humaneval.md)、[MBPP](../benchmarks/mbpp.md)、[LiveCodeBench](../benchmarks/live_code_bench.md) | 支持 | 支持，自动选择 `base` 模板（Python 3.13） |
-| [HumanEvalPlus](../benchmarks/humaneval_plus.md)、[MBPPPlus](../benchmarks/mbpp_plus.md) | 需准备包含 NumPy 的镜像或模板 | 需准备包含 NumPy 的模板 |
-| [BigCodeBench](../benchmarks/bigcodebench.md)、[BigCodeBench-Hard](../benchmarks/bigcodebench_hard.md) | 支持 | 需准备对应评测模板 |
-| [DS-1000](../benchmarks/ds1000.md)、[SciCode](../benchmarks/scicode.md) | 需准备对应依赖和测试数据的镜像或模板 | 需准备对应评测模板 |
+| [MBPP](../benchmarks/mbpp.md) | 支持 | 支持，自动选择 `base` 模板（Python 3.13） |
+| [MBPPPlus](../benchmarks/mbpp_plus.md) | 需准备包含 NumPy 的镜像或模板 | 需准备包含 NumPy 的模板 |
 
 使用自备环境时，请按各基准文档准备依赖、测试数据和工作目录。WideSearch 还需要沙箱能够访问搜索服务和目标网站。Agent 评测请使用[原生 Agent 模式](agent/native.md)。
 
@@ -166,11 +156,10 @@ SWE-bench 单镜像实测：新建模板约需 10–22 秒，复用后约 1–2 
 
 ### 调整并发和运行时长
 
-`eval_batch_size` 控制同时处理的样本数，`sandbox.manager_config.max_sandboxes` 限制同时存在的沙箱数。增加并发前，请确认服务商账号有足够配额。HumanEval 等使用代码执行池的基准，还需保证 `sandbox.pool_size` 不超过 `max_sandboxes`；未设置 `pool_size` 时，取 `eval_batch_size`。
+`eval_batch_size` 控制同时处理的样本数，`sandbox.manager_config.max_sandboxes` 限制同时存在的沙箱数。增加并发前，请确认服务商账号有足够配额。MBPP 等使用代码执行池的基准，还需保证 `sandbox.pool_size` 不超过 `max_sandboxes`；未设置 `pool_size` 时，取 `eval_batch_size`。
 
 `sandbox.default_config.sandbox_timeout` 控制沙箱从创建到回收的最长时长，默认 3600 秒。它与 Agent 单条命令的 `command_timeout`、基准测试脚本的超时不同，需要为整个任务预留足够时间。
 
-[官方 E2B Hobby 账号](https://e2b.dev/docs/sandbox)的存活时长上限为 3600 秒，运行 SWE-bench Pro 时也请保留示例中的 `sandbox_timeout=3600`。其他套餐和阿里云的限制以账号配额为准。
 
 ### E2B 参数参考
 
@@ -202,7 +191,6 @@ SWE-bench 单镜像实测：新建模板约需 10–22 秒，复用后约 1–2 
 | `working_dir` | 基准提供 | 命令的工作目录 |
 | `env_vars` | `{}` | 为命令添加环境变量 |
 
-SWE-bench 在评分时会另建沙箱，默认存活时长为测试脚本超时加 600 秒；显式设置 `sandbox_timeout` 后，取两者中的较小值。测试脚本默认超时为 SWE-bench 1800 秒、SWE-bench Pro 3600 秒。
 
 Docker 的目录挂载、端口映射和特权模式不能直接用于 E2B，不支持的配置会报错。更多参数见 [ms-enclave 文档](https://github.com/modelscope/ms-enclave)。
 

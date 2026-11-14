@@ -535,9 +535,9 @@ def test_selector_must_match_exactly_one_identity() -> None:
         ReportGenerator.generate_report(scores, 'model', _StubAdapter('benchmark', MetricSelector(name='accuracy')))
 
 
-def test_legacy_humaneval_report_recovers_structured_primary_from_metadata() -> None:
+def test_legacy_mbpp_report_recovers_structured_primary_from_metadata() -> None:
     report = Report.from_dict({
-        'dataset_name': 'humaneval',
+        'dataset_name': 'mbpp',
         'metrics': [
             {
                 'name': 'mean_acc',

@@ -1,6 +1,6 @@
 # Qwen3-Omni 模型评测最佳实践
 
-Qwen3-Omni是新一代原生全模态大模型，能够无缝处理文本、图像、音频和视频等多种输入形式，并通过实时流式响应同时生成文本与自然语音输出。在这篇最佳实践中，我们将使用EvalScope框架以[Qwen3-Omni-30B-A3B-Instruct](https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct)模型为例进行评测，覆盖模型服务推理性能评测和模型能力评测。
+本文介绍如何用 vLLM 部署 Qwen3-Omni，再用 EvalScope 测量推理吞吐与延迟。
 
 ## 安装依赖
 
@@ -75,66 +75,6 @@ evalscope perf \
 
 ![image](https://sail-moe.oss-cn-hangzhou.aliyuncs.com/yunlin/images/evalscope/doc/qwen_omni/eval.png)
 
-## 模型能力评测
-
-下面开始进行模型能力评测流程，我们将在OmniBench上进行评测。OmniBench是一个用于评估多模态模型在文本、图像、音频多种模态上理解能力的基准测试工具。
-
-> 注意：后续评测流程都基于API模型服务，你可以根据模型推理框架使用步骤拉起模型服务。由于vLLM框架目前（2025.9.25）对于Base64音频的输入支持存在bug，暂时无法进行音频输入的评测。
-
-```python
-from evalscope import TaskConfig, run_task
-
-task_cfg = TaskConfig(
-    model='Qwen3-Omni-30B-A3B-Instruct',
-    api_url='http://localhost:8801/v1',
-    api_key='EMPTY',
-    eval_type='openai_api',
-    datasets=[
-        'omni_bench',
-    ],
-    dataset_args={
-        'omni_bench': {
-            'extra_params': {
-                'use_image': True, # 是否使用图像输入，如果为False，则使用文本替代图像内容。
-                'use_audio': False, # 是否使用音频输入，如果为False，则使用文本替代音频内容。
-                }
-            }
-    },
-    eval_batch_size=1,
-    generation_config={
-        'max_tokens': 10000,  # 最大生成token数，建议设置为较大值避免输出截断
-        'temperature': 0.0,  # 采样温度 (qwen 报告推荐值)
-    },
-    limit=100,  # 设置为100条数据进行测试
-)
-
-run_task(task_cfg=task_cfg)
-```
-
-输出结果如下：
-
-> 注意：下面的结果是取了100条数据的结果，只用于评测流程测试。在正式评测时需要去掉该限制。
-```
-+-----------------------------+------------+----------+----------+-------+---------+---------+
-| Model                       | Dataset    | Metric   | Subset   |   Num |   Score | Cat.0   |
-+=============================+============+==========+==========+=======+=========+=========+
-| Qwen3-Omni-30B-A3B-Instruct | omni_bench | Accuracy ↑ | default  |   100 |     44% | default |
-+-----------------------------+------------+----------+----------+-------+---------+---------+ 
-```
-
-更多可用的评测数据集可参考[数据集列表](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/llm.html)。
-
 ## 可视化
 
-EvalScope支持可视化结果，可以查看模型具体的输出。
-
-运行以下命令，可以启动Web 可视化界面：
-
-```shell
-evalscope service
-```
-
-选择评测报告，点击加载，即可看到模型在每个问题上的输出结果，以及整体答题正确率：
-
-
-![image](https://sail-moe.oss-cn-hangzhou.aliyuncs.com/yunlin/images/evalscope/doc/qwen_omni/detail.png)
+运行 `evalscope service`，在「性能」页查看已完成压测的请求延迟、吞吐和 Token 用量。

@@ -31,7 +31,7 @@ evalscope --version
 |------|----------|
 | 推理性能压测 | `pip install 'evalscope[perf]'` |
 | 可视化服务 | `pip install 'evalscope[service]'` |
-| AIGC 评测 | `pip install 'evalscope[aigc]'` |
+| 图像模型与指标扩展 | `pip install 'evalscope[aigc]'` |
 | OpenCompass 后端 | `pip install 'evalscope[opencompass]'` |
 | VLMEvalKit 后端 | `pip install 'evalscope[vlmeval]'` |
 | RAG 评测 | `pip install 'evalscope[rag]'` |
@@ -58,7 +58,7 @@ pip install -e .
 |------|----------|
 | 推理性能压测 | `pip install '.[perf]'` |
 | 可视化服务 | `pip install '.[service]'` |
-| AIGC 评测 | `pip install '.[aigc]'` |
+| 图像模型与指标扩展 | `pip install '.[aigc]'` |
 | OpenCompass 后端 | `pip install '.[opencompass]'` |
 | VLMEvalKit 后端 | `pip install '.[vlmeval]'` |
 | RAG 评测 | `pip install '.[rag]'` |

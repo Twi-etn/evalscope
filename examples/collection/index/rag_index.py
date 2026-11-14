@@ -5,8 +5,8 @@
 from evalscope.collections import CollectionSchema, DatasetInfo
 
 schema = CollectionSchema(name='rag_index', datasets=[
-    DatasetInfo(name='chinese_simpleqa', weight=0.3, task_type='knowledge', tags=['rag']),
-    DatasetInfo(name='aa_lcr', weight=0.3, task_type='long_context', tags=['rag']),
+    DatasetInfo(name='simple_qa', weight=0.3, task_type='knowledge', tags=['rag']),
+    DatasetInfo(name='docmath', weight=0.3, task_type='long_context', tags=['rag']),
     DatasetInfo(name='ifeval', weight=0.4, task_type='instruction_following', tags=['rag']),
 ])
 

@@ -109,10 +109,10 @@ The `--generation-config` parameter supports the following options (comma-separa
 | `shuffle` | `bool` | Whether to shuffle the data |
 | `shuffle_choices` | `bool` | Whether to shuffle choice order (multiple-choice only) |
 | `metric_list` | `list[str\|dict]` | Metric list. Use canonical names such as `accuracy`; legacy aliases such as `acc` are normalized for compatibility. |
-| `aggregation` | `str` | Aggregation method for evaluation results, default is `mean`. Options: `mean_and_pass_at_k`, `mean_and_vote_at_k`, `mean_and_pass_hat_k` (all require setting `repeats=k`), `bayes_at_n`.<br>• `pass_at_k`: Probability that the same sample passes at least once in k generations (e.g., set `repeats=5` for `humaneval`)<br>• `vote_at_k`: Scoring by voting on k results for the same sample<br>• `pass_hat_k`: Probability that the same sample passes all k times (e.g., set `repeats=3` for `tau2_bench`)<br>• `bayes_at_n`: Posterior mean and posterior SD of mean correctness over a fixed question set with `repeats=N`; binary `accuracy`/`exact_match` only, one subset (see [FAQ](./faq.md)) |
+| `aggregation` | `str` | Aggregation method for evaluation results, default is `mean`. Options: `mean_and_pass_at_k`, `mean_and_vote_at_k`, `mean_and_pass_hat_k` (all require setting `repeats=k`), `bayes_at_n`.<br>• `pass_at_k`: Probability that the same sample passes at least once in k generations (e.g., set `repeats=5` for `mbpp`)<br>• `vote_at_k`: Scoring by voting on k results for the same sample<br>• `pass_hat_k`: Probability that the same sample passes all k times (e.g., set `repeats=3` for `tau2_bench`)<br>• `bayes_at_n`: Posterior mean and posterior SD of mean correctness over a fixed question set with `repeats=N`; binary `accuracy`/`exact_match` only, one subset (see [FAQ](./faq.md)) |
 | `filters` | `dict` | Output filters<br>• `remove_until`: Remove content before specified string<br>• `extract`: Extract regex-matched content |
 | `force_redownload` | `bool` | Whether to force re-download the dataset |
-| `extra_params` | `dict` | Dataset-related extra parameters, refer to [dataset documentation](./supported_dataset/index.md), specify `{<param_name>:<value>}` as needed, where the type (`type`) and choices (`choices`) of `value` depend on the specific parameter. For SWE-bench agentic and similar benchmarks, see [Agent Evaluation](../user_guides/agent/native.md#swe-bench-agentic-benchmarks) |
+| `extra_params` | `dict` | Dataset-related extra parameters, refer to [dataset documentation](./supported_dataset/index.md), specify `{<param_name>:<value>}` as needed, where the type (`type`) and choices (`choices`) of `value` depend on the specific parameter. For WideSearch and similar benchmarks, see [Agent Evaluation](../user_guides/agent/native.md) |
 | `sandbox_config` | `dict` | Sandbox configuration (see Sandbox Parameters below) |
 
 **sandbox_config Options:**
@@ -125,23 +125,18 @@ The `--generation-config` parameter supports the following options (comma-separa
 
 **Example:**
 ```bash
---datasets gsm8k arc ifeval hle \
+--datasets gsm8k ceval ifeval \
 --dataset-args '{
   "gsm8k": {
     "few_shot_num": 4,
     "few_shot_random": false
   },
-  "arc": {
-    "dataset_id": "/path/to/arc"
+  "ceval": {
+    "dataset_id": "/path/to/ceval"
   },
   "ifeval": {
     "filters": {
       "remove_until": "</think>"
-    }
-  },
-  "hle": {
-    "extra_params": {
-      "include_multi_modal": false
     }
   }
 }'

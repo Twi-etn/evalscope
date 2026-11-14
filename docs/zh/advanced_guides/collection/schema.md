@@ -50,7 +50,7 @@ from evalscope.collections import CollectionSchema, DatasetInfo
 simple_schema = CollectionSchema(
     name='reasoning_index',
     datasets=[
-        DatasetInfo(name='arc', weight=2.0, task_type='reasoning', tags=['en']),
+        DatasetInfo(name='hellaswag', weight=2.0, task_type='reasoning', tags=['en']),
         DatasetInfo(name='ceval', weight=3.0, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}),
     ],
 )
@@ -67,7 +67,7 @@ complex_schema = CollectionSchema(name='math_index', datasets=[
         DatasetInfo(name='aime25', weight=1.0, task_type='math', tags=['en']),
     ]),
     CollectionSchema(name='reasoning', weight=1.0, datasets=[
-        DatasetInfo(name='arc', weight=1.0, task_type='reasoning', tags=['en']),
+        DatasetInfo(name='hellaswag', weight=1.0, task_type='reasoning', tags=['en']),
         DatasetInfo(name='ceval', weight=1.0, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}),
     ]),
 ])
@@ -86,12 +86,12 @@ loaded = CollectionSchema.from_json('outputs/complex_schema.json')
 
 输出示例（自动归一化权重）:
 ```python
->>> [DatasetInfo(name='arc', weight=0.4, task_type='reasoning', tags=['en'], args={}, hierarchy=['reasoning_index']),
+>>> [DatasetInfo(name='hellaswag', weight=0.4, task_type='reasoning', tags=['en'], args={}, hierarchy=['reasoning_index']),
      DatasetInfo(name='ceval', weight=0.6, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}, hierarchy=['reasoning_index'])]
 
 >>> [DatasetInfo(name='gsm8k', weight=0.375, task_type='math', tags=['en'], args={}, hierarchy=['math_index', 'math']),
      DatasetInfo(name='aime25', weight=0.375, task_type='math', tags=['en'], args={}, hierarchy=['math_index', 'math']),
-     DatasetInfo(name='arc', weight=0.125, task_type='reasoning', tags=['en'], args={}, hierarchy=['math_index', 'reasoning']),
+     DatasetInfo(name='hellaswag', weight=0.125, task_type='reasoning', tags=['en'], args={}, hierarchy=['math_index', 'reasoning']),
      DatasetInfo(name='ceval', weight=0.125, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}, hierarchy=['math_index', 'reasoning'])]
 ```
 
@@ -113,8 +113,8 @@ loaded = CollectionSchema.from_json('outputs/complex_schema.json')
 from evalscope.collections import CollectionSchema, DatasetInfo
 
 schema = CollectionSchema(name='rag_index', datasets=[
-    DatasetInfo(name='chinese_simpleqa', weight=0.3, task_type='knowledge', tags=['rag']),
-    DatasetInfo(name='aa_lcr', weight=0.3, task_type='long_context', tags=['rag']),
+    DatasetInfo(name='simple_qa', weight=0.3, task_type='knowledge', tags=['rag']),
+    DatasetInfo(name='docmath', weight=0.3, task_type='long_context', tags=['rag']),
     DatasetInfo(name='ifeval', weight=0.4, task_type='instruction_following', tags=['rag']),
 ])
 ```
@@ -128,8 +128,8 @@ schema = CollectionSchema(name='rag_index', datasets=[
 from evalscope.collections import CollectionSchema, DatasetInfo
 
 schema = CollectionSchema(name='code_index', datasets=[
-    DatasetInfo(name='humaneval', weight=2.0, task_type='code', tags=['python']),
-    DatasetInfo(name='live_code_bench', weight=1.0, task_type='code', tags=['zh', 'finance'], args={'subset_list': ['v5'], 'review_timeout': 6, 'extra_params': {'start_date': '2024-08-01','end_date': '2025-02-28'},}),
+    DatasetInfo(name='mbpp', weight=2.0, task_type='code', tags=['python']),
+    DatasetInfo(name='mbpp_plus', weight=1.0, task_type='code', tags=['zh', 'finance'], args={'subset_list': ['v5'], 'review_timeout': 6, 'extra_params': {'start_date': '2024-08-01','end_date': '2025-02-28'},}),
 ])
 ```
 

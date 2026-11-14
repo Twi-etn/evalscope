@@ -8,7 +8,7 @@ from evalscope.config import TaskConfig
 from evalscope.constants import DataCollection
 
 # (dataset, subset, samples, correct)
-PLAN = [('gpqa_diamond', 'default', 10, 2), ('humaneval', 'default', 30, 24), ('arc', 'ARC-Easy', 10, 10)]
+PLAN = [('gpqa_diamond', 'default', 10, 2), ('mbpp', 'default', 30, 24), ('hellaswag', 'default', 10, 10)]
 
 
 def _scores():

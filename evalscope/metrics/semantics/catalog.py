@@ -450,8 +450,7 @@ METRIC_DEFINITIONS['correct_submission'] = MetricEntry(
 )
 METRIC_DEFINITIONS['full_flag_found'] = MetricEntry(baseline='quality.accuracy.ratio', metric_name='Full Flag Found')
 
-# AgentHarm measures completion independently of refusal. Direction depends on whether the
-# requested task is harmful or benign; benchmark overrides below express that distinction.
+# Historical reports retain their original completion and refusal metric directions.
 METRIC_DEFINITIONS['task_completion_score'] = MetricEntry(
     baseline='quality.score.ratio', metric_name='Task Completion Score'
 )

@@ -11,7 +11,7 @@ Code evaluations run model-generated programs, while agent evaluations may execu
 | [E2B remote sandboxes](#e2b) | Use cloud environments without local Docker or your own server | An official E2B or Aliyun account and a sandbox API key |
 | [VolcEngine SandboxFusion](#sandboxfusion) | Connect to an existing SandboxFusion service | An accessible service endpoint |
 
-The examples below require Python 3.11 or later. Code evaluation benchmarks such as [HumanEval](../benchmarks/humaneval.md) typically provide a default image. For [agent evaluations](agent/index.md), check the benchmark documentation for environment requirements.
+The examples below require Python 3.11 or later. Code evaluation benchmarks such as [MBPP](../benchmarks/mbpp.md) typically provide a default image. For [agent evaluations](agent/index.md), check the benchmark documentation for environment requirements.
 
 (local-docker)=
 ## Quick Start: Local Docker
@@ -23,7 +23,7 @@ pip install 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 ```
 
-The following example evaluates five HumanEval samples using Docker:
+The following example evaluates five MBPP samples using Docker:
 
 ```python
 import os
@@ -35,7 +35,7 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['humaneval'],
+    datasets=['mbpp'],
     limit=5,
     eval_batch_size=4,
     generation_config={'max_tokens': 4096, 'temperature': 0},
@@ -76,21 +76,18 @@ To run without deploying Docker, choose [official E2B](https://e2b.dev/) or [Ali
 
 ### Install Dependencies and Set API Keys
 
-This example uses SWE-bench. Install the evaluation and sandbox dependencies:
-
 ```bash
-pip install -U 'evalscope[swe_bench]'
+pip install -U 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 export E2B_API_KEY='<your-sandbox-api-key>'
 ```
 
 The example uses DashScope and reads its model API key from `DASHSCOPE_API_KEY`. You can use any OpenAI-compatible service by replacing `model`, `api_url` and `api_key` below. Set `E2B_API_KEY` to the sandbox API key issued by your selected sandbox provider.
 
-For other code evaluation benchmarks, replace `[swe_bench]` with `[sandbox]` in the installation command. You do not need to install `ms-enclave[e2b]` separately.
 
 ### Run an Evaluation
 
-The following script evaluates one SWE-bench Agentic sample on official E2B. The model explores the repository, edits code and submits a patch in the sandbox; EvalScope then runs the tests to grade it. The benchmark supplies the image, so no manual download is needed.
+The following example evaluates one MBPP sample on E2B.
 
 ```python
 import os
@@ -104,10 +101,9 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['swe_bench_verified_agentic'],
+    datasets=['mbpp'],
     limit=1,
     eval_batch_size=1,
-    agent_config={'mode': 'native', 'max_steps': 80},
     sandbox={
         'enabled': True,
         'engine': 'e2b',
@@ -141,9 +137,7 @@ You can also supply another E2B-compatible service's endpoints and key. It must 
 
 A template stores the environment a sandbox starts with. When an image is first used, EvalScope builds a template automatically. Later runs can reuse it to create new, isolated sandboxes. Sandboxes are released after evaluation; templates are retained for reuse.
 
-In a test with one SWE-bench image, preparing a new template took about 10–22 seconds, and a new sandbox using an existing template could execute a command in about 1–2 seconds (median); timings vary with the image and network.
 
-Aliyun cannot build templates directly from Docker Hub. EvalScope includes mappings for the SWE-bench and SWE-Atlas images listed below and automatically selects prepared Aliyun images, without converting or uploading images at runtime. Non-Aliyun endpoints do not use this mapping table.
 
 For custom images without a mapping, prepare a template with the benchmark's dependencies and set `sandbox.default_config.template` to its name or ID. Specifying a template skips image mapping and builds; its environment and resource specifications apply.
 
@@ -151,14 +145,9 @@ For custom images without a mapping, prepare a template with the benchmark's dep
 
 | Benchmark | Official E2B | Aliyun Agent Sandbox |
 | --- | --- | --- |
-| SWE-bench Verified, Verified Mini, Lite, and their Agentic variants | Supported | Supported |
-| [SWE-bench Multilingual Agentic](../benchmarks/swe_bench_multilingual_agentic.md), [SWE-bench Pro](../benchmarks/swe_bench_pro.md) | Supported | Supported |
-| [SWE-Atlas QnA](../benchmarks/swe_atlas_qna.md) | Supported | Supported |
 | [WideSearch](../benchmarks/wide_search.md) | Supported | Supported; selects the `base` template automatically (Python 3.13) |
-| [HumanEval](../benchmarks/humaneval.md), [MBPP](../benchmarks/mbpp.md), [LiveCodeBench](../benchmarks/live_code_bench.md) | Supported | Supported; selects the `base` template automatically (Python 3.13) |
-| [HumanEvalPlus](../benchmarks/humaneval_plus.md), [MBPPPlus](../benchmarks/mbpp_plus.md) | Requires an image or template with NumPy | Requires a template with NumPy |
-| [BigCodeBench](../benchmarks/bigcodebench.md), [BigCodeBench-Hard](../benchmarks/bigcodebench_hard.md) | Supported | Requires a suitable evaluation template |
-| [DS-1000](../benchmarks/ds1000.md), [SciCode](../benchmarks/scicode.md) | Requires an image or template with the dependencies and test data | Requires a suitable evaluation template |
+| [MBPP](../benchmarks/mbpp.md) | Supported | Supported; selects the `base` template automatically (Python 3.13) |
+| [MBPPPlus](../benchmarks/mbpp_plus.md) | Requires an image or template with NumPy | Requires a template with NumPy |
 
 For custom environments, prepare dependencies, test data and working directories as described in each benchmark's documentation. WideSearch also needs network access to search services and target websites. Use [native agent mode](agent/native.md) for agent evaluations.
 
@@ -166,11 +155,10 @@ For custom environments, prepare dependencies, test data and working directories
 
 ### Set Concurrency and Sandbox Lifetime
 
-`eval_batch_size` controls how many samples run concurrently, while `sandbox.manager_config.max_sandboxes` limits the number of live sandboxes. Check your provider quota before increasing concurrency. For benchmarks that use a code execution pool, such as HumanEval, `sandbox.pool_size` must not exceed `max_sandboxes`. If omitted, `pool_size` follows `eval_batch_size`.
+`eval_batch_size` controls how many samples run concurrently, while `sandbox.manager_config.max_sandboxes` limits the number of live sandboxes. Check your provider quota before increasing concurrency. For benchmarks that use a code execution pool, such as MBPP, `sandbox.pool_size` must not exceed `max_sandboxes`. If omitted, `pool_size` follows `eval_batch_size`.
 
 `sandbox.default_config.sandbox_timeout` sets the maximum time from sandbox creation to removal, defaulting to 3600 seconds. This differs from the agent's per-command `command_timeout` and the benchmark test script timeout. Allow enough time for the whole task.
 
-[Official E2B Hobby accounts](https://e2b.dev/docs/sandbox) have a maximum sandbox lifetime of 3600 seconds. Keep `sandbox_timeout=3600` from the example when running SWE-bench Pro as well. Limits for other plans and Aliyun depend on your account quota.
 
 ### E2B Parameter Reference
 
@@ -202,7 +190,6 @@ Place environment settings in `sandbox.default_config`:
 | `working_dir` | Supplied by the benchmark | Command working directory |
 | `env_vars` | `{}` | Environment variables to add to commands |
 
-SWE-bench creates a separate sandbox for grading. Its default lifetime is the test script timeout plus 600 seconds; if `sandbox_timeout` is explicitly set, the smaller value applies. The default test script timeout is 1800 seconds for SWE-bench and 3600 seconds for SWE-bench Pro.
 
 Docker volume mounts, port mappings and privileged mode cannot be used directly with E2B; unsupported settings produce an error. For more options, see the [ms-enclave documentation](https://github.com/modelscope/ms-enclave).
 

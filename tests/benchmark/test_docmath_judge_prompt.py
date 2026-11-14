@@ -1,4 +1,4 @@
-"""DocMath shows the judge the question it asks about, as FRAMES does."""
+"""DocMath shows the judge the question it asks about."""
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import JudgeContext
 from evalscope.api.judge.types import Placement

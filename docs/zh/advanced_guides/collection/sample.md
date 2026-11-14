@@ -25,8 +25,8 @@
   "tags": ["en", "reasoning"],
   "task_type": "question_answering",
   "weight": 1.0,
-  "dataset_name": "arc",
-  "subset_name": "ARC-Easy"
+  "dataset_name": "hellaswag",
+  "subset_name": "default"
 }
 ```
 
@@ -74,7 +74,7 @@ from evalscope.collections import CollectionSchema, DatasetInfo
 schema = CollectionSchema(
     name='reasoning_index',
     datasets=[
-        DatasetInfo(name='arc', weight=2.0, task_type='reasoning', tags=['en']),
+        DatasetInfo(name='hellaswag', weight=2.0, task_type='reasoning', tags=['en']),
         DatasetInfo(name='ceval', weight=3.0, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}),
     ],
 )
@@ -89,7 +89,7 @@ sampler = WeightedSampler(schema)
 mixed_data = sampler.sample(10)  # N=10
 dump_jsonl_data(mixed_data, 'outputs/weighted_mixed_data.jsonl')
 ```
-预期：arc : ceval ≈ 2 : 3 → 4 : 6
+预期：hellaswag : ceval ≈ 2 : 3 → 4 : 6
 
 ### 分层采样（保持源数据规模分布）
 ```python
@@ -100,7 +100,7 @@ sampler = StratifiedSampler(schema)
 mixed_data = sampler.sample(10)
 dump_jsonl_data(mixed_data, 'outputs/stratified_mixed_data.jsonl')
 ```
-预期：按各数据集原始样本量近似分配（示例：若 arc=2000, ceval=10 → 约 9 : 1）
+预期：按各数据集原始样本量近似分配（示例：若 hellaswag=2000, ceval=10 → 约 9 : 1）
 
 ### 均匀采样（对齐能力对比）
 ```python
@@ -111,7 +111,7 @@ sampler = UniformSampler(schema)
 mixed_data = sampler.sample(10)
 dump_jsonl_data(mixed_data, 'outputs/uniform_mixed_data.jsonl')
 ```
-预期：arc : ceval = 5 : 5
+预期：hellaswag : ceval = 5 : 5
 
 
 ## 常见问题

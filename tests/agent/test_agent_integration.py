@@ -378,7 +378,7 @@ class TestAgentLoopAdapterOverrides(unittest.TestCase):
 
     def test_agent_loop_usage_example_contains_native_config(self):
         usage = _format_usage_section(
-            'gaia',
+            'gsm8k',
             agent_config={
                 'strategy': 'react',
                 'max_steps': 50
@@ -394,7 +394,7 @@ class TestAgentLoopAdapterOverrides(unittest.TestCase):
         self.assertNotIn('# agent_config=NativeAgentConfig(', usage)
 
     def test_agent_loop_usage_example_skips_partial_agent_config(self):
-        usage = _format_usage_section('gaia', agent_config={'strategy': 'react'})
+        usage = _format_usage_section('gsm8k', agent_config={'strategy': 'react'})
 
         self.assertNotIn('--agent-config', usage)
         self.assertNotIn('NativeAgentConfig', usage)

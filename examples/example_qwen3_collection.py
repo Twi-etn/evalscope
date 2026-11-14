@@ -14,7 +14,7 @@ def generate_collection():
             DatasetInfo(name='iquiz', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
         ]),
         CollectionSchema(name='Code', datasets=[
-            DatasetInfo(name='live_code_bench', weight=1, task_type='code', tags=['en'], args={'few_shot_num': 0, 'subset_list': ['v5_v6'], 'extra_params': {'start_date': '2025-01-01', 'end_date': '2025-04-30'}}),
+            DatasetInfo(name='mbpp', weight=1, task_type='code', tags=['en']),
         ]),
         CollectionSchema(name='Math&Science', datasets=[
             DatasetInfo(name='math_500', weight=1, task_type='math', tags=['en'], args={'few_shot_num': 0}),

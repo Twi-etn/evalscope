@@ -8,16 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, Sequence
 
-DEFAULT_DATASETS = (
-    'SWE-bench Verified',
-    'SWE-bench Full Test',
-    'SWE-bench Multilingual',
-    'SWE-bench Pro',
-    'TB 2.1',
-    'DeepSWE',
-    'SWE-Atlas',
-    'Toolathlon',
-)
+DEFAULT_DATASETS = ('TB 2.1', 'Toolathlon')
 REQUIRED_COLUMNS = {'源镜像', '转换后镜像', '数据集'}
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / 'evalscope/api/sandbox/e2b_image_mapping.json.gz'
 

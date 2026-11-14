@@ -73,9 +73,9 @@ def test_jevbench_accepts_lossless_mirror_records_and_original_json(kind: str) -
 
 
 def test_decision_mcq_preserves_an_explicit_primary_metric() -> None:
-    adapter = get_benchmark('boolq', TaskConfig(
-        model='test', eval_type='systemone_api', datasets=['boolq'],
-        dataset_args={'boolq': {'metric_list': ['nll'], 'primary_metric': 'nll'}},
+    adapter = get_benchmark('general_mcq', TaskConfig(
+        model='test', eval_type='systemone_api', datasets=['general_mcq'],
+        dataset_args={'general_mcq': {'metric_list': ['nll'], 'primary_metric': 'nll'}},
     ))
     assert adapter.primary_metric.name == 'nll'
 
@@ -108,67 +108,20 @@ def test_typed_benchmarks_reject_chat_before_loading(name: str, monkeypatch: pyt
         adapter.load_dataset()
 
 
-def test_boolq_noul_gold_follows_semantics_after_choice_shuffle() -> None:
-    adapter = get_benchmark('boolq', TaskConfig(model='test', eval_type='systemone_api', datasets=['boolq'],
-        dataset_args={'boolq': {'extra_params': {'decision_kind': 'noul'}}}))
-    sample = adapter.record_to_sample({'passage': 'Paris is in France.', 'question': 'Is Paris in France?', 'answer': True})
-    sample.choices = ['No', 'Yes']
-    sample.target = 'B'
-    answer = DecisionAnswer(type='noul', noul=0.9, probabilities={'no': 0.1, 'yes': 0.9})
-    output = ModelOutput.from_content('test', 'ANSWER: yes')
-    output.metadata = {'decision': answer.model_dump()}
-    result = adapter.match_score('yes', 'yes', sample.target, TaskState(model='test', sample=sample, output=output))
-    assert result.value['acc'] == 1
-
-
 @pytest.mark.parametrize('metadata', [{}, {
     'choice_response': {
         'answers': {'answer': {'type': 'choice', 'choice': 'A', 'probabilities': {'A': 0.9, 'B': 0.1}}},
     },
 }])
 def test_mcq_missing_decision_is_excluded(metadata: dict) -> None:
-    adapter = get_benchmark('boolq', TaskConfig(model='test', eval_type='systemone_api', datasets=['boolq']))
-    sample = adapter.record_to_sample({'passage': 'Fact.', 'question': 'True?', 'answer': True})
+    adapter = get_benchmark('general_mcq', TaskConfig(model='test', eval_type='systemone_api', datasets=['general_mcq']))
+    sample = adapter.record_to_sample({'question': 'True?', 'A': 'yes', 'B': 'no', 'answer': 'A'})
     output = ModelOutput.from_content('test', 'ANSWER: A')
     output.metadata = metadata
     state = TaskState(model='test', sample=sample, output=output, completed=True)
     result = adapter.calculate_metrics(state)
     assert result.score.status is ScoreStatus.EXCLUDED
     assert result.score.metadata['metric_unavailable'] is True
-
-
-def test_noul_conversion_requires_an_explicit_adapter_capability() -> None:
-    config = TaskConfig(
-        model='test',
-        eval_type='systemone_api',
-        datasets=['boolq'],
-        dataset_args={'boolq': {'extra_params': {'decision_kind': 'noul'}}},
-    )
-    adapter = get_benchmark('boolq', config)
-    adapter.decision_noul_positive_choice = None
-    sample = Sample(input='Question?', choices=['Yes', 'No'], target='A')
-    with pytest.raises(ValueError, match='no audited Noul conversion'):
-        adapter.build_systemone_messages(sample, 'default')
-
-
-def test_banking77_macro_f1_uses_intents_after_choice_shuffle() -> None:
-    from evalscope.benchmarks.banking77.banking77_adapter import INTENT_LABELS
-    from evalscope.utils.multi_choices import answer_character
-
-    adapter = get_benchmark('banking77', TaskConfig(model='test', eval_type='systemone_api', datasets=['banking77']))
-    scores = []
-    # Both requests select position A, but they represent two distinct correctly predicted intents.
-    for index in [0, 1]:
-        sample = adapter.record_to_sample({'text': 'Support request', 'label': index})
-        sample.choices[0], sample.choices[index] = sample.choices[index], sample.choices[0]
-        sample.target = 'A'
-        probabilities = {answer_character(i): float(i == 0) for i in range(77)}
-        output = ModelOutput.from_content('test', 'ANSWER: A')
-        output.metadata = {'decision': DecisionAnswer(type='choice', choice='A', probabilities=probabilities).model_dump()}
-        score = adapter.match_score('A', 'A', sample.target, TaskState(model='test', sample=sample, output=output))
-        scores.append(SampleScore(sample_id=index, score=score))
-    metrics = DecisionAggregator()(scores)
-    assert next(m.score for m in metrics if m.metric_name == 'macro_f1') == pytest.approx(2 / len(INTENT_LABELS))
 
 
 @pytest.mark.parametrize('name', ['jevbench', 'open_decisions'])
@@ -259,8 +212,8 @@ def test_autotrust_response_contract_rejects_invalid_arrays_and_selections(chang
 
 
 def test_mcq_probability_order_follows_the_question_not_the_response() -> None:
-    adapter = get_benchmark('boolq', TaskConfig(model='test', eval_type='systemone_api', datasets=['boolq']))
-    sample = adapter.record_to_sample({'passage': 'Fact.', 'question': 'True?', 'answer': True})
+    adapter = get_benchmark('general_mcq', TaskConfig(model='test', eval_type='systemone_api', datasets=['general_mcq']))
+    sample = adapter.record_to_sample({'question': 'True?', 'A': 'yes', 'B': 'no', 'answer': 'A'})
     output = ModelOutput.from_content('test', 'ANSWER: A')
     output.metadata = {'decision': DecisionAnswer(type='choice', choice='A', probabilities={'B': 0.1, 'A': 0.9}).model_dump()}
     score = adapter.match_score('A', 'A', sample.target, TaskState(model='test', sample=sample, output=output))

@@ -2,7 +2,6 @@ from dotenv import dotenv_values
 
 env = dotenv_values('.env')
 import json
-import os
 import unittest
 
 from evalscope.collections import CollectionSchema, DatasetInfo, StratifiedSampler, UniformSampler, WeightedSampler
@@ -45,7 +44,7 @@ class TestCollection(TestBenchmark):
 
     def test_create_simple_collection(self):
         schema = CollectionSchema(name='reasoning_index', datasets=[
-            DatasetInfo(name='arc', weight=2.0, task_type='reasoning', tags=['en']),
+            DatasetInfo(name='hellaswag', weight=2.0, task_type='reasoning', tags=['en']),
             DatasetInfo(name='ceval', weight=3.0, task_type='reasoning', tags=['zh'], args={'subset_list': ['logic']}),
         ])
         print(schema.to_dict())
@@ -83,7 +82,7 @@ class TestCollection(TestBenchmark):
                         ]),
                     ]),
                     CollectionSchema(name='reasoning', datasets=[
-                        DatasetInfo(name='arc', weight=1, task_type='reasoning', tags=['en', 'reasoning']),
+                        DatasetInfo(name='hellaswag', weight=1, task_type='reasoning', tags=['en', 'reasoning']),
                         DatasetInfo(name='ceval', weight=1, task_type='reasoning', tags=['zh', 'reasoning'], args={'subset_list': ['logic']}),
                         DatasetInfo(name='race', weight=1, task_type='reasoning', tags=['en', 'reasoning']),
                     ]),

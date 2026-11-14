@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
@@ -221,8 +220,8 @@ def test_generation_controls_rejected(config: dict) -> None:
         SystemOneAPI('test', 'https://example.test/v1', config=GenerateConfig(**config))
 
 
-AUDITED = ['mmlu', 'ceval', 'cmmlu', 'mmlu_pro', 'arc', 'gpqa_diamond', 'hellaswag', 'winogrande',
-           'general_mcq', 'musr', 'super_gpqa']
+AUDITED = ['mmlu', 'ceval', 'cmmlu', 'mmlu_pro', 'gpqa_diamond', 'hellaswag', 'winogrande',
+           'general_mcq', 'super_gpqa']
 
 
 @pytest.mark.parametrize('name', AUDITED)
@@ -295,23 +294,6 @@ def test_rounded_large_distribution_is_retained() -> None:
         DecisionAnswer(type='choice', choice='A', probabilities={key: 0 for key in probabilities})
 
 
-def test_anli_round_split_selection(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen = []
-    class Loader:
-        def __init__(self, **kwargs: Any) -> None:
-            seen.append((kwargs['subset'], kwargs['split']))
-
-        def load(self) -> MemoryDataset:
-            return MemoryDataset([])
-
-    adapter = get_benchmark('anli', TaskConfig(model='test'))
-    adapter.load_subset('r3', Loader)
-    adapter.load_fewshot_subset('r2', Loader)
-    assert seen == [('plain_text', 'test_r3'), ('plain_text', 'train_r2')]
-    assert adapter.eval_split == 'test'
-    assert adapter.train_split == 'train'
-
-
 def test_failure_is_excluded_with_execution_coverage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(ModelCache, '_models', {})
     data = tmp_path / 'data'
@@ -341,9 +323,6 @@ def test_failure_is_excluded_with_execution_coverage(tmp_path: Path, monkeypatch
 
 
 NEW_RECORDS = {
-    'anli': {'premise': 'Alice is home.', 'hypothesis': 'Alice is home.', 'label': 0, 'reason': 'SECRET_GOLD'},
-    'boolq': {'passage': 'Paris is in France.', 'question': 'Is Paris in France?', 'answer': True},
-    'banking77': {'text': 'Wrong exchange rate for cash withdrawal.', 'label': 76, 'label_text': 'wrong_exchange_rate_for_cash_withdrawal'},
     'contract_nli': {'premise': 'No disclosure is allowed.', 'hypothesis': 'Disclosure is allowed.', 'label': 0},
     'reward_bench': {'prompt': 'Say hello.', 'chosen': 'Hello!\nA) A line in an answer.', 'rejected': 'Goodbye.\nB) Another line.', 'subset': 'alpacaeval-easy'},
 }

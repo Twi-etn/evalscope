@@ -16,7 +16,6 @@ DEFAULT_TEXT_BENCHMARKS: List[str] = [
     'mmlu',
     'cmmlu',
     'ceval',
-    'arc',
     'math_500',
     'aime24',
     'aime25',

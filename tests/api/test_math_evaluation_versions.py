@@ -10,11 +10,9 @@ from evalscope.api.registry import BENCHMARK_REGISTRY, get_benchmark
 from evalscope.models.mockllm import MockLLM
 
 AFFECTED_BENCHMARKS = (
-    'agieval',
     'aime24',
     'aime25',
     'aime26',
-    'amc',
     'arxivmath',
     'chartqa',
     'cmath',
@@ -22,12 +20,8 @@ AFFECTED_BENCHMARKS = (
     'competition_math',
     'docmath',
     'gsm8k',
-    'gsm8k_indic',
     'gsm8k_v',
     'hipho',
-    'hmmt25',
-    'hmmt26',
-    'hmmt_nov25',
     'imo_answerbench',
     'math_500',
     'math_verse',

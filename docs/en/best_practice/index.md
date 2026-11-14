@@ -21,7 +21,6 @@ qwen3_vl.md
 qwen3_next.md
 gpt_oss.md
 qwen3_coder.md
-t2i_eval.md
 qwen3.md
 eval_qwq.md
 iquiz.md

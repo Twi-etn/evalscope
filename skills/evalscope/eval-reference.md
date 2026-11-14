@@ -16,7 +16,7 @@ Complete parameter reference for `evalscope eval`. All parameters can also be di
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `--datasets` | str (multiple) | (required) | Space-separated list of dataset names (e.g. `gsm8k arc mmlu`) |
+| `--datasets` | str (multiple) | (required) | Space-separated list of dataset names (e.g. `gsm8k mmlu`) |
 | `--dataset-args` | JSON str | `{}` | Per-dataset configuration as JSON |
 | `--dataset-dir` | str | None | Local dataset cache directory |
 | `--dataset-hub` | str | None | Dataset source: `modelscope` or `huggingface` |
@@ -28,7 +28,7 @@ Complete parameter reference for `evalscope eval`. All parameters can also be di
 ```bash
 --dataset-args '{
   "gsm8k": {"few_shot_num": 4, "few_shot_random": false},
-  "arc": {"subset_list": ["ARC-Challenge"]},
+  "mmlu": {"subset_list": ["abstract_algebra"]},
   "ifeval": {"filters": {"remove_until": "</think>"}}
 }'
 ```

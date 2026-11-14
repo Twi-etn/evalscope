@@ -4,20 +4,9 @@
 
 | 数据集名称 | 标准名称 | 任务类别 |
 |------------|----------|----------|
-| `acebench` | [ACEBench](../../benchmarks/acebench.md) | `Agent`, `FunctionCalling`, `MultiTurn` |
-| `agentdojo` | [AgentDojo](../../benchmarks/agentdojo.md) | `Agent`, `FunctionCalling`, `Safety` |
-| `agentharm` | [AgentHarm](../../benchmarks/agentharm.md) | `Agent`, `FunctionCalling`, `Safety` |
-| `agentharm_benign` | [AgentHarm Benign](../../benchmarks/agentharm_benign.md) | `Agent`, `FunctionCalling`, `Safety` |
-| `automation_bench` | [AutomationBench](../../benchmarks/automation_bench.md) | `Agent`, `FunctionCalling`, `MultiTurn` |
 | `bfcl_v3` | [BFCL-v3](../../benchmarks/bfcl_v3.md) | `Agent`, `FunctionCalling` |
 | `bfcl_v4` | [BFCL-v4](../../benchmarks/bfcl_v4.md) | `Agent`, `FunctionCalling` |
 | `browsecomp` | [BrowseComp](../../benchmarks/browsecomp.md) | `Agent`, `Knowledge`, `QA` |
-| `claw_eval` | [Claw-Eval](../../benchmarks/claw_eval.md) | `Agent`, `MultiModal`, `MultiTurn` |
-| `cybench` | [Cybench (Unguided)](../../benchmarks/cybench.md) | `Agent`, `Safety` |
-| `deep_swe` | [DeepSWE](../../benchmarks/deep_swe.md) | `Agent`, `Coding`, `MultiTurn` |
-| `deepsearchqa` | [DeepSearchQA](../../benchmarks/deepsearchqa.md) | `Agent`, `Knowledge`, `QA`, `Retrieval` |
-| `gaia` | [GAIA](../../benchmarks/gaia.md) | `Agent`, `MultiTurn`, `Reasoning` |
-| `gdpval` | [GDPval](../../benchmarks/gdpval.md) | `Agent`, `Knowledge`, `MultiTurn` |
 | `general_fc` | [General-FunctionCalling](../../benchmarks/general_fc.md) | `Agent`, `Custom`, `FunctionCalling` |
 | `job_bench` | [JobBench](../../benchmarks/job_bench.md) | `Agent`, `Knowledge`, `MultiTurn` |
 | `k2_verifier` | [K2-Vendor-Verifier](../../benchmarks/k2_verifier.md) | `Agent`, `FunctionCalling` |
@@ -25,15 +14,8 @@
 | `mcp_atlas` | [MCP-Atlas](../../benchmarks/mcp_atlas.md) | `Agent`, `MultiTurn` |
 | `minimax_verifier` | [MiniMax-Vendor-Verifier](../../benchmarks/minimax_verifier.md) | `Agent`, `FunctionCalling` |
 | `miniwob` | [MiniWoB](../../benchmarks/miniwob.md) | `Agent`, `FunctionCalling`, `MultiModal`, `MultiTurn` |
-| `officeqa` | [OfficeQA](../../benchmarks/officeqa.md) | `Agent`, `Knowledge`, `QA` |
 | `researchrubrics` | [ResearchRubrics](../../benchmarks/researchrubrics.md) | `Agent`, `MultiTurn`, `Reasoning`, `Retrieval` |
 | `skillsbench` | [SkillsBench](../../benchmarks/skillsbench.md) | `Agent`, `MultiTurn` |
-| `swe_atlas_qna` | [SWE-Atlas-QnA](../../benchmarks/swe_atlas_qna.md) | `Agent`, `Coding`, `MultiTurn` |
-| `swe_bench_lite_agentic` | [SWE-bench_Lite_Agentic](../../benchmarks/swe_bench_lite_agentic.md) | `Coding` |
-| `swe_bench_multilingual_agentic` | [SWE-bench_Multilingual_Agentic](../../benchmarks/swe_bench_multilingual_agentic.md) | `Coding` |
-| `swe_bench_pro` | [SWE-bench_Pro](../../benchmarks/swe_bench_pro.md) | `Coding` |
-| `swe_bench_verified_agentic` | [SWE-bench_Verified_Agentic](../../benchmarks/swe_bench_verified_agentic.md) | `Coding` |
-| `swe_bench_verified_mini_agentic` | [SWE-bench_Verified_Mini_Agentic](../../benchmarks/swe_bench_verified_mini_agentic.md) | `Coding` |
 | `tau2_bench` | [τ²-bench](../../benchmarks/tau2_bench.md) | `Agent`, `FunctionCalling`, `Reasoning` |
 | `tau3_bench` | [τ³-bench](../../benchmarks/tau3_bench.md) | `Agent`, `FunctionCalling`, `Reasoning` |
 | `tau_bench` | [τ-bench](../../benchmarks/tau_bench.md) | `Agent`, `FunctionCalling`, `Reasoning` |
@@ -47,20 +29,9 @@
 :hidden:
 :maxdepth: 1
 
-../../benchmarks/acebench.md
-../../benchmarks/agentdojo.md
-../../benchmarks/agentharm.md
-../../benchmarks/agentharm_benign.md
-../../benchmarks/automation_bench.md
 ../../benchmarks/bfcl_v3.md
 ../../benchmarks/bfcl_v4.md
 ../../benchmarks/browsecomp.md
-../../benchmarks/claw_eval.md
-../../benchmarks/cybench.md
-../../benchmarks/deep_swe.md
-../../benchmarks/deepsearchqa.md
-../../benchmarks/gaia.md
-../../benchmarks/gdpval.md
 ../../benchmarks/general_fc.md
 ../../benchmarks/job_bench.md
 ../../benchmarks/k2_verifier.md
@@ -68,15 +39,8 @@
 ../../benchmarks/mcp_atlas.md
 ../../benchmarks/minimax_verifier.md
 ../../benchmarks/miniwob.md
-../../benchmarks/officeqa.md
 ../../benchmarks/researchrubrics.md
 ../../benchmarks/skillsbench.md
-../../benchmarks/swe_atlas_qna.md
-../../benchmarks/swe_bench_lite_agentic.md
-../../benchmarks/swe_bench_multilingual_agentic.md
-../../benchmarks/swe_bench_pro.md
-../../benchmarks/swe_bench_verified_agentic.md
-../../benchmarks/swe_bench_verified_mini_agentic.md
 ../../benchmarks/tau2_bench.md
 ../../benchmarks/tau3_bench.md
 ../../benchmarks/tau_bench.md

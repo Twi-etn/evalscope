@@ -16,7 +16,7 @@ from evalscope.config import TaskConfig
 Case = tuple[str, str, list[dict[str, Any]], str, str]
 
 
-@pytest.fixture(params=['visfactor', 'hallusion_bench', 'acebench'])
+@pytest.fixture(params=['visfactor', 'hallusion_bench'])
 def grouped_case(request: pytest.FixtureRequest) -> Case:
     name = request.param
     if name == 'visfactor':
@@ -26,23 +26,13 @@ def grouped_case(request: pytest.FixtureRequest) -> Case:
             for i in range(2)
         ]
         return name, 'default', records, '{"answer": true}', '{"answer": false}'
-    if name == 'hallusion_bench':
-        records = [
-            dict(question=f'Question {i}', gt_answer='1', category='VD', subcategory='chart',
-                 set_id='0', figure_id='1', question_id=str(i))
-            for i in range(2)
-        ]
-        return name, 'default', records, 'YES', 'NO'
-    category = 'normal_multi_turn_user_adjust'
     records = [
-        dict(id=f'{category}_0_{i}', sub_category=f'data_{category}',
-             question=f'user: Book in Athens. Step {i}.',
-             function=[dict(name='book', description='Book a room.', parameters=dict(
-                 type='object', properties={'city': {'type': 'string'}}, required=['city']))],
-             rubric={'ground_truth': {'book': {'city': 'Athens'}}})
+        dict(question=f'Question {i}', gt_answer='1', category='VD', subcategory='chart',
+             set_id='0', figure_id='1', question_id=str(i))
         for i in range(2)
     ]
-    return name, category, records, "[book(city='Athens')]", "[book(city='Rome')]"
+    return name, 'default', records, 'YES', 'NO'
+
 
 
 def _score_case(
@@ -115,8 +105,6 @@ def test_grouped_repeats_match_independent_runs(grouped_case: Case, mode: str) -
         assert actual['answer'] == (0.75, 4)
     else:
         assert actual['accuracy'] == (0.5, 2)
-        if name == 'acebench':
-            assert actual['process_acc'] == (0.75, 2)
 
 
 def test_all_correct_repeats_count_group_attempts(grouped_case: Case) -> None:
@@ -163,20 +151,6 @@ def test_visfactor_preserves_category_macro_with_unequal_coverage() -> None:
     ]]
     result = _metrics(adapter, 'default', scores)
     assert result['accuracy'] == (pytest.approx((1 / 3 + 1) / 2), 4)
-
-
-def test_acebench_preserves_dialogue_weighted_process_accuracy() -> None:
-    adapter = get_benchmark('acebench', TaskConfig(datasets=['acebench'], repeats=2))
-    scores = [SampleScore(
-        sample_id=index, score=Score(value={'acc': value}), generation_index=generation,
-        sample_metadata={'test_category': 'normal_multi_turn_user_adjust', 'dialogue_id': dialogue},
-    ) for index, (dialogue, generation, value) in enumerate([
-        ('long', 0, 1), ('long', 0, 1), ('long', 1, 1), ('long', 1, 0),
-        ('short', 0, 0), ('short', 1, 1),
-    ])]
-    result = _metrics(adapter, 'normal_multi_turn_user_adjust', scores)
-    assert result['accuracy'] == (0.5, 4)
-    assert result['process_acc'] == (0.625, 4)
 
 
 def test_hallusion_repeats_preserve_category_and_no_figure_rules() -> None:

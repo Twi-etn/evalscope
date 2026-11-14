@@ -113,7 +113,7 @@ Note: Subsequent evaluation processes are based on models started using the vLLM
 
 ### Building Evaluation Sets (Optional)
 
-To comprehensively evaluate the model's capabilities, we can mix the benchmarks already supported by EvalScope to create a comprehensive evaluation set. Below is an example of an evaluation set covering mainstream benchmarks, evaluating the model's coding ability (LiveCodeBench), mathematical ability (AIME2024, AIME2025), knowledge ability (MMLU-Pro, CEVAL), instruction following (IFEval), and more.
+To comprehensively evaluate the model's capabilities, we can mix the benchmarks already supported by EvalScope to create a comprehensive evaluation set. Below is an example of an evaluation set covering mainstream benchmarks, evaluating the model's mathematical ability (AIME2024, AIME2025), knowledge ability (MMLU-Pro, CEVAL), instruction following (IFEval), and more.
 
 Run the following code to automatically download and mix datasets based on the defined schema and save the constructed evaluation set in a local jsonl file. Of course, you can skip this step and directly use the processed data set we placed in the [ModelScope repository](https://modelscope.cn/datasets/evalscope/Qwen3-Test-Collection/summary).
 
@@ -130,9 +130,6 @@ schema = CollectionSchema(name='Qwen3', datasets=[
     CollectionSchema(name='Chinese', datasets=[
         DatasetInfo(name='ceval', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
         DatasetInfo(name='iquiz', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
-    ]),
-    CollectionSchema(name='Code', datasets=[
-        DatasetInfo(name='live_code_bench', weight=1, task_type='code', tags=['en'], args={'few_shot_num': 0, 'subset_list': ['v5_v6'], 'extra_params': {'start_date': '2025-01-01', 'end_date': '2025-04-30'}}),
     ]),
     CollectionSchema(name='Math&Science', datasets=[
         DatasetInfo(name='math_500', weight=1, task_type='math', tags=['en'], args={'few_shot_num': 0}),
@@ -191,7 +188,6 @@ Note: The results below are for 1000 samples, only for testing the evaluation pr
 +-------------+-------------------------+-----------------+---------------+-------+
 |  task_type  |         metric          |  dataset_name   | average_score | count |
 +-------------+-------------------------+-----------------+---------------+-------+
-|    code     |         Pass@1          | live_code_bench |     0.544     |  182  |
 |    exam     |        accuracy         |      ceval      |     0.88      |  125  |
 |    exam     |        accuracy         |      iquiz      |    0.8417     |  120  |
 |    exam     |        accuracy         |    mmlu_pro     |    0.6867     |  83   |
@@ -246,7 +242,6 @@ Output results:
 +-------------+-------------------------+-----------------+---------------+-------+
 |  task_type  |         metric          |  dataset_name   | average_score | count |
 +-------------+-------------------------+-----------------+---------------+-------+
-|    code     |         Pass@1          | live_code_bench |    0.2857     |  182  |
 |    exam     |        accuracy         |      ceval      |     0.808     |  125  |
 |    exam     |        accuracy         |      iquiz      |     0.775     |  120  |
 |    exam     |        accuracy         |    mmlu_pro     |    0.6145     |  83   |

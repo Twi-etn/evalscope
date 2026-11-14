@@ -124,7 +124,7 @@ task_config = TaskConfig(
 1.  在 `generation_config` 中设置 `temperature=0`。
 2.  设置固定的 `seed` 参数。
 
-**Q: 评测 `humaneval` 等代码生成任务时，分数远低于预期？**
+**Q: 评测 `mbpp` 等代码生成任务时，分数远低于预期？**
 
 **A:**
 1.  **检查模型类型**：请使用 Instruct 或 Chat 模型，Base 模型可能因不遵循指令而产生复读等问题。
@@ -152,10 +152,6 @@ judge={'strategy': 'llm_recall', 'models': {
     judge={'strategy': 'llm_recall', 'models': {'model_id': '...', 'api_url': '...', 'api_key': '...'}}
     ```
     `llm_recall` 仅在规则得分不满分时才调用裁判模型，不会带来额外的全量开销。
-
-**Q: 评测 `alpaca_eval` 时报错 `Connection error`？**
-
-**A:** `alpaca_eval` 需要指定一个裁判模型（Judge Model）进行打分。默认使用 OpenAI API，如果未配置相关 Key 会导致连接失败。请通过 `--judge` 指定一个可用的裁判模型。
 
 **Q: 评测中断后，如何从断点处继续？**
 

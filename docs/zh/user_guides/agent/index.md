@@ -6,7 +6,7 @@ EvalScope 提供 **Agent 评测**，允许模型或成品 Agent CLI 在受控的
 
 | 模式 | 适用场景 | 文档 |
 |------|---------|------|
-| **内置 AgentLoop** | 给常规 benchmark(GSM8K、AIME、SWE-bench 等)套上多轮工具调用循环，评测**模型自身**的工具使用能力 | [内置 AgentLoop 模式](native.md) |
+| **内置 AgentLoop** | 给常规 benchmark(GSM8K、AIME 等)套上多轮工具调用循环，评测**模型自身**的工具使用能力 | [内置 AgentLoop 模式](native.md) |
 | **外部 Agent Bridge** | 直接评测 **Claude Code / Codex / OpenCode / Gemini CLI / Hermes / DeepSeek Harness** 等成品 Agent CLI，EvalScope 把 CLI 的 LLM 请求转发到你的评测模型 | [外部 Agent Bridge 模式](bridge.md) |
 
 两种模式都通过 `TaskConfig.agent_config` 配置，一次评测只能选一种。
@@ -36,9 +36,8 @@ Web 仪表盘的整体使用说明(报告对比、预测视图等)请参考 [可
 
 **何时使用 `agent_config`，何时依赖基准内置 AgentLoop?**
 
-- 想让常规基准(GSM8K、AIME、IFEval、HLE 等)变成多轮工具调用形式 → 在 `TaskConfig.agent_config` 设置 [`AgentConfig`](native.md) 或 [`ExternalAgentConfig`](bridge.md)。
-- 评测基于 `AgentLoopAdapter` 的基准（GAIA、ResearchRubrics、SWE-bench agentic、GDPval 等）→ 基准会提供必需工具和环境；显式设置的 `NativeAgentConfig` 可覆盖 `strategy`、`max_steps`、工具和 MCP servers 等循环配置。`dataset_args.extra_params` 只保留各基准自己的构建、过滤等参数。
-- `swe_bench_pro` 等基准会带自己的样本级环境，可与 [外部 Agent Bridge](bridge.md) 组合，留空 `environment` 即可。
+- 想让常规基准(GSM8K、AIME、IFEval 等)变成多轮工具调用形式 → 在 `TaskConfig.agent_config` 设置 [`AgentConfig`](native.md) 或 [`ExternalAgentConfig`](bridge.md)。
+- 评测基于 `AgentLoopAdapter` 的基准（ResearchRubrics、WideSearch 等）→ 基准会提供必需工具和环境；显式设置的 `NativeAgentConfig` 可覆盖 `strategy`、`max_steps`、工具和 MCP servers 等循环配置。`dataset_args.extra_params` 只保留各基准自己的构建、过滤等参数。
 
 其他模式特定的常见问题请见各自子页:[内置 AgentLoop FAQ](native.md#常见问题) · [外部 Agent Bridge FAQ](bridge.md#常见问题)。
 

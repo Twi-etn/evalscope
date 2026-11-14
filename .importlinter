@@ -16,7 +16,7 @@ exclude_type_checking_imports = True
 
 # Benchmarks are plugins loaded on demand via evalscope/benchmarks/_index.json.
 # Nothing in the core may import them back, otherwise touching any core module
-# drags all ~240 adapter modules (and datasets/nltk/openai) into the process.
+# drags every adapter module (and datasets/nltk/openai) into the process.
 [importlinter:contract:core-does-not-import-benchmarks]
 name = core layers must not import benchmark adapters
 type = forbidden
@@ -46,8 +46,6 @@ forbidden_modules =
     evalscope.benchmarks
 ignore_imports =
     evalscope.api.benchmark.meta -> evalscope.metrics.semantics.legacy_identity
-    evalscope.api.benchmark.adapters.text2image_adapter -> evalscope.metrics.semantics
-    evalscope.api.benchmark.adapters.text2image_adapter -> evalscope.metrics.semantics.naming
     evalscope.api.mixin.llm_judge_mixin -> evalscope.metrics
     evalscope.api.mixin.llm_judge_mixin -> evalscope.metrics.semantics.naming
     evalscope.api.metric.scorer -> evalscope.metrics.semantics.naming

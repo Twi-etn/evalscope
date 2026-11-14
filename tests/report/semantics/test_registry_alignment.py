@@ -20,7 +20,6 @@ from typing import Dict, List, Set, Tuple
 import pytest
 
 import evalscope  # noqa: F401  # imported for its registration side effects
-from evalscope.api.benchmark.adapters.text2image_adapter import T2I_REPORT_METRIC_NAMES
 from evalscope.api.metric.semantics import KNOWN_AGGREGATIONS, MetricIdentity
 from evalscope.api.registry import BENCHMARK_REGISTRY, METRIC_REGISTRY
 from evalscope.metrics.semantics.aliases import AliasScope, aliases_in_scope
@@ -32,8 +31,9 @@ from evalscope.metrics.semantics.resolver import get_semantics_resolver
 
 def _canonical_metric_name(registered_name: str) -> str:
     """Canonical report metric name produced by a registered scorer."""
-    if registered_name in T2I_REPORT_METRIC_NAMES:
-        return T2I_REPORT_METRIC_NAMES[registered_name]
+    migrated = migrate_legacy_identity(registered_name, 'identity').name
+    if migrated in METRIC_DEFINITIONS:
+        return migrated
     return canonicalize_producer_identity(registered_name, 'mean').name
 
 

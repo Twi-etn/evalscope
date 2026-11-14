@@ -101,7 +101,7 @@ We can see that the model has strong overall tool calling abilities, but there i
 
 ## Evaluating Qwen3-Instruct Model’s Knowledge and Reasoning Abilities
 
-Below, we use the simple_qa and chinese_simpleqa benchmarks to evaluate the model’s knowledge base, with Qwen2.5-72B used to judge answer correctness. We also use AIME25 to evaluate complex reasoning abilities. Configuration details:
+Below, we use the simple_qa benchmark to evaluate the model’s knowledge base, with Qwen2.5-72B used to judge answer correctness. We also use AIME25 to evaluate complex reasoning abilities. Configuration details:
 
 ```python
 import os
@@ -112,7 +112,7 @@ task_cfg = TaskConfig(
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.getenv('DASHSCOPE_API_KEY'),
     eval_type='openai_api',  # Use API model service
-    datasets=['simple_qa', 'chinese_simpleqa', 'aime25'],
+    datasets=['simple_qa', 'aime25'],
     eval_batch_size=10,
     generation_config={
         'temperature': 0.7,
@@ -154,19 +154,12 @@ It can be seen that the model demonstrates good reasoning abilities and a high l
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
 | qwen3-235b-a22b-instruct-2507 | aime25           | AveragePass@1    | OVERALL              |    30 |  0.6667 | -       |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Chinese Culture      |    20 |  0.65   | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Humanities & Social  |    20 |  1      | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Engineering & Tech   |    20 |  0.8    | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Life, Arts & Culture |    20 |  0.8    | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Society              |    20 |  0.9    | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | Nature & Science     |    20 |  0.8    | default |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
-| qwen3-235b-a22b-instruct-2507 | chinese_simpleqa | is_correct       | OVERALL              |   120 |  0.825  | -       |
 +-------------------------------+------------------+------------------+----------------------+-------+---------+---------+
 | ... (similar for is_incorrect and is_not_attempted) ...
 | qwen3-235b-a22b-instruct-2507 | simple_qa        | is_correct       | default              |    20 |  0.6    | default |
@@ -201,7 +194,7 @@ This guide introduced how to use the EvalScope framework to evaluate the perform
 
 *   **Qwen3-Coder Model**: Evaluated tool calling abilities using the BFCL-v3 benchmark. The model demonstrated strong overall performance, but there is room for improvement in multi-turn and parallel calls.
     
-*   **Qwen3-Instruct Model**: Assessed knowledge and reasoning abilities using the simple_qa, chinese_simpleqa, and AIME25 benchmarks, with outstanding results.
+*   **Qwen3-Instruct Model**: Assessed knowledge and reasoning abilities using the simple_qa and AIME25 benchmarks, with outstanding results.
     
 
 For the complete evaluation process and documentation, please refer to the [official EvalScope documentation](https://evalscope.readthedocs.io/).

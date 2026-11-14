@@ -114,7 +114,7 @@ evalscope perf \
 
 ### 构建评测集合（可选）
 
-为了全面评测模型的各方面能力，我们可以混合EvalScope已支持的benchmark，构建一个全面的评测集合。下面是一个评测集合的例子，覆盖了主流的benchmark，评测了模型的代码能力(LiveCodeBench)、数学能力(AIME2024, AIME2025)、知识能力(MMLU-Pro, CEVAL)、指令遵循(IFEval)等。
+为了全面评测模型的各方面能力，我们可以混合EvalScope已支持的benchmark，构建一个全面的评测集合。下面是一个评测集合的例子，覆盖了主流的benchmark，评测了模型的数学能力(AIME2024, AIME2025)、知识能力(MMLU-Pro, CEVAL)、指令遵循(IFEval)等。
 
 运行如下代码即可根据定义的Schema自动下载并混合数据集，并将构建的评测集合保存在本地的jsonl文件中。当然你也可以跳过这个步骤，直接使用我们放在了[ModelScope仓库](https://modelscope.cn/datasets/evalscope/Qwen3-Test-Collection/summary)中处理好的数据集合。
 
@@ -131,9 +131,6 @@ schema = CollectionSchema(name='Qwen3', datasets=[
     CollectionSchema(name='Chinese', datasets=[
         DatasetInfo(name='ceval', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
         DatasetInfo(name='iquiz', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
-    ]),
-    CollectionSchema(name='Code', datasets=[
-        DatasetInfo(name='live_code_bench', weight=1, task_type='code', tags=['en'], args={'few_shot_num': 0, 'subset_list': ['v5_v6'], 'extra_params': {'start_date': '2025-01-01', 'end_date': '2025-04-30'}}),
     ]),
     CollectionSchema(name='Math&Science', datasets=[
         DatasetInfo(name='math_500', weight=1, task_type='math', tags=['en'], args={'few_shot_num': 0}),
@@ -192,7 +189,6 @@ run_task(task_cfg=task_cfg)
 +-------------+-------------------------+-----------------+---------------+-------+
 |  task_type  |         metric          |  dataset_name   | average_score | count |
 +-------------+-------------------------+-----------------+---------------+-------+
-|    code     |         Pass@1          | live_code_bench |     0.544     |  182  |
 |    exam     |        accuracy         |      ceval      |     0.88      |  125  |
 |    exam     |        accuracy         |      iquiz      |    0.8417     |  120  |
 |    exam     |        accuracy         |    mmlu_pro     |    0.6867     |  83   |
@@ -247,7 +243,6 @@ run_task(task_cfg=task_cfg)
 +-------------+-------------------------+-----------------+---------------+-------+                                                                                                                                                                           
 |  task_type  |         metric          |  dataset_name   | average_score | count |                                                                                                                                                                           
 +-------------+-------------------------+-----------------+---------------+-------+                                                                                                                                                                           
-|    code     |         Pass@1          | live_code_bench |    0.2857     |  182  |                                                                                                                                                                           
 |    exam     |        accuracy         |      ceval      |     0.808     |  125  |
 |    exam     |        accuracy         |      iquiz      |     0.775     |  120  |
 |    exam     |        accuracy         |    mmlu_pro     |    0.6145     |  83   |

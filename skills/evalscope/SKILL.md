@@ -79,7 +79,7 @@ Core command pattern:
 evalscope eval --model Qwen/Qwen2.5-0.5B-Instruct --datasets gsm8k --limit 10
 
 # API endpoint (auto-detects openai_api when --api-url is set)
-evalscope eval --model qwen-plus --datasets gsm8k arc \
+evalscope eval --model qwen-plus --datasets gsm8k \
   --api-url http://localhost:8000/v1/chat/completions --api-key sk-xxx --limit 10
 
 # Anthropic
@@ -155,10 +155,10 @@ evalscope benchmark-info gsm8k --format markdown   # full docs
 
 ## Workflow 6: Sandbox Evaluation
 
-For code-execution benchmarks (HumanEval, MBPP, etc.) with Docker isolation:
+For code-execution benchmarks (MBPP, etc.) with Docker isolation:
 
 ```bash
-evalscope eval --model qwen-plus --datasets humaneval \
+evalscope eval --model qwen-plus --datasets mbpp \
   --api-url http://localhost:8000/v1/chat/completions \
   --sandbox '{"enabled": true, "engine": "docker"}'
 ```
@@ -172,7 +172,7 @@ For up-to-date results: `evalscope benchmark-info --list --tag <TAG>`
 | User Need | Tags | Typical Benchmarks |
 |-----------|------|--------------------|
 | Math / reasoning | Math, Reasoning | gsm8k, math_500, aime24, competition_math |
-| Coding | Coding | humaneval, mbpp, live_code_bench |
+| Coding | Coding | mbpp, mbpp_plus |
 | General knowledge | Knowledge, MCQ | mmlu, ceval, cmmlu, mmlu_pro |
 | Chinese | Chinese | ceval, cmmlu, chinese_simpleqa |
 | Multimodal / vision | MultiModal | mmmu, mm_bench, math_vista |
@@ -182,7 +182,7 @@ For up-to-date results: `evalscope benchmark-info --list --tag <TAG>`
 | Agent | Agent | tau_bench |
 
 Common suites:
-- **General LLM**: `mmlu gsm8k bbh humaneval ifeval`
+- **General LLM**: `mmlu gsm8k mbpp ifeval`
 - **Chinese**: `ceval cmmlu chinese_simpleqa`
 - **Multimodal**: `mmmu mm_bench math_vista mm_star`
 

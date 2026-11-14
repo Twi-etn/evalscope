@@ -6,8 +6,6 @@ aggregators are covered separately in ``tests/metrics/aggregators/test_missing_m
 """
 from typing import Dict, Optional
 
-import pytest
-
 from evalscope.api.metric import SampleScore, Score
 from evalscope.api.registry import get_benchmark
 from evalscope.config import TaskConfig
@@ -73,21 +71,6 @@ def test_mcp_atlas_excludes_unusable_sample() -> None:
     assert result['coverage_score'].num == 1
     assert result['pass_rate'].score == 1.0
     assert result['pass_rate'].num == 1
-
-
-def test_drivelology_averages_each_metric_over_its_own_usable_samples() -> None:
-    adapter = _judge_benchmark('drivel_writing')
-    result = _by_metric(
-        adapter.aggregate_scores([
-            # The rule-based bert_score is always present; the judge_score can be missing.
-            scored({'judge_score': 1.0, 'bert_score': 0.8}, sample_id=1),
-            scored({'bert_score': 0.6}, sample_id=2),
-        ])
-    )
-    assert result['judge_score'].score == 1.0
-    assert result['judge_score'].num == 1
-    assert result['bert_score'].score == pytest.approx(0.7)
-    assert result['bert_score'].num == 2
 
 
 COLLECTION_INFO = {

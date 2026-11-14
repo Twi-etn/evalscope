@@ -13,7 +13,7 @@ pip install -U 'evalscope[service]'
 export DASHSCOPE_API_KEY='<your-bailian-api-key>'
 ```
 
-The following example uses `decision-model-preview` to evaluate five samples each from C-Eval's computer network subset and BANKING77:
+The following example uses `decision-model-preview` to evaluate five samples each from C-Eval's computer network subset and ContractNLI:
 
 ```python
 import os
@@ -25,7 +25,7 @@ run_task(TaskConfig(
     eval_type='systemone_api',
     api_url='https://trial.cn-beijing.maas.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['ceval', 'banking77'],
+    datasets=['ceval', 'contract_nli'],
     dataset_args={
         'ceval': {
             'subset_list': ['computer_network'],
@@ -51,7 +51,7 @@ TypeSafe Jev uses the same evaluation type with a different model, endpoint and 
 export TYPESAFE_API_KEY='<your-typesafe-api-key>'
 ```
 
-The following example evaluates two BoolQ samples:
+The following example evaluates two HellaSwag samples:
 
 ```python
 import os
@@ -63,7 +63,7 @@ run_task(TaskConfig(
     eval_type='systemone_api',
     api_url='https://api.typesafe.ai/v1',
     api_key=os.environ['TYPESAFE_API_KEY'],
-    datasets=['boolq'],
+    datasets=['hellaswag'],
     limit=2,
     eval_batch_size=1,
 ))
@@ -93,14 +93,12 @@ The following existing benchmarks support text single-choice conversion:
 
 | Task | Benchmark names |
 | --- | --- |
-| Knowledge and exams | `mmlu`, `ceval`, `cmmlu`, `mmlu_pro`, `arc`, `gpqa_diamond`, `super_gpqa` |
-| Commonsense and reasoning | `hellaswag`, `winogrande`, `musr` |
-| Reading comprehension and inference | `anli`, `boolq` |
-| Text classification | `banking77`, `contract_nli` |
+| Knowledge and exams | `mmlu`, `ceval`, `cmmlu`, `mmlu_pro`, `gpqa_diamond`, `super_gpqa` |
+| Commonsense and reasoning | `hellaswag`, `winogrande` |
+| Text classification | `contract_nli` |
 | Response preference | `reward_bench` |
 | Custom multiple-choice data | `general_mcq` |
 
-BoolQ also uses two-option Choice by default. To evaluate the probability of yes directly, set its `extra_params={'decision_kind': 'noul'}` within `dataset_args`. In the same `extra_params` dictionary, `decision_threshold` controls the yes/no cutoff and defaults to 0.5.
 
 Native decision benchmarks preserve their question types and scoring rules and use zero-shot evaluation:
 
@@ -114,10 +112,6 @@ Native decision benchmarks preserve their question types and scoring rules and u
 Public datasets default to ModelScope. Use each benchmark's `local_path` for local data or `dataset_revision` to pin a dataset version. EvalScope's current System One integration supports text decisions only, without images, audio, video, multiple-correct questions, agents, tools or LLM judges.
 
 ```{dropdown} Benchmark-specific evaluation rules
-- ARC-C is the `ARC-Challenge` subset of `arc`.
-- ANLI exposes `r1`, `r2` and `r3`, using each round's test split for evaluation and its train split for demonstrations.
-- BoolQ uses the original validation data.
-- BANKING77 retains all 77 intents without candidate pruning.
 - ContractNLI uses full contracts from the `contractnli_b` configuration of `evalscope/contract-nli`. It evaluates three-way classification, without evidence extraction.
 - RewardBench uses v1 filtered data with deterministic response position shuffling. Overall accuracy is weighted by sample count, not by the official leaderboard's category weights.
 - GPQA and SuperGPQA retain fixed demonstrations according to their benchmark rules.
@@ -134,7 +128,7 @@ Results are saved under `outputs/<timestamp>/` by default: `reports/` contains a
 | `ece` | Gap between predicted probabilities and observed event frequencies across probability bins; lower is better |
 | `mae` | Mean absolute difference between probability-weighted Score values and gold scores; lower is better |
 
-Available metrics depend on the question type and benchmark. For example, BANKING77 also reports `macro_f1`, while STS-B uses continuous-score MAE as its primary metric. See the [best practice](../best_practice/decision_evaluation.md) for OpenDecisions composite metrics.
+Available metrics depend on the question type and benchmark. For example, STS-B uses continuous-score MAE as its primary metric. See the [best practice](../best_practice/decision_evaluation.md) for OpenDecisions composite metrics.
 
 Start the Web UI and open `http://127.0.0.1:9000`. Select a report on the evaluation page, then use the prediction browser to inspect predictions, gold answers and probability distributions:
 

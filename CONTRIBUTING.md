@@ -192,9 +192,7 @@ Choose a base class depending on your benchmark type:
 | `AgentAdapter` | Function calling, tool use |
 | `VisionLanguageAdapter` | Image + text (VQA, etc.) |
 | `MultiTurnAdapter` | Multi-turn conversations |
-| `Text2ImageAdapter` | Text-to-image generation |
 | `NERAdapter` | Named entity recognition |
-| `ImageEditAdapter` | Image editing |
 
 **Minimal example** (text QA benchmark):
 

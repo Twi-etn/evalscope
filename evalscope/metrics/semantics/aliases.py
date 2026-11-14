@@ -61,7 +61,9 @@ METRIC_ALIASES: Dict[str, MetricAlias] = {
     # --- exact synonyms, safe for every rewrite ------------------------------------------
     'acc': MetricAlias('accuracy', 'quality.accuracy.ratio', scopes=_EVERY_SCOPE),
     'f1_score': MetricAlias('f1', 'quality.f1.ratio', scopes=_EVERY_SCOPE),
-    'em': MetricAlias('exact_match', 'quality.exact_match.ratio', scopes=_EVERY_SCOPE),
+    'em': MetricAlias(
+        'exact_match', 'quality.exact_match.ratio', scopes=frozenset({AliasScope.READ_OLD, AliasScope.PRODUCER})
+    ),
     # `bert_score` is registered as an alias of the scorer, so the registry lookup survives.
     'bertscore': MetricAlias('bert_score', scopes=frozenset({AliasScope.READ_OLD, AliasScope.PRODUCER})),
     # Snake-casing already turns `F1` into `f1`, so no producer rewrite is needed for it.

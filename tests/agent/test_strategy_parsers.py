@@ -471,63 +471,6 @@ class TestSweBenchToolcallExtractFinalAnswer(unittest.TestCase):
         self.assertNotIn('ContentReasoning', answer)
 
 
-class TestSweBenchAdapterDiffFallback(unittest.TestCase):
-    """Diff-recovery fallback must read ``msg.text``, not ``str(msg.content)``.
-
-    For a reasoning model ``content`` is a list, whose ``str()`` is a non-empty
-    Python repr that ``extract_diff`` passes straight through to the grader.
-    """
-
-    def setUp(self):
-        from evalscope.agent.strategies.swe_bench.swe_bench_backticks import SweBenchBackticksStrategy
-        from evalscope.api.messages.content import ContentReasoning, ContentText
-
-        self.patch = (
-            'diff --git a/foo.py b/foo.py\n'
-            '--- a/foo.py\n'
-            '+++ b/foo.py\n'
-            '@@ -1 +1 @@\n'
-            '-old\n'
-            '+new\n'
-        )
-        # A reasoning model's assistant turn: list content, patch in a text part.
-        self.messages = [
-            ChatMessageAssistant(
-                content=[
-                    ContentReasoning(reasoning='I should emit the diff directly.'),
-                    ContentText(text=self.patch),
-                ],
-                model='test',
-                source='generate',
-            ),
-        ]
-        self.strategy = SweBenchBackticksStrategy()
-
-    def _result(self):
-        return AgentLoopResult(
-            messages=self.messages,
-            final_output=_make_output(text=''),
-            trace=AgentTrace(),
-        )
-
-    def _assert_clean_patch(self, answer: str) -> None:
-        self.assertIn('diff --git a/foo.py', answer)
-        self.assertNotIn('ContentReasoning', answer)
-        self.assertNotIn('ContentText', answer)
-        # A repr escapes newlines; a real patch keeps them.
-        self.assertNotIn('\\n', answer)
-
-    def test_swe_bench_agentic_fallback_recovers_the_patch(self):
-        from evalscope.benchmarks.swe_bench.swe_bench_agentic_adapter import _SWEBenchAgenticAdapterBase
-        adapter = object.__new__(_SWEBenchAgenticAdapterBase)
-        self._assert_clean_patch(adapter._extract_final_answer(self._result(), self.strategy))
-
-    def test_swe_bench_pro_fallback_recovers_the_patch(self):
-        from evalscope.benchmarks.swe_bench_pro.swe_bench_pro_agentic_adapter import SWEBenchProAgenticAdapter
-        adapter = object.__new__(SWEBenchProAgenticAdapter)
-        self._assert_clean_patch(adapter._extract_final_answer(self._result(), self.strategy))
-
-
 # ---------------------------------------------------------------------------
 # _observation.py: pure parsers (returncode reverse-engineering, sentinel,
 # mini-style envelope rendering).

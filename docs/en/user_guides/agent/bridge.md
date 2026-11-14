@@ -7,7 +7,6 @@ Evaluate off-the-shelf agent CLIs such as Claude Code, Codex, OpenCode, Gemini C
 ## When to use
 
 - **Benchmark an off-the-shelf agent CLI on a specific dataset.**
-  e.g. Claude Code's code-fix score on SWE-bench Pro, Codex's tool-use ability on GAIA.
 
 - **Compare the same agent CLI across different backend models.**
   e.g. point claude-code at qwen3-max, deepseek-v3, your own fine-tuned model on the same task set to see which backend best supports agentic workloads.
@@ -83,28 +82,6 @@ Most-tweaked `kwargs` keys (largely shared between claude-code and codex; full l
 Set `ExternalAgentConfig.skills_dir` to a host directory whose child folders contain `SKILL.md` files. EvalScope makes
 those skills available to the wrapped runner before it starts, and adds a short prompt hint when
 `skill_prompt_nudge=True`.
-
-## Example: Claude Code on SWE-bench Pro
-
-Let Claude Code autonomously fix code inside a container; when the sample finishes EvalScope automatically takes `git diff` from the working tree as the final patch.
-
-```python
-task_config = TaskConfig(
-    model='qwen-plus',
-    api_url='...',
-    api_key='...',
-    eval_type='openai_api',
-    datasets=['swe_bench_pro'],
-    limit=3,
-    agent_config=ExternalAgentConfig(
-        framework='claude-code',
-        timeout=1800.0,
-    ),
-)
-run_task(task_config)
-```
-
-`swe_bench_pro` ships its own per-sample Docker environment, so leaving `environment` empty is fine.
 
 ## Prerequisites
 
@@ -247,7 +224,6 @@ The runner creates an isolated `DSH_HOME` with an `evalscope-bridge` provider an
 
 **Evaluation is slow / per-sample timeout**
 
-- `timeout` is the per-sample cap; SWE-bench-style tasks need 1800–3600 seconds.
 - Raise `eval_batch_size` for more parallelism (mind host resources).
 
 (custom-runner)=

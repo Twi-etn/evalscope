@@ -13,7 +13,7 @@ EvalScope 是一个为大模型设计的评测框架，旨在提供简单易用�
 ```bash
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
- --datasets gsm8k arc \
+ --datasets gsm8k \
  --limit 5
 ```
 
@@ -34,7 +34,7 @@ from evalscope.config import TaskConfig
 
 task_cfg = TaskConfig(
     model='Qwen/Qwen2.5-0.5B-Instruct',
-    datasets=['gsm8k', 'arc'],
+    datasets=['gsm8k'],
     limit=5
 )
 
@@ -47,7 +47,7 @@ from evalscope.run import run_task
 
 task_cfg = {
     'model': 'Qwen/Qwen2.5-0.5B-Instruct',
-    'datasets': ['gsm8k', 'arc'],
+    'datasets': ['gsm8k'],
     'limit': 5
 }
 
@@ -61,7 +61,6 @@ run_task(task_cfg=task_cfg)
 model: Qwen/Qwen2.5-0.5B-Instruct
 datasets:
   - gsm8k
-  - arc
 limit: 5
 ```
 ```python
@@ -76,7 +75,7 @@ run_task(task_cfg="config.yaml")
 
 {
     "model": "Qwen/Qwen2.5-0.5B-Instruct",
-    "datasets": ["gsm8k", "arc"],
+    "datasets": ["gsm8k"],
     "limit": 5
 }
 ```
@@ -97,10 +96,6 @@ run_task(task_cfg="config.json")
 │ Model                 │ Dataset   │ Metric     │ Subset        │   Num │ Score   │
 ├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
 │ Qwen2.5-0.5B-Instruct │ gsm8k     │ Accuracy ↑ │ main          │     5 │ 40%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Easy      │     5 │ 80%     │
-├───────────────────────┼───────────┼────────────┼───────────────┼───────┼─────────┤
-│ Qwen2.5-0.5B-Instruct │ arc       │ Accuracy ↑ │ ARC-Challenge │     5 │ 40%     │
 └───────────────────────┴───────────┴────────────┴───────────────┴───────┴─────────┘
 ```
 
@@ -224,7 +219,7 @@ task_cfg = TaskConfig(
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.getenv('DASHSCOPE_API_KEY'),
     eval_type='openai_api',
-    datasets=['chinese_simpleqa'],
+    datasets=['simple_qa'],
     limit=5,
     judge={
         'strategy': 'auto',

@@ -163,7 +163,6 @@ def test_invalid_reference_is_excluded_in_real_adapter(reference: str) -> None:
     ('math_verse', {'question_type':'multi-choice'}, r'\boxed{B}'),
     ('math_verse', {'question_type':'multi-choice'}, 'ANSWER: B'),
     ('cmmu', {'type':'multiple-choice'}, '答案：B'),
-    ('agieval', {'subset':'lsat-ar'}, 'Answer: B'),
 ])
 def test_mixed_benchmarks_keep_categorical_scores(name: Any, metadata: Any, prediction: Any) -> None:
     task_state = state(prediction,'B',metadata, choices=['first','second','third','fourth'])
@@ -250,7 +249,6 @@ def test_tir_numeric_errors_are_excluded(monkeypatch: pytest.MonkeyPatch) -> Non
 @pytest.mark.parametrize(('name', 'metadata'), [
     ('gsm8k', {}), ('aime24', {}), ('docmath', {'answer_type': 'float'}),
     ('olympiad_bench', {'answer_type': 'Expression', 'is_multiple_answer': False}),
-    ('agieval', {'subset': 'math'}), ('agieval', {'subset': 'gaokao-mathcloze'}),
 ])
 def test_invalid_reference_cannot_be_recovered_by_judge(
     name: str, metadata: dict, monkeypatch: pytest.MonkeyPatch,

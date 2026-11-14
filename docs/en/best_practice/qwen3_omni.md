@@ -1,6 +1,6 @@
 # Best Practices for Evaluating the Qwen3-Omni Model
 
-Qwen3-Omni represents the next generation of native multimodal large models, seamlessly handling various input forms such as text, images, audio, and video, while simultaneously generating text and natural voice outputs through real-time streaming responses. In this best practice guide, we will utilize the EvalScope framework to evaluate the [Qwen3-Omni-30B-A3B-Instruct](https://modelscope.cn/models/Qwen/Qwen3-Omni-30B-A3B-Instruct) model, covering both inference performance evaluation and model capability assessment.
+This guide shows how to serve Qwen3-Omni with vLLM, then benchmark inference throughput and latency with EvalScope.
 
 ## Dependency Installation
 
@@ -78,66 +78,6 @@ The output report is as follows:
 
 ![image](https://sail-moe.oss-cn-hangzhou.aliyuncs.com/yunlin/images/evalscope/doc/qwen_omni/eval.png)
 
-## Model Capability Evaluation
-
-Next, we proceed with the model capability evaluation process using OmniBench. OmniBench is a benchmark tool for assessing multimodal models' understanding capabilities across text, image, and audio modalities.
-
-> Note: Subsequent evaluation processes are based on API model services. You can start the model service according to the model inference framework usage steps. Due to a bug in the vLLM framework (as of September 25, 2025) regarding Base64 audio input support, audio input evaluation is temporarily unavailable.
-
-```python
-from evalscope import TaskConfig, run_task
-
-task_cfg = TaskConfig(
-    model='Qwen3-Omni-30B-A3B-Instruct',
-    api_url='http://localhost:8801/v1',
-    api_key='EMPTY',
-    eval_type='openai_api',
-    datasets=[
-        'omni_bench',
-    ],
-    dataset_args={
-        'omni_bench': {
-            'extra_params': {
-                'use_image': True, # Whether to use image input, if False, use text alternative image content.
-                'use_audio': False, # Whether to use audio input, if False, use text alternative audio content.
-                }
-            }
-    },
-    eval_batch_size=1,
-    generation_config={
-        'max_tokens': 10000,  # Maximum number of tokens to generate, recommended to set a large value to avoid output truncation
-        'temperature': 0.0,  # Sampling temperature (recommended value from Qwen report)
-    },
-    limit=100,  # Set to 100 data points for testing
-)
-
-run_task(task_cfg=task_cfg)
-```
-
-The output results are as follows:
-
-> Note: The results below are based on 100 data points, used only for testing the evaluation process. The limit should be removed for formal evaluation.
-
-```
-+-----------------------------+------------+----------+----------+-------+---------+---------+
-| Model                       | Dataset    | Metric   | Subset   |   Num |   Score | Cat.0   |
-+=============================+============+==========+==========+=======+=========+=========+
-| Qwen3-Omni-30B-A3B-Instruct | omni_bench | Accuracy ↑ | default  |   100 |     44% | default |
-+-----------------------------+------------+----------+----------+-------+---------+---------+ 
-```
-
-For more available evaluation datasets, refer to the [Dataset List](https://evalscope.readthedocs.io/zh-cn/latest/get_started/supported_dataset/llm.html).
-
 ## Visualization
 
-EvalScope supports result visualization, allowing you to view the model's specific outputs.
-
-Run the following command to start a Web dashboard:
-
-```shell
-evalscope service
-```
-
-Select the evaluation report, click load, and you can see the model's output results for each question, along with the overall accuracy:
-
-![image](https://sail-moe.oss-cn-hangzhou.aliyuncs.com/yunlin/images/evalscope/doc/qwen_omni/detail.png)
+Run `evalscope service` and open the **Performance** page to inspect request latency, throughput and token usage for the completed run.

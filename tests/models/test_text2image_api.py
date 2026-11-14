@@ -1,22 +1,17 @@
 import base64
-import glob
 import json
-import os
 import threading
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from typing import Any, Iterator
 
 import pytest
 from openai import APIStatusError, BadRequestError, RateLimitError
 
-from evalscope.api.benchmark import BenchmarkMeta, Text2ImageAdapter
-from evalscope.api.dataset import Sample
 from evalscope.api.messages import ContentImage
-from evalscope.api.model import ChatCompletionChoice, GenerateConfig, ModelOutput, get_model, get_model_with_task_config
+from evalscope.api.model import GenerateConfig, get_model, get_model_with_task_config
 from evalscope.config import DEFAULT_IMAGE_GEN_CONFIG, TaskConfig
-from evalscope.constants import EvalType, FileConstants, ModelTask
+from evalscope.constants import EvalType, ModelTask
 from evalscope.utils.uri_utils import data_uri_to_base64
 
 
@@ -126,30 +121,6 @@ def _image_bytes(content: Any) -> bytes:
     assert isinstance(content, ContentImage)
     assert content.image.startswith('data:image/png;base64,')
     return base64.b64decode(data_uri_to_base64(content.image))
-
-
-class _StubModel:
-    name = 'test-image-model'
-
-
-def _t2i_adapter() -> Text2ImageAdapter:
-    return Text2ImageAdapter(
-        benchmark_meta=BenchmarkMeta(name='general_t2i', dataset_id='general_t2i'),
-        task_config=TaskConfig(
-            model='test-image-model',
-            model_task=ModelTask.IMAGE_GENERATION,
-            eval_type=EvalType.TEXT2IMAGE,
-            datasets=['general_t2i'],
-        ),
-    )
-
-
-def _image_output() -> ModelOutput:
-    image_uri = 'data:image/png;base64,' + base64.b64encode(_ImageServiceHandler.image_bytes).decode('utf-8')
-    return ModelOutput(
-        model='test-image-model',
-        choices=[ChatCompletionChoice.from_content(content=[ContentImage(image=image_uri)])],
-    )
 
 
 def test_remote_text2image_uses_openai_compatible_endpoint(caplog: pytest.LogCaptureFixture) -> None:
@@ -533,53 +504,6 @@ def test_image_generation_service_drops_diffusion_defaults() -> None:
     assert task_config.generation_config.width == DEFAULT_IMAGE_GEN_CONFIG['width']
     assert task_config.generation_config.num_inference_steps is None
     assert task_config.generation_config.guidance_scale is None
-
-
-def test_text2image_adapter_saves_data_uri_output(tmp_path: Path) -> None:
-    adapter = _t2i_adapter()
-    output = _image_output()
-    sample = Sample(input='Draw a red dot.', id=1, group_id=0)
-
-    adapter._on_inference_end(_StubModel(), sample, output, str(tmp_path))
-
-    with open(sample.metadata[FileConstants.IMAGE_PATH], 'rb') as f:
-        assert f.read() == _ImageServiceHandler.image_bytes
-
-
-def test_text2image_adapter_saves_concurrently(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    adapter = _t2i_adapter()
-    worker_count = 4
-    barrier = threading.Barrier(worker_count)
-    real_makedirs = os.makedirs
-
-    def synchronized_makedirs(name: str, *args: Any, **kwargs: Any) -> None:
-        # Release every worker into the real call at once, so the shared image directory
-        # is always created by several workers simultaneously rather than by chance.
-        barrier.wait(timeout=10)
-        real_makedirs(name, *args, **kwargs)
-
-    monkeypatch.setattr(
-        'evalscope.api.benchmark.adapters.text2image_adapter.os.makedirs',
-        synchronized_makedirs,
-    )
-    samples = [Sample(input=f'Draw dot {index}.', id=index, group_id=index) for index in range(worker_count)]
-    failures: list[BaseException] = []
-
-    def save(sample: Sample) -> None:
-        try:
-            adapter._on_inference_end(_StubModel(), sample, _image_output(), str(tmp_path))
-        except BaseException as ex:  # noqa: BLE001 - recorded so the assertion can report it
-            failures.append(ex)
-
-    threads = [threading.Thread(target=save, args=(sample, )) for sample in samples]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join(timeout=15)
-
-    assert not failures, failures
-    saved = sorted(glob.glob(os.path.join(str(tmp_path), 'images', '*.png')))
-    assert len(saved) == worker_count
 
 
 def test_local_text2image_still_checks_aigc_dependencies(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,9 +1,7 @@
 """Configured scorers must not share model state or publish unfinished initialization."""
 
-import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from types import ModuleType
 from typing import Any
 
 import pytest
@@ -188,63 +186,3 @@ def test_waiter_recovers_after_concurrent_initialization_failure() -> None:
     assert good is RetryingMetric()
     assert len(attempts) == 2
     assert attempts[0] is not good
-
-
-@pytest.mark.parametrize('order', [('drivel_writing', 'wmt24pp'), ('wmt24pp', 'drivel_writing')])
-def test_native_benchmarks_keep_default_bert_models(
-    monkeypatch: pytest.MonkeyPatch, order: tuple[str, str]
-) -> None:
-    from evalscope.api.dataset import Sample
-    from evalscope.api.evaluator import TaskState
-    from evalscope.api.metric import SampleScore, Score
-    from evalscope.api.model import ModelOutput
-    from evalscope.api.registry import get_benchmark
-    from evalscope.config import TaskConfig
-    from evalscope.metrics.nlp import metrics
-
-    model_scores = {'AI-ModelScope/roberta-large': 0.25, 'AI-ModelScope/xlm-roberta-large': 0.75}
-    loads = []
-
-    class Scalar:
-        def __init__(self, value: float) -> None:
-            self.value = value
-
-        def item(self) -> float:
-            return self.value
-
-    class FakeScorer:
-        def __init__(self, model_id_or_path: str, **kwargs: Any) -> None:
-            self.model_id = model_id_or_path
-            loads.append(model_id_or_path)
-
-        def score(self, predictions: list[str], references: list[str]) -> tuple:
-            return None, None, [Scalar(model_scores[self.model_id]) for _ in predictions]
-
-    # Keep the real metric implementation and benchmark batch/aggregation paths.
-    class FreshBertScore(metrics.BertScore):
-        pass
-
-    scorer_module = ModuleType('evalscope.metrics.nlp.bert_score.scorer')
-    scorer_module.BERTScorer = FakeScorer
-    monkeypatch.setitem(sys.modules, scorer_module.__name__, scorer_module)
-    monkeypatch.setattr(metrics, 'BertScore', FreshBertScore)
-    monkeypatch.setattr(metrics, 'check_import', lambda *args, **kwargs: None)
-    monkeypatch.setattr('evalscope.benchmarks.wmt.wmt24_adapter.check_import', lambda *args, **kwargs: None)
-    for name in (*order, *order):
-        adapter = get_benchmark(name, TaskConfig(model='mock', datasets=[name]))
-        model_args = adapter.get_metric_args('bert_score')
-        # Disable unrelated COMET, BLEU and judge I/O, retaining the real default BERT model.
-        adapter = get_benchmark(name, TaskConfig(model='mock', datasets=[name], dataset_args={name: {
-            'metric_list': [{'bert_score': model_args}], 'primary_metric': 'bert_score',
-        }}))
-        state = TaskState(model='mock', sample=Sample(id=0, input='question', target='reference'),
-                          output=ModelOutput.from_content('mock', 'candidate'), completed=True)
-        scores = adapter.batch_calculate_metrics([state], [SampleScore(sample_id=0, score=Score())])
-        restored = SampleScore.model_validate_json(scores[0].model_dump_json())
-        aggregates = adapter.aggregate_scores([restored])
-        assert restored.score.value['bert_score'] == model_scores[model_args['model_id_or_path']]
-        aggregate = next(item for item in aggregates if item.metric_name == 'bert_score')
-        assert aggregate.score == model_scores[model_args['model_id_or_path']]
-        report = adapter.generate_report({'default': aggregates}, model_name='mock', output_dir='')
-        assert report.score == model_scores[model_args['model_id_or_path']]
-    assert sorted(loads) == sorted(model_scores)

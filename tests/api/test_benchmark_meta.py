@@ -95,7 +95,7 @@ def test_few_shot_capabilities_cannot_be_overridden_at_runtime() -> None:
         meta._update({'few_shot_mode': 'disabled'})
 
 
-@pytest.mark.parametrize('benchmark_name', ['longbench_v2', 'agieval', 'coin_flip', 'general_vmcq', 'zerobench'])
+@pytest.mark.parametrize('benchmark_name', ['longbench_v2', 'general_vmcq', 'zerobench'])
 def test_unsupported_benchmarks_reject_few_shot_before_loading_datasets(benchmark_name: str) -> None:
     with pytest.raises(ValueError, match=f'Benchmark {benchmark_name!r} does not support few-shot'):
         get_benchmark(

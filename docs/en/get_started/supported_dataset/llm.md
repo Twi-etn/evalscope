@@ -4,48 +4,20 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 
 | Benchmark Name | Pretty Name | Task Categories |
 |------------|----------|----------|
-| `aa_lcr` | [AA-LCR](../../benchmarks/aa_lcr.md) | `Knowledge`, `LongContext`, `Reasoning` |
-| `agieval` | [AGIEval](../../benchmarks/agieval.md) | `Knowledge`, `MCQ`, `Math`, `Reasoning` |
 | `aime24` | [AIME-2024](../../benchmarks/aime24.md) | `Math`, `Reasoning` |
 | `aime25` | [AIME-2025](../../benchmarks/aime25.md) | `Math`, `Reasoning` |
 | `aime26` | [AIME-2026](../../benchmarks/aime26.md) | `Math`, `Reasoning` |
-| `alpaca_eval` | [AlpacaEval2.0](../../benchmarks/alpaca_eval.md) | `Arena`, `InstructionFollowing` |
-| `amc` | [AMC](../../benchmarks/amc.md) | `Math`, `Reasoning` |
 | `anat_em` | [AnatEM](../../benchmarks/anat_em.md) | `Knowledge`, `NER` |
-| `anli` | [ANLI](../../benchmarks/anli.md) | `MCQ` |
-| `arc` | [ARC](../../benchmarks/arc.md) | `MCQ`, `Reasoning` |
-| `arc_agi_2` | [ARC-AGI-2](../../benchmarks/arc_agi_2.md) | `Reasoning` |
-| `arc_indic` | [ARC-Challenge-Indic](../../benchmarks/arc_indic.md) | `MCQ`, `MultiLingual`, `Reasoning` |
-| `arena_hard` | [ArenaHard](../../benchmarks/arena_hard.md) | `Arena`, `InstructionFollowing` |
 | `arxivmath` | [ArXiv-Math](../../benchmarks/arxivmath.md) | `Math`, `Reasoning` |
-| `arxivrollbench` | [ArxivRollBench](../../benchmarks/arxivrollbench.md) | `Knowledge`, `MCQ`, `Reasoning` |
-| `arxivrollbench_full` | [ArxivRollBench-Full](../../benchmarks/arxivrollbench_full.md) | `Knowledge`, `MCQ`, `Reasoning` |
-| `banking77` | [BANKING77](../../benchmarks/banking77.md) | `MCQ` |
-| `bbh` | [BBH](../../benchmarks/bbh.md) | `Reasoning` |
 | `bc2gm` | [BC2GM](../../benchmarks/bc2gm.md) | `Knowledge`, `NER` |
 | `bc4chemd` | [BC4CHEMD](../../benchmarks/bc4chemd.md) | `Knowledge`, `NER` |
 | `bc5cdr` | [BC5CDR](../../benchmarks/bc5cdr.md) | `Knowledge`, `NER` |
-| `bhasha_bench_multi_ayur` | [BhashaBench-Multi (Ayurveda)](../../benchmarks/bhasha_bench_multi_ayur.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhasha_bench_multi_finance` | [BhashaBench-Multi (Finance)](../../benchmarks/bhasha_bench_multi_finance.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhasha_bench_multi_krishi` | [BhashaBench-Multi (Krishi)](../../benchmarks/bhasha_bench_multi_krishi.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhasha_bench_multi_legal` | [BhashaBench-Multi (Legal)](../../benchmarks/bhasha_bench_multi_legal.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhashabenchv1_ayur` | [BhashaBench-V1 (Ayurveda)](../../benchmarks/bhashabenchv1_ayur.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhashabenchv1_finance` | [BhashaBench-V1 (Finance)](../../benchmarks/bhashabenchv1_finance.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhashabenchv1_krishi` | [BhashaBench-V1 (Krishi)](../../benchmarks/bhashabenchv1_krishi.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bhashabenchv1_legal` | [BhashaBench-V1 (Legal)](../../benchmarks/bhashabenchv1_legal.md) | `Knowledge`, `MCQ`, `MultiLingual` |
-| `bigcodebench` | [BigCodeBench](../../benchmarks/bigcodebench.md) | `Coding` |
-| `bigcodebench_hard` | [BigCodeBench-Hard](../../benchmarks/bigcodebench_hard.md) | `Coding` |
 | `biomix_qa` | [BioMixQA](../../benchmarks/biomix_qa.md) | `Knowledge`, `MCQ`, `Medical` |
-| `bird_sql` | [BIRD-SQL Mini-Dev](../../benchmarks/bird_sql.md) | `Coding`, `Reasoning` |
-| `boolq` | [BoolQ](../../benchmarks/boolq.md) | `MCQ` |
 | `broad_twitter_corpus` | [BroadTwitterCorpus](../../benchmarks/broad_twitter_corpus.md) | `Knowledge`, `NER` |
 | `ceval` | [C-Eval](../../benchmarks/ceval.md) | `Chinese`, `Knowledge`, `MCQ` |
-| `chinese_simpleqa` | [Chinese-SimpleQA](../../benchmarks/chinese_simpleqa.md) | `Chinese`, `Knowledge`, `QA` |
 | `cl_bench` | [CL-bench](../../benchmarks/cl_bench.md) | `InstructionFollowing`, `Reasoning` |
-| `cluewsc` | [CLUEWSC](../../benchmarks/cluewsc.md) | `Chinese`, `MCQ`, `Reasoning` |
 | `cmath` | [CMATH](../../benchmarks/cmath.md) | `Chinese`, `Math`, `Reasoning` |
 | `cmmlu` | [C-MMLU](../../benchmarks/cmmlu.md) | `Chinese`, `Knowledge`, `MCQ` |
-| `coin_flip` | [CoinFlip](../../benchmarks/coin_flip.md) | `Reasoning`, `Yes/No` |
 | `commonsense_qa` | [CommonsenseQA](../../benchmarks/commonsense_qa.md) | `Commonsense`, `MCQ`, `Reasoning` |
 | `competition_math` | [Competition-MATH](../../benchmarks/competition_math.md) | `Math`, `Reasoning` |
 | `conll2003` | [CoNLL2003](../../benchmarks/conll2003.md) | `Knowledge`, `NER` |
@@ -55,16 +27,8 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `cross_ner` | [CrossNER](../../benchmarks/cross_ner.md) | `Knowledge`, `NER` |
 | `data_collection` | [Data-Collection](../../benchmarks/data_collection.md) | `Custom` |
 | `docmath` | [DocMath](../../benchmarks/docmath.md) | `LongContext`, `Math`, `Reasoning` |
-| `drivel_binary` | [DrivelologyBinaryClassification](../../benchmarks/drivel_binary.md) | `Yes/No` |
-| `drivel_multilabel` | [DrivelologyMultilabelClassification](../../benchmarks/drivel_multilabel.md) | `MCQ` |
-| `drivel_selection` | [DrivelologyNarrativeSelection](../../benchmarks/drivel_selection.md) | `MCQ` |
-| `drivel_writing` | [DrivelologyNarrativeWriting](../../benchmarks/drivel_writing.md) | `Knowledge`, `Reasoning` |
-| `drop` | [DROP](../../benchmarks/drop.md) | `Reasoning` |
-| `ds1000` | [DS-1000](../../benchmarks/ds1000.md) | `Coding` |
 | `eq_bench` | [EQ-Bench](../../benchmarks/eq_bench.md) | `InstructionFollowing` |
 | `fin_ner` | [FinNER](../../benchmarks/fin_ner.md) | `Knowledge`, `NER` |
-| `finqa` | [FinQA](../../benchmarks/finqa.md) | `Math`, `QA`, `Reasoning` |
-| `frames` | [FRAMES](../../benchmarks/frames.md) | `LongContext`, `Reasoning` |
 | `general_arena` | [GeneralArena](../../benchmarks/general_arena.md) | `Arena`, `Custom` |
 | `general_decision` | [General Decision](../../benchmarks/general_decision.md) | `Custom`, `Decision` |
 | `general_mcq` | [General-MCQ](../../benchmarks/general_mcq.md) | `Custom`, `MCQ` |
@@ -72,30 +36,18 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `genia_ner` | [GeniaNER](../../benchmarks/genia_ner.md) | `Knowledge`, `NER` |
 | `gpqa_diamond` | [GPQA-Diamond](../../benchmarks/gpqa_diamond.md) | `Knowledge`, `MCQ` |
 | `gsm8k` | [GSM8K](../../benchmarks/gsm8k.md) | `Math`, `Reasoning` |
-| `gsm8k_indic` | [GSM8K-Indic](../../benchmarks/gsm8k_indic.md) | `Math`, `MultiLingual`, `Reasoning` |
 | `halueval` | [HaluEval](../../benchmarks/halueval.md) | `Hallucination`, `Knowledge`, `Yes/No` |
 | `harvey_ner` | [HarveyNER](../../benchmarks/harvey_ner.md) | `Knowledge`, `NER` |
-| `health_bench` | [HealthBench](../../benchmarks/health_bench.md) | `Knowledge`, `Medical`, `QA` |
 | `hellaswag` | [HellaSwag](../../benchmarks/hellaswag.md) | `Commonsense`, `Knowledge`, `MCQ` |
 | `hellaswag_hi` | [HellaSwag-Hindi](../../benchmarks/hellaswag_hi.md) | `MCQ`, `Reasoning` |
-| `hle` | [Humanity's-Last-Exam](../../benchmarks/hle.md) | `Knowledge`, `QA` |
-| `hmmt25` | [HMMT25](../../benchmarks/hmmt25.md) | `Math`, `Reasoning` |
-| `hmmt26` | [HMMT26](../../benchmarks/hmmt26.md) | `Math`, `Reasoning` |
-| `hmmt_nov25` | [HMMT-Nov-2025](../../benchmarks/hmmt_nov25.md) | `Math`, `Reasoning` |
-| `humaneval` | [HumanEval](../../benchmarks/humaneval.md) | `Coding` |
-| `humaneval_plus` | [HumanEvalPlus](../../benchmarks/humaneval_plus.md) | `Coding` |
 | `ifbench` | [IFBench](../../benchmarks/ifbench.md) | `InstructionFollowing` |
 | `ifeval` | [IFEval](../../benchmarks/ifeval.md) | `InstructionFollowing` |
 | `imo_answerbench` | [IMO-AnswerBench](../../benchmarks/imo_answerbench.md) | `Math`, `Reasoning` |
-| `indic_boolq` | [BoolQ-Indic](../../benchmarks/indic_boolq.md) | `MCQ`, `MultiLingual`, `ReadingComprehension` |
-| `indic_param` | [IndicParam](../../benchmarks/indic_param.md) | `Knowledge`, `MCQ`, `MultiLingual` |
 | `iquiz` | [IQuiz](../../benchmarks/iquiz.md) | `Chinese`, `Knowledge`, `MCQ` |
 | `jevbench` | [JevBench public subset](../../benchmarks/jevbench.md) | `Decision` |
 | `jnlpba` | [JNLPBA](../../benchmarks/jnlpba.md) | `Knowledge`, `NER` |
 | `jnlpba_rare` | [JNLPBA-Rare](../../benchmarks/jnlpba_rare.md) | `Knowledge`, `NER` |
 | `kina` | [KINA](../../benchmarks/kina.md) | `Knowledge`, `MCQ` |
-| `lawbench` | [LawBench](../../benchmarks/lawbench.md) | `Knowledge`, `QA`, `Reasoning` |
-| `live_code_bench` | [Live-Code-Bench](../../benchmarks/live_code_bench.md) | `Coding` |
 | `locomo` | [LoCoMo](../../benchmarks/locomo.md) | `LongContext`, `MultiTurn`, `QA` |
 | `logi_qa` | [LogiQA](../../benchmarks/logi_qa.md) | `MCQ`, `Reasoning` |
 | `longbench_v2` | [LongBench-v2](../../benchmarks/longbench_v2.md) | `LongContext`, `MCQ`, `ReadingComprehension` |
@@ -107,7 +59,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `math_qa` | [MathQA](../../benchmarks/math_qa.md) | `MCQ`, `Math`, `Reasoning` |
 | `mbpp` | [MBPP](../../benchmarks/mbpp.md) | `Coding` |
 | `mbpp_plus` | [MBPP-Plus](../../benchmarks/mbpp_plus.md) | `Coding` |
-| `med_mcqa` | [Med-MCQA](../../benchmarks/med_mcqa.md) | `Knowledge`, `MCQ` |
 | `mgsm` | [MGSM](../../benchmarks/mgsm.md) | `Math`, `MultiLingual`, `Reasoning` |
 | `milu` | [MILU](../../benchmarks/milu.md) | `Knowledge`, `MCQ`, `MultiLingual` |
 | `minerva_math` | [Minerva-Math](../../benchmarks/minerva_math.md) | `Math`, `Reasoning` |
@@ -123,11 +74,8 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `multi_nerd` | [MultiNERD](../../benchmarks/multi_nerd.md) | `Knowledge`, `NER` |
 | `multiple_humaneval` | [MultiPL-E HumanEval](../../benchmarks/multiple_humaneval.md) | `Coding` |
 | `multiple_mbpp` | [MultiPL-E MBPP](../../benchmarks/multiple_mbpp.md) | `Coding` |
-| `music_trivia` | [MusicTrivia](../../benchmarks/music_trivia.md) | `Knowledge`, `MCQ` |
-| `musr` | [MuSR](../../benchmarks/musr.md) | `MCQ`, `Reasoning` |
 | `ncbi` | [NCBI](../../benchmarks/ncbi.md) | `Knowledge`, `NER` |
 | `needle_haystack` | [Needle-in-a-Haystack](../../benchmarks/needle_haystack.md) | `LongContext`, `Retrieval` |
-| `one_million_bench` | [$OneMillion-Bench](../../benchmarks/one_million_bench.md) | `Agent`, `Knowledge`, `MultiLingual`, `QA`, `Reasoning` |
 | `ontonotes5` | [OntoNotes5](../../benchmarks/ontonotes5.md) | `Knowledge`, `NER` |
 | `open_decisions` | [OpenDecisions](../../benchmarks/open_decisions.md) | `Decision` |
 | `openai_mrcr` | [OpenAI MRCR](../../benchmarks/openai_mrcr.md) | `LongContext`, `Retrieval` |
@@ -147,18 +95,13 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `salad_bench` | [SALAD-Bench](../../benchmarks/salad_bench.md) | `QA`, `Safety` |
 | `salad_bench_mcq` | [SALAD-Bench MCQ](../../benchmarks/salad_bench_mcq.md) | `MCQ`, `Safety` |
 | `sanskriti` | [Sanskriti](../../benchmarks/sanskriti.md) | `Knowledge`, `MCQ` |
-| `scicode` | [SciCode](../../benchmarks/scicode.md) | `Coding` |
 | `sciq` | [SciQ](../../benchmarks/sciq.md) | `Knowledge`, `MCQ`, `ReadingComprehension` |
-| `seed_tts_eval` | [Seed-TTS-Eval](../../benchmarks/seed_tts_eval.md) | `Audio`, `TextToSpeech` |
 | `simple_qa` | [SimpleQA](../../benchmarks/simple_qa.md) | `Knowledge`, `QA` |
 | `siqa` | [SIQA](../../benchmarks/siqa.md) | `Commonsense`, `MCQ`, `Reasoning` |
 | `sleight_bench` | [SLEIGHT-Bench](../../benchmarks/sleight_bench.md) | `Agent`, `Safety` |
 | `sparc` | [SPaRC](../../benchmarks/sparc.md) | `Reasoning` |
 | `stsb` | [STS-B Decision](../../benchmarks/stsb.md) | `Decision` |
 | `super_gpqa` | [SuperGPQA](../../benchmarks/super_gpqa.md) | `Knowledge`, `MCQ` |
-| `swe_bench_lite` | [SWE-bench_Lite](../../benchmarks/swe_bench_lite.md) | `Coding` |
-| `swe_bench_verified` | [SWE-bench_Verified](../../benchmarks/swe_bench_verified.md) | `Coding` |
-| `swe_bench_verified_mini` | [SWE-bench_Verified_mini](../../benchmarks/swe_bench_verified_mini.md) | `Coding` |
 | `tablebench` | [TableBench](../../benchmarks/tablebench.md) | `QA`, `Reasoning` |
 | `tat_qa` | [TAT-QA](../../benchmarks/tat_qa.md) | `Math`, `QA`, `Reasoning` |
 | `tool_bench` | [ToolBench-Static](../../benchmarks/tool_bench.md) | `FunctionCalling`, `Reasoning` |
@@ -177,48 +120,20 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 :hidden:
 :maxdepth: 1
 
-../../benchmarks/aa_lcr.md
-../../benchmarks/agieval.md
 ../../benchmarks/aime24.md
 ../../benchmarks/aime25.md
 ../../benchmarks/aime26.md
-../../benchmarks/alpaca_eval.md
-../../benchmarks/amc.md
 ../../benchmarks/anat_em.md
-../../benchmarks/anli.md
-../../benchmarks/arc.md
-../../benchmarks/arc_agi_2.md
-../../benchmarks/arc_indic.md
-../../benchmarks/arena_hard.md
 ../../benchmarks/arxivmath.md
-../../benchmarks/arxivrollbench.md
-../../benchmarks/arxivrollbench_full.md
-../../benchmarks/banking77.md
-../../benchmarks/bbh.md
 ../../benchmarks/bc2gm.md
 ../../benchmarks/bc4chemd.md
 ../../benchmarks/bc5cdr.md
-../../benchmarks/bhasha_bench_multi_ayur.md
-../../benchmarks/bhasha_bench_multi_finance.md
-../../benchmarks/bhasha_bench_multi_krishi.md
-../../benchmarks/bhasha_bench_multi_legal.md
-../../benchmarks/bhashabenchv1_ayur.md
-../../benchmarks/bhashabenchv1_finance.md
-../../benchmarks/bhashabenchv1_krishi.md
-../../benchmarks/bhashabenchv1_legal.md
-../../benchmarks/bigcodebench.md
-../../benchmarks/bigcodebench_hard.md
 ../../benchmarks/biomix_qa.md
-../../benchmarks/bird_sql.md
-../../benchmarks/boolq.md
 ../../benchmarks/broad_twitter_corpus.md
 ../../benchmarks/ceval.md
-../../benchmarks/chinese_simpleqa.md
 ../../benchmarks/cl_bench.md
-../../benchmarks/cluewsc.md
 ../../benchmarks/cmath.md
 ../../benchmarks/cmmlu.md
-../../benchmarks/coin_flip.md
 ../../benchmarks/commonsense_qa.md
 ../../benchmarks/competition_math.md
 ../../benchmarks/conll2003.md
@@ -228,16 +143,8 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/cross_ner.md
 ../../benchmarks/data_collection.md
 ../../benchmarks/docmath.md
-../../benchmarks/drivel_binary.md
-../../benchmarks/drivel_multilabel.md
-../../benchmarks/drivel_selection.md
-../../benchmarks/drivel_writing.md
-../../benchmarks/drop.md
-../../benchmarks/ds1000.md
 ../../benchmarks/eq_bench.md
 ../../benchmarks/fin_ner.md
-../../benchmarks/finqa.md
-../../benchmarks/frames.md
 ../../benchmarks/general_arena.md
 ../../benchmarks/general_decision.md
 ../../benchmarks/general_mcq.md
@@ -245,30 +152,18 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/genia_ner.md
 ../../benchmarks/gpqa_diamond.md
 ../../benchmarks/gsm8k.md
-../../benchmarks/gsm8k_indic.md
 ../../benchmarks/halueval.md
 ../../benchmarks/harvey_ner.md
-../../benchmarks/health_bench.md
 ../../benchmarks/hellaswag.md
 ../../benchmarks/hellaswag_hi.md
-../../benchmarks/hle.md
-../../benchmarks/hmmt25.md
-../../benchmarks/hmmt26.md
-../../benchmarks/hmmt_nov25.md
-../../benchmarks/humaneval.md
-../../benchmarks/humaneval_plus.md
 ../../benchmarks/ifbench.md
 ../../benchmarks/ifeval.md
 ../../benchmarks/imo_answerbench.md
-../../benchmarks/indic_boolq.md
-../../benchmarks/indic_param.md
 ../../benchmarks/iquiz.md
 ../../benchmarks/jevbench.md
 ../../benchmarks/jnlpba.md
 ../../benchmarks/jnlpba_rare.md
 ../../benchmarks/kina.md
-../../benchmarks/lawbench.md
-../../benchmarks/live_code_bench.md
 ../../benchmarks/locomo.md
 ../../benchmarks/logi_qa.md
 ../../benchmarks/longbench_v2.md
@@ -280,7 +175,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/math_qa.md
 ../../benchmarks/mbpp.md
 ../../benchmarks/mbpp_plus.md
-../../benchmarks/med_mcqa.md
 ../../benchmarks/mgsm.md
 ../../benchmarks/milu.md
 ../../benchmarks/minerva_math.md
@@ -296,11 +190,8 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/multi_nerd.md
 ../../benchmarks/multiple_humaneval.md
 ../../benchmarks/multiple_mbpp.md
-../../benchmarks/music_trivia.md
-../../benchmarks/musr.md
 ../../benchmarks/ncbi.md
 ../../benchmarks/needle_haystack.md
-../../benchmarks/one_million_bench.md
 ../../benchmarks/ontonotes5.md
 ../../benchmarks/open_decisions.md
 ../../benchmarks/openai_mrcr.md
@@ -320,18 +211,13 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/salad_bench.md
 ../../benchmarks/salad_bench_mcq.md
 ../../benchmarks/sanskriti.md
-../../benchmarks/scicode.md
 ../../benchmarks/sciq.md
-../../benchmarks/seed_tts_eval.md
 ../../benchmarks/simple_qa.md
 ../../benchmarks/siqa.md
 ../../benchmarks/sleight_bench.md
 ../../benchmarks/sparc.md
 ../../benchmarks/stsb.md
 ../../benchmarks/super_gpqa.md
-../../benchmarks/swe_bench_lite.md
-../../benchmarks/swe_bench_verified.md
-../../benchmarks/swe_bench_verified_mini.md
 ../../benchmarks/tablebench.md
 ../../benchmarks/tat_qa.md
 ../../benchmarks/tool_bench.md

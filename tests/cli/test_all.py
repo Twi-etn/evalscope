@@ -19,39 +19,28 @@ datasets=[
     'ifeval',
     'mmlu',
     'mmlu_pro',
-    'musr',
     'process_bench',
     'race',
     # 'trivia_qa',
     'cmmlu',
-    'humaneval',
     'gsm8k',
-    'bbh',
     'competition_math',
     'math_500',
     'aime24',
     'gpqa_diamond',
-    'arc',
     'ceval',
     'hellaswag',
     'general_mcq',
     'general_qa',
     'super_gpqa',
-    # 'live_code_bench',
     'mmlu_redux',
     'simple_qa',
-    'chinese_simpleqa',
-    'alpaca_eval',
-    'arena_hard',
     'maritime_bench',
-    'drop',
     'winogrande',
     'tool_bench',
-    'frames',
     'docmath',
     'needle_haystack',
     # 'bfcl_v3',
-    'hle',
     'tau_bench',
     'chartqa',
 ]
@@ -78,9 +67,6 @@ dataset_args={
         'subset_list': ['elementary_chinese'],
         'few_shot_num': 0
     },
-    'bbh': {
-        'subset_list': ['word_sorting', 'movie_recommendation'],
-    },
     'gpqa_diamond': {
         'few_shot_num': 0,
     },
@@ -92,9 +78,6 @@ dataset_args={
     },
     'process_bench': {
         'subset_list': ['gsm8k'],
-    },
-    'musr': {
-        'subset_list': ['murder_mysteries']
     },
     'general_mcq': {
         'local_path': 'custom_eval/text/mcq',  # 自定义数据集路径
@@ -113,16 +96,6 @@ dataset_args={
         'subset_list': ['Philosophy', 'Education'],
         'few_shot_num': 0
     },
-    'live_code_bench': {
-        'subset_list': ['v4_v5'],
-        'extra_params': {
-            'start_date': '2024-12-01',
-            'end_date': '2025-01-01'
-        },
-    },
-    'chinese_simpleqa': {
-        'subset_list': ['中华文化']
-    },
     'mmlu_redux':{
         'subset_list': ['abstract_algebra']
     },
@@ -131,9 +104,6 @@ dataset_args={
     },
     'bfcl_v3':{
         'subset_list': ['simple', 'multiple']
-    },
-    'hle': {
-        'subset_list': ['Math', 'Other'],
     },
     'tau_bench': {
         'extra_params': {
