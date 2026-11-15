@@ -1,10 +1,11 @@
 """Local-file benchmarks must honor the configured dataset shuffle seed."""
 
-import json
 import random
 from collections.abc import Iterator
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.registry import get_benchmark
@@ -29,9 +30,7 @@ def qa_directory(tmp_path: Path) -> Path:
         }
         for index in range(20)
     ]
-    (tmp_path / 'default_test.jsonl').write_text(
-        '\n'.join(json.dumps(row) for row in rows) + '\n', encoding='utf-8'
-    )
+    pq.write_table(pa.Table.from_pylist(rows), tmp_path / 'default_test.parquet')
     return tmp_path
 
 
@@ -75,3 +74,26 @@ def test_local_file_none_seed_preserves_global_random_behavior(qa_directory: Pat
     random.seed(123)
 
     assert load_targets(qa_directory, None) == expected[:5]
+
+
+def test_native_loader_pins_and_records_lance_versions(tmp_path: Path) -> None:
+    lance = pytest.importorskip('lance')
+    from evalscope.evaluation_versioning import ResolvedBenchmarkSpec
+
+    path = tmp_path / 'default_test.lance'
+    lance.write_dataset(pa.table({'question': ['Q'], 'answer': ['first']}), path)
+    config = TaskConfig(datasets=['general_qa'], dataset_args={'general_qa': {'local_path': str(tmp_path)}})
+    adapter = get_benchmark('general_qa', config)
+
+    assert ResolvedBenchmarkSpec.from_adapter(adapter, config).dataset_versions == {str(path): 1}
+    lance.write_dataset(pa.table({'question': ['Q'], 'answer': ['second']}), path, mode='overwrite')
+
+    assert adapter.load_dataset()['default'][0].target == 'first'
+    latest = get_benchmark('general_qa', config)
+    assert ResolvedBenchmarkSpec.from_adapter(latest, config).dataset_versions == {str(path): 2}
+    assert latest.load_dataset()['default'][0].target == 'second'
+
+    config.dataset_args['general_qa']['dataset_revision'] = 1
+    pinned = get_benchmark('general_qa', config)
+    assert ResolvedBenchmarkSpec.from_adapter(pinned, config).dataset_versions == {str(path): 1}
+    assert pinned.load_dataset()['default'][0].target == 'first'

@@ -286,12 +286,22 @@ def test_cache_mismatch_is_rejected_before_snapshot_is_overwritten(tmp_path) -> 
     assert sources['demo'].fingerprint == previous.benchmarks['demo'].fingerprint
 
 
-def test_native_cache_identity_blocks_mismatched_run_before_snapshot_overwrite(tmp_path) -> None:
+@pytest.fixture
+def mcq_path(tmp_path):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    path = tmp_path / 'example_val.parquet'
+    pq.write_table(pa.Table.from_pylist([{'question': 'Pick A', 'A': 'yes', 'B': 'no', 'answer': 'A'}]), path)
+    return path
+
+
+def test_native_cache_identity_blocks_mismatched_run_before_snapshot_overwrite(tmp_path, mcq_path) -> None:
     base = {
         'model': 'mock-model',
         'eval_type': 'mock_llm',
         'datasets': ['general_mcq'],
-        'dataset_args': {'general_mcq': {'local_path': 'custom_eval/text/mcq', 'subset_list': ['example']}},
+        'dataset_args': {'general_mcq': {'local_path': str(mcq_path), 'subset_list': ['example']}},
         'limit': 1,
         'no_timestamp': True,
         'work_dir': str(tmp_path),
@@ -302,7 +312,7 @@ def test_native_cache_identity_blocks_mismatched_run_before_snapshot_overwrite(t
     snapshot_path = tmp_path / 'configs' / 'task_config.yaml'
     snapshot = snapshot_path.read_text()
     assert 'evaluation_identity:' in snapshot
-    assert 'local_path: custom_eval/text/mcq' in snapshot
+    assert f'local_path: {mcq_path}' in snapshot
 
     with pytest.raises(ValueError, match='Cached evaluation identity does not match'):
         run_task(TaskConfig(**base, use_cache=str(tmp_path), generation_config={'temperature': 0.7}))
@@ -310,12 +320,12 @@ def test_native_cache_identity_blocks_mismatched_run_before_snapshot_overwrite(t
     assert snapshot_path.read_text() == snapshot
 
 
-def test_native_rerun_review_records_the_prediction_source(tmp_path) -> None:
+def test_native_rerun_review_records_the_prediction_source(tmp_path, mcq_path) -> None:
     base = {
         'model': 'mock-model',
         'eval_type': 'mock_llm',
         'datasets': ['general_mcq'],
-        'dataset_args': {'general_mcq': {'local_path': 'custom_eval/text/mcq', 'subset_list': ['example']}},
+        'dataset_args': {'general_mcq': {'local_path': str(mcq_path), 'subset_list': ['example']}},
         'limit': 1,
         'no_timestamp': True,
         'work_dir': str(tmp_path),

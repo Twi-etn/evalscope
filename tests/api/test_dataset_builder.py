@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Dict
+from typing import Any, Dict
 
 import pytest
 
@@ -8,9 +8,8 @@ from evalscope.api.dataset import (
     Sample,
     build_dataset_dict_from_record_map,
     build_dataset_from_records,
-    builder,
     load_local_file_dataset,
-    resolve_snapshot_or_local_path,
+    resolve_local_dataset_path,
 )
 from evalscope.config import TaskConfig
 
@@ -111,12 +110,12 @@ def make_adapter(dataset_id: str) -> DummyAdapter:
 
 
 @pytest.mark.parametrize('allow_local_file', [False, True])
-def test_resolve_snapshot_or_local_path_uses_adapter_hub(tmp_path, allow_local_file: bool) -> None:
+def test_resolve_local_dataset_directory(tmp_path, allow_local_file: bool) -> None:
     dataset_dir = tmp_path / 'dataset'
     dataset_dir.mkdir()
     adapter = make_adapter(str(dataset_dir))
 
-    assert resolve_snapshot_or_local_path(adapter, allow_local_file=allow_local_file) == str(dataset_dir.resolve())
+    assert resolve_local_dataset_path(adapter, allow_local_file=allow_local_file) == str(dataset_dir.resolve())
 
 
 def test_resolve_local_file_requires_explicit_opt_in(tmp_path) -> None:
@@ -125,87 +124,32 @@ def test_resolve_local_file_requires_explicit_opt_in(tmp_path) -> None:
     adapter = make_adapter(str(path))
 
     with pytest.raises(FileNotFoundError, match='Local dataset directory was not found'):
-        resolve_snapshot_or_local_path(adapter)
-    assert resolve_snapshot_or_local_path(adapter, allow_local_file=True) == str(path.resolve())
+        resolve_local_dataset_path(adapter)
+    assert resolve_local_dataset_path(adapter, allow_local_file=True) == str(path.resolve())
 
 
 def test_resolve_missing_local_path_with_file_opt_in(tmp_path) -> None:
     adapter = make_adapter(str(tmp_path / 'missing.jsonl'))
-    adapter.dataset_hub = 'local'
     with pytest.raises(FileNotFoundError, match='missing.jsonl'):
-        resolve_snapshot_or_local_path(adapter, allow_local_file=True)
+        resolve_local_dataset_path(adapter, allow_local_file=True)
 
 
-@pytest.mark.parametrize('allow_local_file', [False, True])
-def test_resolve_snapshot_passes_effective_revision(monkeypatch, allow_local_file: bool) -> None:
-    captured: Dict[str, Any] = {}
-
-    class CapturingDatasetHub:
-        def __init__(self, **kwargs: Any) -> None:
-            captured.update(kwargs)
-
-        def download_snapshot(self, allow_file_pattern=None) -> str:
-            captured['allow_file_pattern'] = allow_file_pattern
-            return '/tmp/snapshot'
-
-    adapter = DummyAdapter(
-        benchmark_meta=BenchmarkMeta(
-            name='dummy',
-            dataset_id='ms/data',
-            hf_dataset_id='hf/data',
-            hf_dataset_revision='hf-revision',
-            eval_split='test',
-        ),
-        task_config=TaskConfig(datasets=['dummy'], dataset_hub='huggingface'),
-    )
-    monkeypatch.setattr(builder, 'DatasetHub', CapturingDatasetHub)
-
-    assert resolve_snapshot_or_local_path(
-        adapter, allow_file_pattern='data/*', allow_local_file=allow_local_file,
-    ) == '/tmp/snapshot'
-    assert captured['data_id_or_path'] == 'hf/data'
-    assert captured['data_source'] == 'huggingface'
-    assert captured['revision'] == 'hf-revision'
-    assert captured['allow_file_pattern'] == 'data/*'
 
 
-def test_load_local_file_dataset_passes_loader_args(monkeypatch) -> None:
-    captured: Dict[str, Any] = {}
+def test_load_local_file_dataset_uses_explicit_reader(tmp_path) -> None:
+    from evalscope.utils.io_utils import jsonl_to_list
 
-    class CapturingLocalDataLoader:
-        latest_kwargs: ClassVar[Dict[str, Any]] = {}
-
-        def __init__(self, **kwargs: Any) -> None:
-            captured.update(kwargs)
-
-        def load(self) -> MemoryDataset:
-            return MemoryDataset([Sample(input='ok')], name='loaded')
-
-    monkeypatch.setattr(
-        'evalscope.api.dataset.builder.LocalDataLoader',
-        CapturingLocalDataLoader,
-    )
-
-    adapter = make_adapter('/tmp/data')
+    path = tmp_path / 'file.jsonl'
+    path.write_text('{"value": 1}\n', encoding='utf-8')
     dataset = load_local_file_dataset(
-        adapter=adapter,
-        dataset_path='/tmp/data/file.jsonl',
-        subset='test',
-        split='validation',
+        adapter=make_adapter(str(path)),
+        dataset_path=str(path),
+        reader=jsonl_to_list,
         sample_fields=record_to_sample,
         limit=5,
         repeats=2,
         shuffle=True,
     )
-
-    assert dataset.name == 'loaded'
-    assert captured == {
-        'data_id_or_path': '/tmp/data/file.jsonl',
-        'split': 'validation',
-        'subset': 'test',
-        'sample_fields': record_to_sample,
-        'limit': 5,
-        'repeats': 2,
-        'shuffle': True,
-        'seed': 42,
-    }
+    assert [sample.input for sample in dataset] == ['1', '1']
+    assert dataset.name == 'file'
+    assert dataset.location == str(path)

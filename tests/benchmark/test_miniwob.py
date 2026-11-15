@@ -80,17 +80,16 @@ def test_ensure_miniwob_assets_extracts_the_verified_archive(tmp_path: Path) -> 
     with tarfile.open(archive_source, 'w:gz') as archive:
         archive.add(source_root, arcname='miniwob-source')
 
-    def copy_archive(url: str, save_path: str, **kwargs: Any) -> None:
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(archive_source, save_path)
-
-    with patch.object(miniwob_utils, 'download_url', side_effect=copy_archive) as download:
-        extracted = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path / 'cache')
-        reused = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path / 'cache')
+    destination = tmp_path / 'sources' / 'miniwob' / f'{miniwob_utils.MINIWOB_COMMIT}.tar.gz'
+    destination.parent.mkdir(parents=True)
+    archive_source.rename(destination)
+    checksum = miniwob_utils.file_sha256(str(destination))
+    with patch.object(miniwob_utils, 'MINIWOB_ARCHIVE_SHA256', checksum):
+        extracted = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path)
+        reused = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path)
 
     assert extracted == reused
     assert (extracted / 'click-dialog.html').read_text(encoding='utf-8') == '<html></html>'
-    download.assert_called_once()
 
 
 def test_browsergym_session_uses_the_expected_gym_contract() -> None:

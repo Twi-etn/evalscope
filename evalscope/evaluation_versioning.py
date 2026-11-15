@@ -43,6 +43,7 @@ class ResolvedBenchmarkSpec(BaseModel):
     dataset_id: str
     dataset_hub: Optional[str] = None
     dataset_revision: Optional[str] = None
+    dataset_versions: Dict[str, int] = Field(default_factory=dict)
     eval_split: Optional[str] = None
     train_split: Optional[str] = None
     subset_list: list[str] = Field(default_factory=list)
@@ -69,6 +70,10 @@ class ResolvedBenchmarkSpec(BaseModel):
         """Resolve an adapter and its actual member benchmarks before validating cached reviews."""
         members = adapter.evaluation_dependencies()
         spec = cls.from_meta(adapter.benchmark_meta, task_config)
+        spec.dataset_id = adapter.dataset_id
+        spec.dataset_hub = adapter.dataset_hub
+        spec.dataset_revision = adapter.dataset_revision
+        spec.dataset_versions = adapter.resolve_dataset_versions()
         spec.dependencies = {
             name: ResolvedBenchmarkDependency(
                 evaluation_version=member.benchmark_meta.evaluation_version,
@@ -357,6 +362,8 @@ def _canonicalize_generation_config(config: Any) -> Any:
 def _fingerprint_benchmark_spec(spec: ResolvedBenchmarkSpec) -> Dict[str, Any]:
     """Include composite semantics while preserving existing fingerprints for ordinary benchmarks."""
     payload = spec.model_dump(mode='json', exclude={'dependencies'})
+    if not spec.dataset_versions:
+        payload.pop('dataset_versions')
     if spec.dependencies:
         payload['dependencies'] = {
             name: {

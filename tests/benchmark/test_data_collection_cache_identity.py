@@ -5,6 +5,8 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.registry import BENCHMARK_REGISTRY, get_benchmark
@@ -20,8 +22,8 @@ from evalscope.utils.io_utils import dict_to_yaml, yaml_to_dict
 def collection_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
     source = tmp_path / 'source'
     source.mkdir()
-    (source / 'example.jsonl').write_text(
-        json.dumps({'question': 'Pick A', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}) + '\n'
+    pq.write_table(
+        pa.Table.from_pylist([{'question': 'Pick A', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}]), source / 'example.parquet'
     )
     schema = CollectionSchema(name='suite', datasets=[DatasetInfo(
         name='general_mcq', task_type='reasoning', tags=['en'],

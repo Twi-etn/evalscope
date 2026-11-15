@@ -1,6 +1,7 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 
 import contextlib
+import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
@@ -152,20 +153,8 @@ class DataAdapter(LLMJudgeMixin, ABC):
 
     @property
     def dataset_id(self) -> str:
-        """
-        Return the dataset ID or path to the benchmark, resolved against the
-        configured dataset hub. When the hub is Hugging Face and the benchmark
-        declares an ``hf_dataset_id``, that ID is used instead of the
-        ModelScope dataset ID.
-        """
-        meta = self._benchmark_meta
-        source = meta.dataset_source
-        if self.dataset_hub == HubType.HUGGINGFACE and not meta.hf_dataset_id and not source.is_local:
-            logger.warning(
-                f'Benchmark {meta.name} has no hf_dataset_id mapping; '
-                f'falling back to the ModelScope dataset id {meta.dataset_id!r} on the Hugging Face hub.'
-            )
-        return source.resolve_dataset_id(self.dataset_hub)
+        """Return the configured local dataset path."""
+        return os.path.expanduser(self._benchmark_meta.dataset_id)
 
     @property
     def output_types(self) -> Optional[List[str]]:
@@ -190,24 +179,18 @@ class DataAdapter(LLMJudgeMixin, ABC):
 
     @property
     def dataset_hub(self) -> str:
-        """
-        Return the dataset hub type for the benchmark.
-        """
-        if self._task_config is None:
-            return HubType.MODELSCOPE
-        return self._task_config.dataset_hub
-
-    @dataset_hub.setter
-    def dataset_hub(self, value: str):
-        """
-        Set the dataset hub type for the benchmark.
-        """
-        self._task_config.dataset_hub = value
+        """Return the source type for native benchmark data."""
+        return HubType.LOCAL
 
     @property
     def dataset_revision(self) -> Optional[str]:
-        """Return the resolved revision of the remote dataset source."""
-        return self._benchmark_meta.dataset_source.resolve_revision(self.dataset_hub)
+        """Return the configured local dataset revision."""
+        revision = self._benchmark_meta.dataset_revision
+        return str(revision) if revision is not None else None
+
+    def resolve_dataset_versions(self) -> dict[str, int]:
+        """Return concrete dataset versions that contribute to evaluation cache identity."""
+        return {}
 
     @property
     def eval_type(self) -> str:

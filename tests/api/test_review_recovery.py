@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator.cache import CacheManager
@@ -72,7 +74,7 @@ def local_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> LocalRun:
     dataset_dir = tmp_path / 'data'
     dataset_dir.mkdir()
     row = {'id': 'one', 'question': 'Choose the second option.', 'A': 'first', 'B': 'second', 'answer': 'B'}
-    (dataset_dir / 'default_val.jsonl').write_text(json.dumps(row) + '\n', encoding='utf-8')
+    pq.write_table(pa.Table.from_pylist([row]), dataset_dir / 'default_val.parquet')
     monkeypatch.setattr(MockLLM, 'default_output', 'B A')
     # The regression concerns durable JSON/YAML artifacts; rendering adds no coverage.
     monkeypatch.setattr('evalscope.report.gen_html_report_file', lambda *args, **kwargs: '')
@@ -334,8 +336,8 @@ def test_empty_subset_during_rerun_does_not_keep_stale_reviews(
     local_run: LocalRun, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     subsets = ('default', 'second')
-    (local_run.dataset_dir / 'second_val.jsonl').write_bytes(
-        (local_run.dataset_dir / 'default_val.jsonl').read_bytes()
+    (local_run.dataset_dir / 'second_val.parquet').write_bytes(
+        (local_run.dataset_dir / 'default_val.parquet').read_bytes()
     )
     assert run_task(local_run.config(subsets=subsets))[BENCHMARK].score == 1
     predictions = {subset: local_run.cache_path('predictions', subset=subset).read_bytes() for subset in subsets}
@@ -362,8 +364,8 @@ def test_partial_subset_commit_failure_requires_explicit_recovery(
     local_run: LocalRun, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     subsets = ('default', 'second')
-    (local_run.dataset_dir / 'second_val.jsonl').write_bytes(
-        (local_run.dataset_dir / 'default_val.jsonl').read_bytes()
+    (local_run.dataset_dir / 'second_val.parquet').write_bytes(
+        (local_run.dataset_dir / 'default_val.parquet').read_bytes()
     )
     run_task(local_run.config(subsets=subsets))
     old_reviews = {subset: local_run.cache_path('reviews', subset=subset).read_bytes() for subset in subsets}

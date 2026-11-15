@@ -192,34 +192,6 @@ class TestWideSearchAdapter(unittest.TestCase):
         self.assertEqual([sample.metadata['language'] for sample in dataset], ['en', 'en', 'zh', 'zh'])
         self.assertTrue(all(sample.target.startswith('id,value') for sample in dataset))
 
-    def test_remote_dataset_downloads_full_snapshot(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            root = Path(tmp_dir)
-            self._write_dataset(root, count=1)
-            config = TaskConfig(
-                model='mock',
-                datasets=['wide_search'],
-                judge={'models': {'model_id': 'mock'}},
-            )
-
-            with patch(
-                'evalscope.api.dataset.hub.download_dataset_snapshot',
-                return_value=tmp_dir,
-            ) as snapshot_download:
-                dataset = get_benchmark('wide_search', config=config).load_dataset()['default']
-
-        snapshot_download.assert_called_once_with(
-            data_id_or_path='bytedance-community/WideSearch',
-            data_source='modelscope',
-            revision=None,
-            force_redownload=False,
-            cache_dir=DEFAULT_DATASET_CACHE_DIR,
-            allow_file_pattern=None,
-            ignore_file_pattern=None,
-        )
-        self.assertEqual(len(dataset), 1)
-        self.assertEqual(dataset[0].metadata['instance_id'], 'ws_zh_001')
-
     def test_base_metric_pipeline_uses_official_scorer(self) -> None:
         config = TaskConfig(
             model='mock',

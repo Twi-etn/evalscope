@@ -5,7 +5,7 @@ from collections import Counter
 from typing import Any
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter
-from evalscope.api.dataset import DataLoader, Dataset, Sample, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DataLoader, Dataset, Sample, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.metric import AggScore, SampleScore
 from evalscope.api.metric.semantics import MetricIdentity
@@ -81,19 +81,15 @@ class SafetyBenchAdapter(MultiChoiceAdapter):
     aggregate_empty_scores = True
 
     def load_subset(self, subset: str, data_loader: type[DataLoader]) -> Dataset:
-        """Download the labeled files and retain the standard loader transformations."""
-        if self.dataset_hub == HubType.HUGGINGFACE and not os.path.exists(self.dataset_id):
-            raise ValueError('SafetyBench requires evalscope/SafetyBench on ModelScope or its labeled local snapshot.')
+        """Read the labeled local files and retain the standard loader transformations."""
         if subset not in {'zh', 'en', 'zh_subset'}:
             raise ValueError(f'Unsupported SafetyBench subset: {subset}')
         relative_path = f'data/{subset}/{self.eval_split}.parquet'
-        root = resolve_snapshot_or_local_path(self, allow_file_pattern=relative_path)
+        root = resolve_local_dataset_path(self)
         return data_loader(
-            data_id_or_path='parquet',
-            data_source=HubType.LOCAL,
+            data_id_or_path=os.path.join(root, relative_path),
             split=self.eval_split,
             subset='default',
-            data_files={self.eval_split: os.path.join(root, relative_path)},
             sample_fields=self.record_to_sample,
             filter_func=self.sample_filter,
             limit=self.limit,
@@ -101,7 +97,6 @@ class SafetyBenchAdapter(MultiChoiceAdapter):
             shuffle=self.shuffle,
             shuffle_choices=self.shuffle_choices,
             seed=self.seed,
-            dataset_dir=self.dataset_dir,
         ).load()
 
     def record_to_sample(self, record: dict[str, Any]) -> Sample:

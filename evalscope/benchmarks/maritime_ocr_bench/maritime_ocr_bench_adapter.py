@@ -8,13 +8,14 @@ from typing import Any, Dict, List, Optional
 from PIL import Image
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_local_dataset_path
 from evalscope.api.evaluator.state import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.metric.scorer import Score
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
 from evalscope.utils.import_utils import check_import
+from evalscope.utils.io_utils import jsonl_to_list
 from evalscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -86,15 +87,14 @@ class MaritimeOCRBenchAdapter(VisionLanguageAdapter):
             raise_error=True,
             feature_name='Maritime-OCR-Bench benchmark',
         )
-        dataset_path = resolve_snapshot_or_local_path(self)
+        dataset_path = resolve_local_dataset_path(self)
         dataset_file = self._resolve_dataset_file(dataset_path)
         self.data_root = os.path.dirname(dataset_file)
 
         dataset = load_local_file_dataset(
             adapter=self,
             dataset_path=dataset_file,
-            subset='test',
-            split=self.eval_split,
+            reader=jsonl_to_list,
             sample_fields=self.record_to_sample,
             limit=None,
             repeats=self.repeats,

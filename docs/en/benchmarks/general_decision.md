@@ -3,7 +3,7 @@
 
 ## Overview
 
-Evaluate local JSONL datasets containing one Choice, Noul or Score question per record.
+Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score question per record.
 
 ## Task Description
 
@@ -14,7 +14,7 @@ Evaluate local JSONL datasets containing one Choice, Noul or Score question per 
 
 ## Key Features
 
-- Reads `default_test.jsonl` from a directory passed through `dataset_args.general_decision.local_path`
+- Reads `default_test.parquet` from a directory passed through `dataset_args.general_decision.local_path`
 - Fields: `id`, `state`, `question` (type/instructions/criteria), `expected`; one question per record
 - Preserves option order, source IDs and rubric descriptions
 - Supports System One and native AutoTrust APIs within their declared capabilities
@@ -26,7 +26,7 @@ Evaluate local JSONL datasets containing one Choice, Noul or Score question per 
 - Probability metrics are separated by type; Score retains its expectation and normalized RPS
 - Invalid responses are excluded from ordinary metrics and reflected in execution coverage
 - This is a local data entry point; no upload is required
-- See [Custom decision datasets](../advanced_guides/custom_dataset/decision.md) for runnable JSONL examples,
+- See [Custom decision datasets](../advanced_guides/custom_dataset/decision.md) for runnable examples,
   required and optional fields, question types, metrics, continuous scores, and configuration
 - See the [decision evaluation best practice](../best_practice/decision_evaluation.md) for deployment and Web UI
 
@@ -85,7 +85,7 @@ task_cfg = TaskConfig(
     datasets=['general_decision'],
     dataset_args={
         'general_decision': {
-            'local_path': '/path/to/data',  # contains default_test.jsonl
+            'local_path': '/path/to/data',  # contains default_test.parquet
         }
     },
     limit=10,  # Remove this line for formal evaluation

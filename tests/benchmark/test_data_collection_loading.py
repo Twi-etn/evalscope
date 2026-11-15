@@ -4,6 +4,8 @@ import json
 import random
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.dataset import DatasetHub
@@ -23,7 +25,7 @@ def collection_file(tmp_path: Path) -> Path:
         {'id': index, 'question': f'Pick A: {index}', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}
         for index in range(6)
     ]
-    (source / 'example.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
+    pq.write_table(pa.Table.from_pylist(rows), source / 'example.parquet')
     schema = CollectionSchema(name='suite', datasets=[DatasetInfo(
         name='general_mcq', task_type='reasoning', tags=['en'],
         args={'local_path': str(source), 'subset_list': ['example']},

@@ -1,10 +1,11 @@
 import copy
 import os
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from evalscope.api.benchmark import BenchmarkMeta, DataAdapter, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.metric.scorer import AggScore, SampleScore
 from evalscope.api.registry import get_benchmark, register_benchmark
@@ -12,6 +13,7 @@ from evalscope.config import TaskConfig
 from evalscope.constants import DataCollection, Tags
 from evalscope.report.generator import ReportGenerator
 from evalscope.report.report import Report
+from evalscope.utils.io_utils import jsonl_to_list
 from evalscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -86,13 +88,15 @@ class DataCollectionAdapter(DefaultDataAdapter):
         self.load_dataset()
         return self.dataset_adapters
 
-    def load(self):
-        dataset_path = resolve_snapshot_or_local_path(self, allow_file_pattern='*.jsonl', allow_local_file=True)
+    def load(self) -> tuple[DatasetDict, None]:
+        dataset_path = Path(resolve_local_dataset_path(self, allow_local_file=True))
+        if dataset_path.is_dir():
+            candidates = (dataset_path / f'test_{self.eval_split}.jsonl', dataset_path / 'test.jsonl')
+            dataset_path = next((path for path in candidates if path.is_file()), candidates[0])
         dataset = load_local_file_dataset(
             adapter=self,
-            dataset_path=dataset_path,
-            subset='test',  # NOTE: using hardcoded test subset
-            split=self.eval_split,
+            dataset_path=str(dataset_path),
+            reader=jsonl_to_list,
             sample_fields=self.record_to_sample,
             limit=self.limit,
             repeats=self.repeats,

@@ -11,7 +11,7 @@ from evalscope.agent.tools.bash import BASH_TOOL_INFO, run_bash
 from evalscope.api.agent import AgentEnvironment, AgentLoopResult
 from evalscope.api.benchmark import BenchmarkMeta
 from evalscope.api.benchmark.adapters import AgentLoopAdapter
-from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import (
     CaseVerdict,
@@ -29,6 +29,7 @@ from evalscope.api.registry import register_benchmark
 from evalscope.api.sandbox import resolve_sandbox_config, task_sandbox_env_kwargs
 from evalscope.constants import ScoringPolicy, Tags
 from evalscope.utils.import_utils import check_import
+from evalscope.utils.io_utils import jsonl_to_list
 
 from .utils import (
     EVAL_COLUMN_PROMPT,
@@ -122,11 +123,7 @@ class WideSearchAdapter(AgentLoopAdapter):
         self._dataset_root: Optional[Path] = None
 
     def load(self) -> Tuple[DatasetDict, None]:
-        # NOTE: download the full snapshot rather than an ``allow_file_pattern`` list.
-        # ModelScope drops root-level file matches (e.g. ``widesearch.jsonl``) whenever the
-        # pattern list also contains a subdirectory glob (e.g. ``widesearch_gold/*.csv``),
-        # which left the data file missing. The dataset is small (one jsonl + gold CSVs).
-        dataset_root = Path(resolve_snapshot_or_local_path(self))
+        dataset_root = Path(resolve_local_dataset_path(self))
         self._dataset_root = dataset_root
         data_path = dataset_root / 'widesearch.jsonl'
         if not data_path.exists():
@@ -134,8 +131,7 @@ class WideSearchAdapter(AgentLoopAdapter):
         dataset = load_local_file_dataset(
             adapter=self,
             dataset_path=str(data_path),
-            subset='default',
-            split=self.eval_split,
+            reader=jsonl_to_list,
             sample_fields=self.record_to_sample,
             limit=self.limit,
             repeats=self.repeats,

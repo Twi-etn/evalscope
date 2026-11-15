@@ -6,7 +6,13 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import (
+    DatasetDict,
+    DatasetHub,
+    Sample,
+    build_dataset_from_records,
+    read_local_dataset_records,
+)
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
@@ -133,8 +139,7 @@ class MVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def _load_subset_records(self, subset: str) -> List[Dict[str, Any]]:
         logger.info(f'Loading MVBench subset {subset} from {self.dataset_hub}: {self.dataset_id}.')
-        dataset = self.source_dataset.load(split=self.eval_split, subset=subset)
-        records = list(dataset)
+        records = read_local_dataset_records(self.dataset_id, self.eval_split, subset, version=self.dataset_revision)
         if not records:
             raise ValueError(f'No records found for MVBench subset: {subset}')
         return records

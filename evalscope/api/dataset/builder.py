@@ -1,10 +1,9 @@
 import copy
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional, Union
 
 from .dataset import DatasetDict, FieldSpec, MemoryDataset, Sample, validate_dataset_repeats
-from .hub import DatasetHub
-from .loader import LocalDataLoader, _shuffle_in_place
+from .loader import DictDataLoader, _shuffle_in_place
 from .utils import data_to_samples, record_to_sample_fn
 
 if TYPE_CHECKING:
@@ -90,45 +89,34 @@ def build_dataset_dict_from_record_map(
     return DatasetDict(datasets)
 
 
-def resolve_snapshot_or_local_path(
-    adapter: 'DataAdapter',
-    allow_file_pattern: Optional[Union[str, List[str]]] = None,
-    *,
-    allow_local_file: bool = False,
-) -> str:
-    """Resolve a snapshot root, accepting a direct local file only when explicitly enabled."""
-    if allow_local_file:
-        path = Path(adapter.dataset_id)
-        if path.is_file():
-            # Preserve symlink extensions and the filesystem meaning of ".." after directory symlinks.
-            return str(path.absolute())
-    return DatasetHub(
-        data_id_or_path=adapter.dataset_id,
-        data_source=adapter.dataset_hub,
-        revision=adapter.dataset_revision,
-        force_redownload=adapter.force_redownload,
-        cache_dir=adapter.dataset_dir,
-    ).download_snapshot(allow_file_pattern=allow_file_pattern)
+def resolve_local_dataset_path(adapter: 'DataAdapter', *, allow_local_file: bool = False) -> str:
+    """Resolve a local dataset root or a file for an adapter with its own file format."""
+    path = Path(adapter.dataset_id).expanduser()
+    if allow_local_file and path.is_file():
+        # Preserve symlink extensions and the filesystem meaning of ".." after directory symlinks.
+        return str(path.absolute())
+    if path.is_dir():
+        return str(path.resolve())
+    raise FileNotFoundError(
+        f'Local dataset directory was not found: {path}. Set dataset_args.{adapter.name}.local_path to a local dataset.'
+    )
 
 
 def load_local_file_dataset(
     adapter: 'DataAdapter',
     dataset_path: str,
-    subset: str,
-    split: str,
+    reader: Callable[[str], list[dict]],
     sample_fields: Union[FieldSpec, Callable],
     limit: Optional[Union[int, float]],
     repeats: int,
     shuffle: bool,
 ) -> MemoryDataset:
-    """Load a local JSONL/CSV/TSV file or directory with the standard LocalDataLoader."""
-    return LocalDataLoader(
-        data_id_or_path=dataset_path,
-        split=split,
-        subset=subset,
+    """Load a benchmark-specific file using its explicit reader and the standard sample conversion."""
+    return DictDataLoader(
+        dict_list=reader(dataset_path),
         sample_fields=sample_fields,
         limit=limit,
         repeats=repeats,
         shuffle=shuffle,
         seed=adapter.seed,
-    ).load()
+    ).load(location=dataset_path)

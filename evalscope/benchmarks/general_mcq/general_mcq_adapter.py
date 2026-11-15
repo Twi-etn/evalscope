@@ -98,9 +98,6 @@ class GeneralMCQAdapter(MultiChoiceAdapter):
             return ['multi_choice_acc']
         return super().metric_list
 
-    def load_from_disk(self, **kwargs):
-        return super().load_from_disk(use_local_loader=True)
-
     def record_to_sample(self, record) -> Sample:
         # Extract choices from the record (A, B, C, D, etc.)
         choices = []

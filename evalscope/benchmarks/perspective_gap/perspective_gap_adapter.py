@@ -41,7 +41,7 @@ PerspectiveGap evaluates whether a model can compose orchestration prompts for m
 
 ## Data
 
-The benchmark uses the ModelScope dataset `evalscope/PerspectiveGap`, which contains the released `test` split. You can also pass `dataset_args.<task>.local_path` to a local JSONL mirror with the same fields.
+Prepare the released `test` split as local Parquet or Lance with the original fields, and set `dataset_args.<task>.local_path`.
 
 ## Scoring
 
@@ -102,9 +102,6 @@ class PerspectiveGapBaseAdapter(DefaultDataAdapter):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def load_from_disk(self, **kwargs):
-        return super().load_from_disk(use_local_loader=True)
 
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         reference_need_sets = record.get('reference_need_sets') or {}

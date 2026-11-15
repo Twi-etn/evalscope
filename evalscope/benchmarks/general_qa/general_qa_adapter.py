@@ -65,9 +65,6 @@ class GeneralQAAdapter(DefaultDataAdapter):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def load_from_disk(self, **kwargs):
-        return super().load_from_disk(use_local_loader=True)
-
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         """
         Convert a data record to a Sample object.

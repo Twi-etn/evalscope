@@ -1,6 +1,6 @@
 # 决策模型
 
-使用 `general_decision`，可以评测自己业务中的选择、是非判断和分级评分。数据保存在本地 JSONL 文件中，无需上传数据集。
+使用 `general_decision`，可以评测自己业务中的选择、是非判断和分级评分。数据保存在本地 Parquet 或 Lance 文件中，无需上传数据集。
 
 这种格式需要 `systemone_api` 或 `autotrust_api` 决策服务。模型部署和连接参数见[决策模型评测最佳实践](../../best_practice/decision_evaluation.md)；普通聊天模型的问答和选择题见[大模型数据格式](llm.md)。
 
@@ -10,7 +10,7 @@
 
 ```text
 decision-data/
-└── default_test.jsonl
+└── default_test.parquet
 ```
 
 将下面三个样本保存到 `decision-data/default_test.jsonl`，使用 UTF-8 编码，每行一个完整 JSON 对象。它们分别对应 Choice、Noul 和四档 Score：
@@ -60,7 +60,7 @@ EvalScope 接受 2–255 个 Choice 选项、2–10 个 Score 等级，模型服
 
 ### 文件命名与子集
 
-`local_path` 指向目录，而非 JSONL 文件。默认子集为 `default`、评测划分为 `test`，所以文件名是 `default_test.jsonl`。如果改用 `routing_test.jsonl` 和 `quality_test.jsonl`，在该 benchmark 的数据参数中设置 `subset_list=['routing', 'quality']`；每个文件都可以包含三类题型。
+`local_path` 指向目录，并从中读取 Parquet 文件。默认子集为 `default`、评测划分为 `test`，所以读取 `default_test.parquet`。如果改用 `routing_test.parquet` 和 `quality_test.parquet`，在该 benchmark 的数据参数中设置 `subset_list=['routing', 'quality']`；每个文件都可以包含三类题型。
 
 ### 连续标准分数（可选）
 
@@ -68,6 +68,24 @@ EvalScope 接受 2–255 个 Choice 选项、2–10 个 Score 等级，模型服
 
 ```json
 {"id":"similarity","state":{"sentence1":"A girl is styling her hair.","sentence2":"A girl is brushing her hair."},"question":{"type":"score","instructions":"Rate the semantic similarity of the two sentences.","criteria":["Unrelated","Some shared meaning","Mostly similar","Equivalent"]},"expected":1.5,"continuous":true}
+```
+
+评测前将 JSONL 源文件转换为 Parquet。把 `state` 和 `question` 序列化为 JSON 字符串，使不同题型可以存放在同一张表里。
+
+```python
+import json
+from pathlib import Path
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+for source in Path('decision-data').glob('*_test.jsonl'):
+    rows = [json.loads(line) for line in source.read_text(encoding='utf-8').splitlines() if line.strip()]
+    for row in rows:
+        row['state'] = json.dumps(row['state'], ensure_ascii=False)
+        row['question'] = json.dumps(row['question'], ensure_ascii=False)
+        row['expected'] = str(row['expected'])
+    pq.write_table(pa.Table.from_pylist(rows), source.with_suffix('.parquet'))
 ```
 
 ## 配置任务

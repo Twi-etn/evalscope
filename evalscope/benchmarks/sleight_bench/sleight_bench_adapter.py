@@ -13,7 +13,7 @@ from evalscope.api.dataset import (
     Dataset,
     Sample,
     build_dataset_from_records,
-    resolve_snapshot_or_local_path,
+    resolve_local_dataset_path,
 )
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageSystem, ChatMessageUser
@@ -221,16 +221,7 @@ class SLEIGHTBenchAdapter(DefaultDataAdapter):
         """按攻击组加载，使用标准构建器保留配对样本及全部会话。"""
         if subset != 'default':
             raise ValueError('SLEIGHT-Bench uses one global default subset for benign calibration.')
-        root = Path(
-            resolve_snapshot_or_local_path(
-                self,
-                allow_file_pattern=[
-                    'attacks/*/*/metadata.json',
-                    'attacks/*/*/transcript.jsonl',
-                    'attacks/*/*/benign.jsonl',
-                ],
-            )
-        )
+        root = Path(resolve_local_dataset_path(self))
         groups = defaultdict(list)
         for metadata_path in sorted(root.glob('attacks/*/*/metadata.json')):
             attack_dir = metadata_path.parent

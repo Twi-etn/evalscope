@@ -86,8 +86,7 @@ The `--generation-config` parameter supports the following options (comma-separa
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `--datasets` | `list[str]` | Dataset name list, space-separated<br>Refer to [Dataset List](./supported_dataset/llm.md) | - |
-| `--dataset-dir` | `str` | Dataset download path | `~/.cache/modelscope/datasets` |
-| `--dataset-hub` | `str` | Dataset source | `modelscope`<br>(Options: `huggingface`) |
+| `--dataset-dir` | `str` | Cache directory for media extracted by some benchmarks | `~/.cache/modelscope/datasets` |
 | `--limit` | `int`/`float` | Maximum samples to evaluate per dataset<br>• int: First N samples<br>• float: First N% of samples<br>Example: `100` or `0.1` | `None` (evaluate all) |
 | `--repeats` | `int` | Number of times to repeat inference on the same sample | `1` |
 | `--dataset-args` | `str` | Dataset configuration parameters (JSON string), see table below | `{}` |
@@ -98,8 +97,9 @@ The `--generation-config` parameter supports the following options (comma-separa
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `dataset_id` | `str` | ModelScope dataset ID or local path |
-| `local_path` | `str` | Local dataset path, deprecated, please use `dataset_id` |
+| `dataset_id` | `str` | Local dataset path, also configurable with `local_path` |
+| `local_path` | `str` | Local dataset file or directory |
+| `dataset_revision` | `int\|str` | Lance version number or tag. Defaults to the latest version. |
 | `review_timeout` | `float` | Timeout for evaluation samples (seconds), recommended for code tasks |
 | `prompt_template` | `str` | Prompt template, example: `Question: {query}\nAnswer:` |
 | `system_prompt` | `str` | System prompt |
@@ -111,7 +111,6 @@ The `--generation-config` parameter supports the following options (comma-separa
 | `metric_list` | `list[str\|dict]` | Metric list. Use canonical names such as `accuracy`; legacy aliases such as `acc` are normalized for compatibility. |
 | `aggregation` | `str` | Aggregation method for evaluation results, default is `mean`. Options: `mean_and_pass_at_k`, `mean_and_vote_at_k`, `mean_and_pass_hat_k` (all require setting `repeats=k`), `bayes_at_n`.<br>• `pass_at_k`: Probability that the same sample passes at least once in k generations (e.g., set `repeats=5` for `mbpp`)<br>• `vote_at_k`: Scoring by voting on k results for the same sample<br>• `pass_hat_k`: Probability that the same sample passes all k times (e.g., set `repeats=3` for `tau2_bench`)<br>• `bayes_at_n`: Posterior mean and posterior SD of mean correctness over a fixed question set with `repeats=N`; binary `accuracy`/`exact_match` only, one subset (see [FAQ](./faq.md)) |
 | `filters` | `dict` | Output filters<br>• `remove_until`: Remove content before specified string<br>• `extract`: Extract regex-matched content |
-| `force_redownload` | `bool` | Whether to force re-download the dataset |
 | `extra_params` | `dict` | Dataset-related extra parameters, refer to [dataset documentation](./supported_dataset/index.md), specify `{<param_name>:<value>}` as needed, where the type (`type`) and choices (`choices`) of `value` depend on the specific parameter. For WideSearch and similar benchmarks, see [Agent Evaluation](../user_guides/agent/native.md) |
 | `sandbox_config` | `dict` | Sandbox configuration (see Sandbox Parameters below) |
 

@@ -8,7 +8,7 @@ from evalscope.api.dataset import (
     DatasetDict,
     Sample,
     build_dataset_dict_from_record_map,
-    resolve_snapshot_or_local_path,
+    resolve_local_dataset_path,
 )
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import JudgeCase, JudgeContext, JudgeDefinition, JudgeRequest, ReducedVerdict
@@ -92,9 +92,7 @@ class PhyXAdapter(VisionLanguageAdapter):
 
         # Only fetch the problem file and its figures; the repository also holds ~1 GB of
         # pre-rendered parquet/TSV exports that this adapter does not use.
-        snapshot_dir = resolve_snapshot_or_local_path(
-            self, allow_file_pattern=[f'{DATA_DIR}/{RECORD_FILE}', f'{DATA_DIR}/{IMAGE_DIR}/*']
-        )
+        snapshot_dir = resolve_local_dataset_path(self)
         data_root = os.path.join(snapshot_dir, DATA_DIR)
         self.image_root = os.path.join(data_root, IMAGE_DIR)
 

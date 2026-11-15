@@ -183,9 +183,8 @@ def test_aggregation_reports_accuracy_and_invalid_path_rate() -> None:
 
 
 @pytest.mark.parametrize('configured_hub', [HubType.MODELSCOPE, HubType.HUGGINGFACE])
-def test_default_hub_is_modelscope_without_hf_override(configured_hub: str) -> None:
+def test_dataset_loading_is_local_with_legacy_hub_config(configured_hub: str) -> None:
     adapter = _adapter(dataset_hub=configured_hub)
 
-    assert adapter.dataset_hub == configured_hub
-    # SPaRC ships on ModelScope, so the adapter must not override load() to redirect the hub.
+    assert adapter.dataset_hub == HubType.LOCAL
     assert type(adapter).load is DefaultDataAdapter.load

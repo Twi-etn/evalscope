@@ -86,8 +86,7 @@
 | 参数 | 类型 | 说明 | 默认值 |
 |------|------|------|--------|
 | `--datasets` | `list[str]` | 数据集名称列表，空格分隔<br>参考[数据集列表](./supported_dataset/llm.md) | - |
-| `--dataset-dir` | `str` | 数据集下载路径 | `~/.cache/modelscope/datasets` |
-| `--dataset-hub` | `str` | 数据集下载源 | `modelscope`<br>（可选：`huggingface`） |
+| `--dataset-dir` | `str` | 部分基准解包媒体文件的缓存目录 | `~/.cache/modelscope/datasets` |
 | `--limit` | `int`/`float` | 每个数据集最大评测数据量<br>• int：评测前N条数据<br>• float：评测前N%数据<br>示例：`100`或`0.1` | `None`（全部评测） |
 | `--repeats` | `int` | 重复推理一个样例多次 | `1` |
 | `--dataset-args` | `str` | 数据集配置参数（JSON字符串），详见下表 | `{}` |
@@ -98,8 +97,9 @@
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `dataset_id` | `str` | 数据集modelscope id/本地路径 |
-| `local_path` | `str` | 本地数据集路径，已废弃，请使用`dataset_id` |
+| `dataset_id` | `str` | 本地数据集路径，也可使用 `local_path` |
+| `local_path` | `str` | 本地数据集文件或目录 |
+| `dataset_revision` | `int\|str` | Lance 版本号或标签，默认读取最新版本 |
 | `review_timeout` | `float` | 评测样本超时时间（秒），代码类任务建议设置 |
 | `prompt_template` | `str` | Prompt模板，示例：`Question: {query}\nAnswer:` |
 | `system_prompt` | `str` | 系统prompt |
@@ -111,7 +111,6 @@
 | `metric_list` | `list[str\|dict]` | 指标列表。应使用 `accuracy` 等规范名称；`acc` 等旧别名仅为兼容用途并会被规范化。 |
 | `aggregation` | `str` | 评测结果聚合方式，默认`mean`。可选：`mean_and_pass_at_k`、`mean_and_vote_at_k`、`mean_and_pass_hat_k`（均需设置`repeats=k`）、`bayes_at_n`。<br>• `pass_at_k`：同一样例生成k次至少一次通过的概率（如`mbpp`设`repeats=5`）<br>• `vote_at_k`：对同一样例k次结果投票后计分<br>• `pass_hat_k`：同一样例k次全部通过的概率（如`tau2_bench`设`repeats=3`）<br>• `bayes_at_n`：固定题集上重复正确率的后验均值与后验标准差（`repeats=N`；仅二元 `accuracy`/`exact_match`，限单个 subset；见[常见问题](./faq.md)） |
 | `filters` | `dict` | 输出过滤器<br>• `remove_until`: 过滤指定字符串之前的内容<br>• `extract`: 提取正则匹配的内容 |
-| `force_redownload` | `bool` | 是否强制重新下载数据集 |
 | `extra_params` | `dict` | 数据集相关的**额外参数**，具体参考[各数据集说明](./supported_dataset/index.md)，指定`{<param_name>:<value>}`即可, `value`的类型(`type`)和选择范围(`choices`)根据具体参数而定。WideSearch 等基准的扩展参数请参见 [Agent 评测](../user_guides/agent/native.md#用例swe-bench-agentic) |
 | `sandbox_config` | `dict` | Sandbox配置（详见下方Sandbox参数） |
 

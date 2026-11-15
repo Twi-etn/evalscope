@@ -155,7 +155,7 @@ class BenchmarkMeta:
     """Published evaluation semantics version used for cache compatibility."""
 
     dataset_revision: Optional[str] = None
-    """Optional immutable revision of the remote dataset source."""
+    """Optional dataset revision. With a local Lance dataset, use a version number or tag."""
 
     hf_dataset_id: Optional[str] = None
     """Optional Hugging Face dataset repo id when it differs from the ModelScope dataset id.
@@ -376,6 +376,9 @@ class BenchmarkMeta:
         if args.get('extra_params'):
             self._update_extra_params(args['extra_params'])
             del args['extra_params']
+
+        if isinstance(args.get('dataset_revision'), int) and not isinstance(args['dataset_revision'], bool):
+            args['dataset_revision'] = str(args['dataset_revision'])
 
         # Update fields with validation
         for key, value in args.items():

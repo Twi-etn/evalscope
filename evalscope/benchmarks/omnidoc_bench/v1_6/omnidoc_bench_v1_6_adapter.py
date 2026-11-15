@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Type
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DataLoader, Dataset, DictDataLoader, Sample, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DataLoader, Dataset, DictDataLoader, Sample, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.metric import AggScore, SampleScore, Score
@@ -92,7 +92,7 @@ class OmniDocBenchV16Adapter(CodeExecutionSandboxMixin, VisionLanguageAdapter):
 
     def load_subset(self, subset: str, data_loader: Type[DataLoader]) -> Dataset:
         """Load the v1.6 snapshot and delegate selection to the standard loader."""
-        self._snapshot_dir = Path(resolve_snapshot_or_local_path(self)).resolve()
+        self._snapshot_dir = Path(resolve_local_dataset_path(self)).resolve()
         annotation_path = self._snapshot_dir / 'OmniDocBench.json'
         records = json.loads(annotation_path.read_text(encoding='utf-8'))
         return DictDataLoader(

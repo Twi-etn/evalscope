@@ -1,5 +1,22 @@
 # Multimodal Large Models
 
+The JSONL, CSV and TSV examples below show the source row structure for native benchmarks. Convert the files to Parquet in those directories before running the examples. Preserve the filename stem for each subset and split.
+
+```python
+from pathlib import Path
+
+from pyarrow import csv, json, parquet
+
+for root in (Path('custom_eval/text'), Path('custom_eval/multimodal')):
+    for source in root.rglob('*.jsonl'):
+        if source.parent.name in {'mcq', 'qa', 'fc', 'vqa'}:
+            parquet.write_table(json.read_json(source), source.with_suffix('.parquet'))
+
+# For a CSV or TSV source, keep text columns as strings where the benchmark expects text.
+# table = csv.read_csv(source, parse_options=csv.ParseOptions(delimiter='\t'))  # TSV
+# parquet.write_table(table, source.with_suffix('.parquet'))
+```
+
 This framework supports two custom multimodal evaluation methods:
 
 - **General-VQA Format**: Suitable for Q&A-based multimodal evaluation tasks. Supports two input styles: **OpenAI Messages Data**, **MMMU-style Data with Media Placeholders**.
@@ -12,7 +29,7 @@ General-VQA supports **two input styles**:
 1. **OpenAI Messages Data** — full structured content with explicit media parts (images, audio, video) in the OpenAI message schema. Supports multi-turn conversations, system prompts, and fine-grained control over each content part.
 2. **MMMU-style Data with Media Placeholders** — a simpler approach where the user message is a plain-text string containing `<image N>`, `<video N>`, or `<audio N>` placeholders, and media files are supplied via separate indexed columns (see [Media Placeholder Mechanism][mp-feature]).
 
-Both formats support **JSONL** or **TSV** files.
+Both record layouts can be stored in Parquet or Lance.
 
 ### OpenAI Messages Data
 

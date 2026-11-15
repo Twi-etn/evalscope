@@ -194,12 +194,11 @@ def undecode_media(
 
 
 def parquet_to_list(parquet_file: str) -> List[Dict[str, Any]]:
-    from datasets import Dataset
+    """Read a local Parquet file without decoding embedded media."""
+    from pyarrow.parquet import ParquetFile
 
-    dataset = Dataset.from_parquet(parquet_file)
-    dataset = undecode_media(dataset, media_type=['image', 'audio', 'video'])
-
-    return dataset.to_list()
+    with ParquetFile(parquet_file) as parquet:
+        return parquet.read().to_pylist()
 
 
 # ---------------------------------------------------------------------------

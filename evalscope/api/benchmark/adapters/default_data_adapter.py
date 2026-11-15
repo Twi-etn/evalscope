@@ -1,20 +1,20 @@
-import os
 from collections import defaultdict
 from functools import partial
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from typing_extensions import override
 
 from evalscope.api.agent import AgentLoopResult
-from evalscope.api.dataset import DataLoader, Dataset, DatasetDict, LocalDataLoader, RemoteDataLoader, Sample
-from evalscope.api.dataset.loader import dataset_loading_session
+from evalscope.api.dataset import DataLoader, Dataset, DatasetDict, LocalDataLoader, Sample
+from evalscope.api.dataset.loader import open_local_lance, resolve_local_dataset_split
 from evalscope.api.evaluator import InferenceResult, InferenceReturn, TaskState
 from evalscope.api.messages import ChatMessage, ChatMessageSystem, ChatMessageUser
 from evalscope.api.metric import AggScore, MetricUnavailableError, SampleScore, Score
 from evalscope.api.model import Model, ModelOutput
 from evalscope.api.model.decision import DECISION_EVAL_TYPES
 from evalscope.api.registry import get_aggregation, get_metric
-from evalscope.constants import DataCollection, HubType, JudgeStrategy, ScoreStatus
+from evalscope.constants import DataCollection, JudgeStrategy, ScoreStatus
 from evalscope.report import Report, ReportGenerator
 from evalscope.utils import get_logger
 
@@ -56,8 +56,7 @@ class DefaultDataAdapter(DataAdapter):
         """
         Load the complete dataset including test data and optional few-shot examples.
 
-        This method handles both local and remote dataset loading, processes samples
-        with appropriate prompt formatting, and prepares few-shot examples if needed.
+        This method loads local datasets, formats prompts, and prepares few-shot examples if needed.
 
         Returns:
             DatasetDict: A dictionary containing the loaded and processed datasets,
@@ -94,54 +93,60 @@ class DefaultDataAdapter(DataAdapter):
 
         return self.test_dataset
 
+    def resolve_dataset_versions(self) -> dict[str, int]:
+        """Pin the Lance inputs used by the standard local loaders for this run."""
+        if hasattr(self, '_lance_versions'):
+            return {str(path): version for path, version in self._lance_versions.items()}
+
+        self._lance_versions: dict[Path, int] = {}
+        if type(self).load_subset is not DefaultDataAdapter.load_subset and not self._should_load_fewshot():
+            return {}
+        path = Path(self.dataset_id)
+        if not path.exists():
+            return {}
+        subsets = [self.default_subset] if self.reformat_subset else self.subset_list
+        splits = []
+        if type(self).load_subset is DefaultDataAdapter.load_subset:
+            splits.append(self.eval_split)
+        if self._should_load_fewshot() and type(self).load_fewshot_subset is DefaultDataAdapter.load_fewshot_subset:
+            splits.append(self.train_split)
+        for split in splits:
+            for subset in subsets:
+                split_name, subset_name = (subset, self.default_subset) if self.split_as_subset else (split, subset)
+                try:
+                    source = resolve_local_dataset_split(self.dataset_id, split_name, subset_name)
+                except (FileNotFoundError, ValueError):
+                    # Custom load() implementations can use a different layout.
+                    continue
+                if source.is_dir() and source not in self._lance_versions:
+                    self._lance_versions[source] = open_local_lance(source, self.dataset_revision).version
+        return {str(path): version for path, version in self._lance_versions.items()}
+
+    def _dataset_version(self, split: str, subset: str) -> Optional[Union[str, int]]:
+        versions = getattr(self, '_lance_versions', {})
+        if not versions:
+            return self.dataset_revision
+        path = resolve_local_dataset_split(self.dataset_id, split, subset)
+        return versions.get(path, self.dataset_revision)
+
     def load(self) -> Tuple[DatasetDict, Optional[DatasetDict]]:
-        """Load the dataset from disk or remote source.
+        """Load local evaluation data and optional few-shot splits."""
+        if not Path(self.dataset_id).expanduser().exists():
+            raise FileNotFoundError(
+                f'Local dataset path does not exist: {self.dataset_id!r}. '
+                f'Set dataset_args.{self.name}.local_path to a local dataset.'
+            )
+        return self.load_from_disk()
 
-        Returns:
-            Tuple[DatasetDict, Optional[DatasetDict]]: The test dataset and few-shot dataset.
-        """
-        if os.path.exists(self.dataset_id):
-            # Load dataset from local file system path
-            with self._temporary_attribute('dataset_hub', HubType.LOCAL):
-                return self.load_from_disk()
-        else:
-            # Load dataset from remote source (e.g., ModelScope, Huggingface)
-            return self.load_from_remote()
-
-    def load_from_remote(self) -> Tuple[DatasetDict, Optional[DatasetDict]]:
-        """Load dataset from remote source and prepare few-shot examples if needed."""
-        with dataset_loading_session():
-            test_load_func = partial(self.load_subset, data_loader=RemoteDataLoader)
-            test_dataset = self.load_subsets(test_load_func)
-            fewshot_dataset = None
-            if self._should_load_fewshot():
-                fewshot_load_func = partial(self.load_fewshot_subset, data_loader=RemoteDataLoader)
-                fewshot_dataset = self.load_subsets(fewshot_load_func, is_fewshot=True)
-        return test_dataset, fewshot_dataset
-
-    def load_from_disk(self, use_local_loader: bool = False):
-        """
-        Load dataset from local disk path.
-
-        Args:
-            use_local_loader: If True, use local file loading; otherwise use remote loading
-                             for local ModelScope datasets.
-        """
-        test_dataset = None
+    def load_from_disk(self) -> Tuple[DatasetDict, Optional[DatasetDict]]:
+        """Load evaluation and few-shot splits using the local loader."""
+        test_dataset = self.load_subsets(partial(self.load_subset, data_loader=LocalDataLoader))
         fewshot_dataset = None
-        if use_local_loader:
-            # Use LocalDataLoader for actual local file loading
-            test_load_func = partial(self.load_subset, data_loader=LocalDataLoader)
-            test_dataset = self.load_subsets(test_load_func)
-
-            # Load few-shot examples if few-shot prompting is enabled
-            if self._should_load_fewshot():
-                fewshot_load_func = partial(self.load_fewshot_subset, data_loader=LocalDataLoader)
-                fewshot_dataset = self.load_subsets(fewshot_load_func, is_fewshot=True)
-            return test_dataset, fewshot_dataset
-        else:
-            # Fallback to remote loading for local ModelScope datasets
-            return self.load_from_remote()
+        if self._should_load_fewshot():
+            fewshot_dataset = self.load_subsets(
+                partial(self.load_fewshot_subset, data_loader=LocalDataLoader), is_fewshot=True
+            )
+        return test_dataset, fewshot_dataset
 
     def _should_load_fewshot(self) -> bool:
         """Check whether auto few-shot examples should be loaded from a split."""
@@ -269,7 +274,7 @@ class DefaultDataAdapter(DataAdapter):
         split = subset if self.split_as_subset else self.eval_split
         subset_name = self.default_subset if self.split_as_subset else subset
 
-        # Create and configure the remote data loader
+        # Configure the local data loader
         loader = data_loader(
             data_id_or_path=self.dataset_id,
             split=split,
@@ -281,10 +286,7 @@ class DefaultDataAdapter(DataAdapter):
             shuffle=self.shuffle,  # Shuffle dataset if enabled
             shuffle_choices=self.shuffle_choices,  # Shuffle choices if requested
             seed=self.seed,
-            data_source=self.dataset_hub,  # Data source configuration
-            version=self.dataset_revision,  # Remote dataset revision when pinned
-            force_redownload=self.force_redownload,  # Force redownload if enabled
-            dataset_dir=self.dataset_dir,  # Dataset directory
+            version=self._dataset_version(split, subset_name),
         )
         dataset = loader.load()
         return dataset
@@ -317,10 +319,7 @@ class DefaultDataAdapter(DataAdapter):
             shuffle=self.few_shot_random,  # Randomize selection if enabled
             shuffle_choices=self.shuffle_choices,  # Shuffle choices if requested
             seed=self.seed,
-            data_source=self.dataset_hub,  # Data source configuration
-            version=self.dataset_revision,  # Remote dataset revision when pinned
-            force_redownload=self.force_redownload,  # Force redownload if enabled
-            dataset_dir=self.dataset_dir,  # Dataset directory
+            version=self._dataset_version(split, subset_name),
         )
         dataset = loader.load()
         return dataset

@@ -93,7 +93,7 @@ def test_v16_loads_snapshot_once_and_reads_images_locally(tmp_path: Path) -> Non
         TaskConfig(datasets=['omni_doc_bench_v1_6']),
     )
     with mock.patch(
-        'evalscope.benchmarks.omnidoc_bench.v1_6.omnidoc_bench_v1_6_adapter.resolve_snapshot_or_local_path',
+        'evalscope.benchmarks.omnidoc_bench.v1_6.omnidoc_bench_v1_6_adapter.resolve_local_dataset_path',
         return_value=str(tmp_path),
     ) as resolve_snapshot:
         dataset = adapter.load_subset('default', DictDataLoader)

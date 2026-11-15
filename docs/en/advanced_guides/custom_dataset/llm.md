@@ -1,5 +1,22 @@
 # Large Language Model
 
+The JSONL, CSV and TSV examples below show the source row structure for native benchmarks. Convert the files to Parquet in those directories before running the examples. Preserve the filename stem for each subset and split.
+
+```python
+from pathlib import Path
+
+from pyarrow import csv, json, parquet
+
+for root in (Path('custom_eval/text'), Path('custom_eval/multimodal')):
+    for source in root.rglob('*.jsonl'):
+        if source.parent.name in {'mcq', 'qa', 'fc', 'vqa'}:
+            parquet.write_table(json.read_json(source), source.with_suffix('.parquet'))
+
+# For a CSV or TSV source, keep text columns as strings where the benchmark expects text.
+# table = csv.read_csv(source, parse_options=csv.ParseOptions(delimiter='\t'))  # TSV
+# parquet.write_table(table, source.with_suffix('.parquet'))
+```
+
 This framework supports multiple-choice questions, question-answering questions, and function calling, with three predefined dataset formats. The usage process is as follows:
 
 To evaluate decision probabilities for Choice, Noul or Score tasks, use the separate [decision-model dataset format](decision.md).
@@ -9,7 +26,7 @@ Suitable for scenarios where users need multiple-choice questions. The evaluatio
 
 ### Data Preparation
 
-Prepare files in multiple-choice question format, supporting both CSV and JSONL formats. The directory structure is as follows:
+Prepare files in multiple-choice question format, using CSV or JSONL as the source format before conversion. The directory structure is as follows:
 
 **CSV Format**
 
@@ -90,7 +107,7 @@ Results:
 
 ### Multiple Correct Answers
 
-When a question has more than one correct option, enable multiple-answer mode via `extra_params`. In this mode the `answer` field **must be a list of letters** (JSONL format only).
+When a question has more than one correct option, enable multiple-answer mode via `extra_params`. In this mode the `answer` field **must be a list of letters** .
 
 **Data format**
 
@@ -375,7 +392,7 @@ run_task(task_cfg=task_cfg)
 
 Applicable to evaluation scenarios that require function call decision-making and parameter structure validation. Supports:
 - Preset dataset: evalscope/GeneralFunctionCall-Test
-- Custom dataset: Pass in JSONL files via local path
+- Custom dataset: Pass the converted Parquet dataset via the local path
 
 The data is synthesized from official MoonshotAI [public samples](https://github.com/MoonshotAI/K2-Vendor-Verifier), including labels for "whether tool should be triggered" (K2-Thinking model as label source), facilitating experiment reproduction and automated regression testing.
 

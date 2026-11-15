@@ -48,17 +48,3 @@ def test_custom_dataset_hub_calls_propagate_revision() -> None:
                 violations.append(f'{path.relative_to(BENCHMARK_ROOT)}:{node.lineno}: {_call_name(node)}')
 
     assert not violations, 'Custom dataset downloads must propagate the resolved revision:\n' + '\n'.join(violations)
-
-
-def test_custom_remote_data_loaders_propagate_hub_and_revision() -> None:
-    violations = []
-    for path, tree in _benchmark_sources():
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or _call_name(node) != 'RemoteDataLoader':
-                continue
-            keyword_names = {keyword.arg for keyword in node.keywords}
-            missing = {'data_source', 'version'} - keyword_names
-            if missing:
-                violations.append(f'{path.relative_to(BENCHMARK_ROOT)}:{node.lineno}: missing {sorted(missing)}')
-
-    assert not violations, 'Custom RemoteDataLoader calls must preserve hub identity:\n' + '\n'.join(violations)

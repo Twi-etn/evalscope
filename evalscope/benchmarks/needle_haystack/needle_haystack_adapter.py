@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from tqdm import tqdm
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import JudgeCase, JudgeContext, JudgeDefinition, JudgeRequest, OutputContract, ReducedVerdict
 from evalscope.api.messages import ChatMessageSystem, ChatMessageUser
@@ -203,10 +203,7 @@ class NeedleHaystackAdapter(DefaultDataAdapter):
         self._init_tokenizer()
         self._init_length()
 
-        dataset_path = resolve_snapshot_or_local_path(
-            self,
-            allow_file_pattern=['PaulGraham_Essays.txt', 'Journey_to_the_West.txt'],
-        )
+        dataset_path = resolve_local_dataset_path(self)
 
         # Load datasets for both subsets
         datasets = {}

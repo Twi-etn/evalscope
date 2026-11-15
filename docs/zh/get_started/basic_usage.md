@@ -6,6 +6,8 @@ EvalScope 是一个为大模型设计的评测框架，旨在提供简单易用�
 
 您可以通过命令行或 Python 代码两种方式，在指定数据集上使用默认配置评测一个模型。
 
+先将 GSM8K 测试集放在 `./data/gsm8k/main_test.parquet`，few-shot 所需的训练集放在 `./data/gsm8k/main_train.parquet`。
+
 ### 方式1：使用命令行
 
 在任意路径下执行 `evalscope eval` 命令即可启动评测。这是最推荐的入门方式。
@@ -14,6 +16,7 @@ EvalScope 是一个为大模型设计的评测框架，旨在提供简单易用�
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 5
 ```
 
@@ -35,6 +38,7 @@ from evalscope.config import TaskConfig
 task_cfg = TaskConfig(
     model='Qwen/Qwen2.5-0.5B-Instruct',
     datasets=['gsm8k'],
+    dataset_args={'gsm8k': {'local_path': './data/gsm8k'}},
     limit=5
 )
 
@@ -48,6 +52,7 @@ from evalscope.run import run_task
 task_cfg = {
     'model': 'Qwen/Qwen2.5-0.5B-Instruct',
     'datasets': ['gsm8k'],
+    'dataset_args': {'gsm8k': {'local_path': './data/gsm8k'}},
     'limit': 5
 }
 
@@ -61,6 +66,9 @@ run_task(task_cfg=task_cfg)
 model: Qwen/Qwen2.5-0.5B-Instruct
 datasets:
   - gsm8k
+dataset_args:
+  gsm8k:
+    local_path: ./data/gsm8k
 limit: 5
 ```
 ```python
@@ -76,6 +84,7 @@ run_task(task_cfg="config.yaml")
 {
     "model": "Qwen/Qwen2.5-0.5B-Instruct",
     "datasets": ["gsm8k"],
+    "dataset_args": {"gsm8k": {"local_path": "./data/gsm8k"}},
     "limit": 5
 }
 ```
@@ -128,6 +137,7 @@ evalscope eval \
  --api-key $OPENAI_API_KEY \
  --eval-type openai_api \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10
 ```
 
@@ -152,6 +162,7 @@ evalscope eval \
  --api-key EMPTY \
  --eval-type openai_api \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10
 ```
 
@@ -163,6 +174,7 @@ evalscope eval \
  --api-key $OPENAI_API_KEY \
  --eval-type openai_responses_api \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --generation-config '{"stream": true, "max_tokens": 512}'
 ```
@@ -178,7 +190,7 @@ evalscope eval \
  --model Qwen/Qwen3-0.6B \
  --model-args '{"revision": "master", "precision": "torch.float16", "device_map": "auto"}' \
  --generation-config '{"do_sample":true,"temperature":0.6,"max_tokens":512}' \
- --dataset-args '{"gsm8k": {"few_shot_num": 0, "few_shot_random": false}}' \
+ --dataset-args '{"gsm8k": {"local_path": "./data/gsm8k", "few_shot_num": 0, "few_shot_random": false}}' \
  --datasets gsm8k \
  --limit 10
 ```
@@ -197,7 +209,7 @@ evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
  --limit 10 \
- --dataset-args '{"gsm8k": {"aggregation": "mean_and_vote_at_k"}}' \
+ --dataset-args '{"gsm8k": {"local_path": "./data/gsm8k", "aggregation": "mean_and_vote_at_k"}}' \
  --repeats 5
 ```
 
@@ -238,44 +250,34 @@ run_task(task_cfg=task_cfg)
 关于裁判模型的详细配置，请参考：[裁判模型参数](./parameters.md#judge参数)
 ```
 
-### 使用 Hugging Face 数据集
+### 读取本地数据集
 
-EvalScope 默认从 ModelScope 加载数据集。如需改用 Hugging Face Hub，将 `--dataset-hub` 设置为 `huggingface` 即可。当某个数据集在 Hugging Face 与 ModelScope 上的仓库 ID 不一致时，再通过 `--dataset-args` 覆盖该数据集的 `dataset_id`。
+原生评测从本地读取数据集，通过 `dataset_args.<benchmark>.local_path` 指定路径。
 
-以 `ocr_bench` 为例，其默认 ID 为 ModelScope 上的 `evalscope/OCRBench`，对应 Hugging Face 仓库为 `echo840/OCRBench`：
+通用加载器接受 Parquet 文件、Lance 数据集目录，或包含多个划分的父目录。在父目录下，优先查找 `<subset>_<split>.parquet` 或 `<subset>_<split>.lance`，再查找 `<subset>.parquet` 或 `<subset>.lance`。有的基准需要保留专用目录结构和关联的媒体文件。
 
-```shell
+在项目目录安装 Lance 可选依赖：
+
+```bash
+uv pip install -e '.[lance]'
+```
+
+```bash
 evalscope eval \
- --model Qwen/Qwen2.5-VL-7B-Instruct \
- --datasets ocr_bench \
- --dataset-hub huggingface \
- --dataset-args '{"ocr_bench": {"dataset_id": "echo840/OCRBench"}}' \
+ --model local-test --eval-type mock_llm \
+ --datasets general_mcq \
+ --dataset-args '{"general_mcq":{"local_path":"./data/questions.lance","dataset_revision":1,"few_shot_num":0}}' \
  --limit 5
 ```
 
-等价的 Python 写法：
+省略 `dataset_revision` 时读取 Lance 最新版本，也可指定版本号或标签。通用加载器会记录本次使用的实际版本。如果数据发布了新版本，恢复旧任务时请沿用原任务固定的版本及配置。
 
-```python
-from evalscope import TaskConfig, run_task
+已有的 CSV、TSV 和 JSONL 可按划分转换成 Parquet 或 Lance 再评测。例如，以下命令转换仓库中的 JSONL 验证集示例：
 
-task_cfg = TaskConfig(
-    model='Qwen/Qwen2.5-VL-7B-Instruct',
-    datasets=['ocr_bench'],
-    dataset_hub='huggingface',
-    dataset_args={
-        'ocr_bench': {
-            'dataset_id': 'echo840/OCRBench',
-        },
-    },
-    limit=5,
-)
-
-run_task(task_cfg=task_cfg)
+```bash
+python -c "from pyarrow import json, parquet; parquet.write_table(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.parquet')"
 ```
 
-```{tip}
-若数据集在 Hugging Face 与 ModelScope 上的仓库 ID 相同，只需设置 `--dataset-hub huggingface`，无需再传 `dataset_id`。
-```
 
 ### 离线评测
 
@@ -283,7 +285,7 @@ run_task(task_cfg=task_cfg)
 
 **1. 准备本地数据集**
 
-数据集默认托管在[ModelScope](https://modelscope.cn/datasets)上，加载需要联网。如果是无网络环境，可以使用本地数据集和模型，流程如下：
+开始评测前先准备本地数据。可提前从数据集的上游来源获取原始文件。
 
 1) 首先查看想要使用的数据集在modelscope上的ID：在[支持的数据集](./supported_dataset/index.md)列表中查找到需要使用的数据集的**数据集ID**，例如`mmlu_pro`的ID为 `modelscope/MMLU-Pro`。
 2) 使用modelscope命令下载数据集：点击“数据集文件”tab -> 点击“下载数据集” -> 复制命令行
@@ -291,7 +293,7 @@ run_task(task_cfg=task_cfg)
 # 下载数据集
 modelscope download --dataset modelscope/MMLU-Pro --local_dir ./data/mmlu_pro
 ```
-3) 使用目录`./data/mmlu_pro`作为`local_path`参数的值传入即可。
+3) 按上文的本地划分命名整理文件，再用 `local_path` 指定所在目录。
 
 **2. 准备本地模型**
 
@@ -328,6 +330,7 @@ evalscope eval \
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10
 ```
 
@@ -337,6 +340,7 @@ evalscope eval \
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --use-cache outputs/20261009_120000
 ```
@@ -359,6 +363,7 @@ EvalScope 按样本 ID 匹配缓存结果：
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --ignore-errors
 ```

@@ -11,7 +11,7 @@ It supports OpenAI-compatible message format with flexible image/video/audio inp
 - **Task Type**: Visual Question Answering
 - **Input**: Images/videos/audio + questions in OpenAI chat format
 - **Output**: Free-form text answer
-- **Flexibility**: Supports custom datasets via TSV/JSONL files
+- **Flexibility**: Supports custom datasets in Parquet or Lance
 
 ## Key Features
 

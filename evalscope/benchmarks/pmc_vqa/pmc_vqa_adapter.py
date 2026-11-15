@@ -5,10 +5,11 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, load_local_file_dataset, resolve_local_dataset_path
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
+from evalscope.utils.io_utils import csv_to_list
 from evalscope.utils.multi_choices import MultipleChoiceTemplate, prompt
 
 CHOICE_LETTERS = ['A', 'B', 'C', 'D']
@@ -91,15 +92,14 @@ class PMCVQAAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def load(self) -> Tuple[DatasetDict, None]:
         """Download the metadata CSV and image archive, then build the test dataset."""
-        dataset_path = resolve_snapshot_or_local_path(self, allow_file_pattern=[DATA_FILE, IMAGE_ARCHIVE])
+        dataset_path = resolve_local_dataset_path(self)
 
         with zipfile.ZipFile(os.path.join(dataset_path, IMAGE_ARCHIVE)) as archive:
             self._image_archive = archive
             dataset = load_local_file_dataset(
                 adapter=self,
                 dataset_path=os.path.join(dataset_path, DATA_FILE),
-                subset=self.default_subset,
-                split=self.eval_split,
+                reader=csv_to_list,
                 sample_fields=self.record_to_sample,
                 limit=self.limit,
                 repeats=self.repeats,

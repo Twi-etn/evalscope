@@ -94,9 +94,6 @@ class GeneralVMCQAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def load_from_disk(self, **kwargs):
-        return super().load_from_disk(use_local_loader=True)
-
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         content_list, answers_list = self.create_content_and_answers_list(record)
 

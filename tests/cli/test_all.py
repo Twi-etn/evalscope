@@ -1,9 +1,12 @@
+from pathlib import Path
+
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from dotenv import dotenv_values
 
 env = dotenv_values('.env')
 
 import os
+import tempfile
 import unittest
 
 from evalscope.constants import EvalType, JudgeStrategy
@@ -188,47 +191,31 @@ class TestRun(unittest.TestCase):
 
         run_task(task_cfg=task_cfg)
 
-    def test_ci_lite(self):
+    def test_ci_lite(self) -> None:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
         from evalscope.config import TaskConfig
+        from evalscope.utils.io_utils import jsonl_to_list
 
-        api_key = env.get('DASHSCOPE_API_KEY')
+        with tempfile.TemporaryDirectory() as workspace:
+            tmp_path = Path(workspace)
+            dataset_args = {}
+            for name, source in {
+                'general_mcq': 'custom_eval/text/mcq/example_val.jsonl',
+                'general_qa': 'custom_eval/text/qa/example.jsonl',
+            }.items():
+                path = tmp_path / f'{name}.parquet'
+                pq.write_table(pa.Table.from_pylist(jsonl_to_list(source)[:1]), path)
+                dataset_args[name] = {'local_path': str(path), 'few_shot_num': 0}
 
-        task_cfg = TaskConfig(
-            model='qwen3.8-flash',
-            api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
-            api_key=api_key,
-            eval_type=EvalType.OPENAI_API if api_key else EvalType.MOCK_LLM,
-            datasets=[
-                'general_mcq',
-                'iquiz',
-            ],
-            dataset_args={
-                'general_mcq': {
-                    'local_path': 'custom_eval/text/mcq',
-                    'subset_list': [
-                        'example'
-                    ],
-                },
-                'general_qa': {
-                    'local_path': 'custom_eval/text/qa',
-                    'subset_list': [
-                        'example'
-                    ]
-                }
-            },
-            eval_batch_size=1,
-            limit=1,
-            stream=True,
-            generation_config={
-                'temperature': 0,
-                'n': 1,
-                'max_tokens': 4096,
-            },
-            judge={'strategy': JudgeStrategy.AUTO, 'models': {
-                'model_id': 'qwen3.8-flash',
-                'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-                'api_key': env.get('DASHSCOPE_API_KEY'),
-            }}
-        )
-
-        run_task(task_cfg=task_cfg)
+            results = run_task(TaskConfig(
+                model='offline',
+                eval_type=EvalType.MOCK_LLM,
+                datasets=list(dataset_args),
+                dataset_args=dataset_args,
+                judge={'strategy': JudgeStrategy.RULE},
+                work_dir=str(tmp_path / 'outputs'),
+                limit=1,
+            ))
+            assert set(results) == set(dataset_args)

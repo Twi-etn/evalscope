@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig
@@ -42,7 +44,7 @@ def test_native_decision_uses_standard_system_prompt_preparation(tmp_path: Path)
     record = {
         'state': 'Facts.', 'question': {'type': 'noul', 'instructions': 'Is it true?'}, 'expected': 'yes',
     }
-    (tmp_path / 'default_test.jsonl').write_text(json.dumps(record) + '\n')
+    pq.write_table(pa.Table.from_pylist([record]), tmp_path / 'default_test.parquet')
     adapter = get_benchmark('general_decision', TaskConfig(
         model='test', eval_type='systemone_api', datasets=['general_decision'],
         dataset_args={'general_decision': {'local_path': str(tmp_path), 'system_prompt': 'Use only the facts.'}},

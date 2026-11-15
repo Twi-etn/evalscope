@@ -1,166 +1,30 @@
-"""Tests for dataset loader cache isolation, media handling, and limits."""
-
-import csv
 import json
 import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
-from datasets import Dataset as HFDataset
-from datasets import DatasetInfo, Features, Value, Video
-from datasets.table import InMemoryTable
 
 from evalscope.api.dataset import FieldSpec, Sample
-from evalscope.api.dataset.hub import DatasetHub
-from evalscope.api.dataset.loader import DictDataLoader, LocalDataLoader, RemoteDataLoader
-from evalscope.constants import HubType
+from evalscope.api.dataset.loader import DictDataLoader, LocalDataLoader
 
 
-def _sample_from_record(record: Dict[str, Any]) -> Sample:
-    return Sample(input=record['text'], metadata={'video': record.get('video')})
-
-
-def _install_fake_remote_dataset(monkeypatch: Any) -> None:
-    def fake_load(self: DatasetHub, split: str, subset: str = 'default', **kwargs: Any) -> HFDataset:
-        return HFDataset.from_dict({'text': [f'{subset}-{split}']})
-
-    monkeypatch.setattr(DatasetHub, 'load', fake_load)
-
-
-def _cache_directories(dataset_dir: Path) -> List[Path]:
-    cache_root = dataset_dir / 'datasets'
-    return sorted(path for path in cache_root.iterdir() if path.is_dir())
-
-
-def _load_remote_cache(
-    dataset_dir: Path,
-    *,
-    data_source: str,
-    split: str,
-    subset: str,
-    loader_kwargs: Optional[Dict[str, Any]] = None,
-) -> None:
-    RemoteDataLoader(
-        data_id_or_path='dummy/cache-dataset',
-        split=split,
-        subset=subset,
-        sample_fields=_sample_from_record,
-        data_source=data_source,
-        dataset_dir=str(dataset_dir),
-        **(loader_kwargs or {}),
-    ).load()
-
-
-def test_remote_cache_directory_separates_data_sources(monkeypatch: Any, tmp_path: Path) -> None:
-    _install_fake_remote_dataset(monkeypatch)
-
-    _load_remote_cache(tmp_path, data_source=HubType.MODELSCOPE, split='train', subset='default')
-    _load_remote_cache(tmp_path, data_source=HubType.HUGGINGFACE, split='train', subset='default')
-
-    assert len(_cache_directories(tmp_path)) == 2
-
-
-def test_remote_cache_directory_preserves_split_subset_boundaries(monkeypatch: Any, tmp_path: Path) -> None:
-    _install_fake_remote_dataset(monkeypatch)
-
-    _load_remote_cache(tmp_path, data_source=HubType.MODELSCOPE, split='a', subset='bc')
-    _load_remote_cache(tmp_path, data_source=HubType.MODELSCOPE, split='ab', subset='c')
-
-    assert len(_cache_directories(tmp_path)) == 2
-
-
-def test_remote_cache_directory_is_stable_across_kwargs_order(monkeypatch: Any, tmp_path: Path) -> None:
-    _install_fake_remote_dataset(monkeypatch)
-
-    _load_remote_cache(
-        tmp_path,
-        data_source=HubType.MODELSCOPE,
-        split='train',
-        subset='default',
-        loader_kwargs={'b': 2, 'a': 1},
-    )
-    _load_remote_cache(
-        tmp_path,
-        data_source=HubType.MODELSCOPE,
-        split='train',
-        subset='default',
-        loader_kwargs={'a': 1, 'b': 2},
-    )
-
-    assert len(_cache_directories(tmp_path)) == 1
-
-
-def test_remote_loader_treats_existing_path_as_effective_local_source(monkeypatch: Any, tmp_path: Path) -> None:
-    local_path = tmp_path / 'local-dataset'
-    local_path.mkdir()
-    dataset_dir = tmp_path / 'cache'
-    captured: Dict[str, Any] = {}
-
-    def fake_load(self: DatasetHub, split: str, subset: str = 'default', **kwargs: Any) -> HFDataset:
-        captured['data_source'] = self.data_source
-        return HFDataset.from_dict({'text': ['local']})
-
-    monkeypatch.setattr(DatasetHub, 'load', fake_load)
-
-    dataset = RemoteDataLoader(
-        data_id_or_path=str(local_path),
-        split='train',
-        sample_fields=_sample_from_record,
-        data_source=HubType.MODELSCOPE,
-        dataset_dir=str(dataset_dir),
-    ).load()
-
-    assert len(dataset) == 1
-    assert captured['data_source'] == HubType.LOCAL
-    assert not (dataset_dir / 'datasets').exists()
-
-
-def test_remote_loader_does_not_decode_video(monkeypatch: Any, tmp_path: Path) -> None:
-    features = Features({'video': Video(decode=True), 'text': Value('string')})
-    row = {'video': {'bytes': b'dummy', 'path': None}, 'text': 'clip'}
-    table = pa.Table.from_pylist([row], schema=features.arrow_schema)
-    remote_dataset = HFDataset(InMemoryTable(table), info=DatasetInfo(features=features))
-
-    def fake_load(self: DatasetHub, split: str, subset: str = 'default', **kwargs: Any) -> HFDataset:
-        return remote_dataset
-
-    monkeypatch.setattr(DatasetHub, 'load', fake_load)
-
-    dataset = RemoteDataLoader(
-        data_id_or_path='dummy/video-dataset',
-        split='train',
-        sample_fields=_sample_from_record,
-        data_source=HubType.LOCAL,
-        dataset_dir=str(tmp_path),
-    ).load()
-
-    assert dataset[0].metadata['video'] == {'bytes': b'dummy', 'path': None}
+def _sample_from_record(record: dict) -> Sample:
+    return Sample(input=record['text'])
 
 
 def _make_direct_loader(
     loader_kind: str,
     tmp_path: Path,
-    monkeypatch: Any,
     limit: Optional[float | int],
     repeats: Any = 1,
-) -> RemoteDataLoader | LocalDataLoader | DictDataLoader:
+) -> LocalDataLoader | DictDataLoader:
     records = [{'text': f'row-{index}'} for index in range(4)]
-    if loader_kind == 'remote':
-        monkeypatch.setattr(DatasetHub, 'load', lambda self, split, subset='default', **kwargs: HFDataset.from_list(records))
-        return RemoteDataLoader(
-            data_id_or_path='dummy/limit-dataset',
-            split='train',
-            sample_fields=_sample_from_record,
-            data_source=HubType.LOCAL,
-            dataset_dir=str(tmp_path),
-            limit=limit,
-            repeats=repeats,
-        )
     if loader_kind == 'local':
-        local_path = tmp_path / 'records.jsonl'
-        local_path.write_text('\n'.join(json.dumps(record) for record in records), encoding='utf-8')
+        local_path = tmp_path / 'records.parquet'
+        pq.write_table(pa.Table.from_pylist(records), local_path)
         return LocalDataLoader(
             data_id_or_path=str(local_path),
             split='train',
@@ -171,19 +35,18 @@ def _make_direct_loader(
     return DictDataLoader(dict_list=records, sample_fields=_sample_from_record, limit=limit, repeats=repeats)
 
 
-@pytest.mark.parametrize('loader_kind', ['remote', 'local', 'dict'])
+@pytest.mark.parametrize('loader_kind', ['local', 'dict'])
 @pytest.mark.parametrize('limit', [2.5, -1, -0.1, math.nan, math.inf])
 def test_direct_loaders_reject_invalid_limits(
     loader_kind: str,
     limit: float | int,
-    monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
     with pytest.raises(ValueError, match='Limit must'):
-        _make_direct_loader(loader_kind, tmp_path, monkeypatch, limit).load()
+        _make_direct_loader(loader_kind, tmp_path, limit).load()
 
 
-@pytest.mark.parametrize('loader_kind', ['remote', 'local', 'dict'])
+@pytest.mark.parametrize('loader_kind', ['local', 'dict'])
 @pytest.mark.parametrize(
     'limit, expected',
     [
@@ -198,10 +61,9 @@ def test_direct_loaders_preserve_valid_limit_semantics(
     loader_kind: str,
     limit: Optional[float | int],
     expected: int,
-    monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
-    loader = _make_direct_loader(loader_kind, tmp_path, monkeypatch, limit)
+    loader = _make_direct_loader(loader_kind, tmp_path, limit)
 
     assert len(loader.load()) == expected
     assert len(loader.load()) == expected
@@ -225,17 +87,10 @@ def test_dict_loader_defaults_to_independent_empty_metadata(metadata_fields: Opt
     assert loader.load()[0].metadata == {}
 
 
-@pytest.mark.parametrize('extension', ['csv', 'jsonl'])
-def test_local_loader_defaults_to_empty_metadata(tmp_path: Path, extension: str) -> None:
+def test_local_loader_defaults_to_empty_metadata(tmp_path: Path) -> None:
     record = {'input': 'Which city is the capital of France?', 'target': 'Paris'}
-    path = tmp_path / f'questions.{extension}'
-    if extension == 'csv':
-        with path.open('w', newline='', encoding='utf-8') as stream:
-            writer = csv.DictWriter(stream, fieldnames=['input', 'target'])
-            writer.writeheader()
-            writer.writerow(record)
-    else:
-        path.write_text(json.dumps(record) + '\n', encoding='utf-8')
+    path = tmp_path / 'questions.parquet'
+    pq.write_table(pa.Table.from_pylist([record]), path)
 
     dataset = LocalDataLoader(data_id_or_path=str(path), split='test').load()
 
@@ -284,16 +139,15 @@ def test_repeats_group_the_samples_of_a_multi_sample_record_by_question() -> Non
     assert groups == {0: ['a', 'a'], 1: ['b', 'b']}
 
 
-@pytest.mark.parametrize('loader_kind', ['remote', 'local', 'dict'])
+@pytest.mark.parametrize('loader_kind', ['local', 'dict'])
 @pytest.mark.parametrize('repeats', [0, -1, 1.5, True, '1'])
 def test_direct_loaders_reject_invalid_repeats(
     loader_kind: str,
     repeats: Any,
-    monkeypatch: Any,
     tmp_path: Path,
 ) -> None:
     with pytest.raises(ValueError, match='Repeats must be a positive integer'):
-        _make_direct_loader(loader_kind, tmp_path, monkeypatch, limit=None, repeats=repeats)
+        _make_direct_loader(loader_kind, tmp_path, limit=None, repeats=repeats)
 
 
 @pytest.mark.parametrize('seed', [0, 42])
@@ -324,3 +178,28 @@ def test_dict_loader_shuffle_preserves_input_records(seed: Optional[int]) -> Non
 
     assert len(dataset) == 3
     assert records == original_records
+
+
+@pytest.mark.parametrize('extension', ['csv', 'tsv', 'jsonl'])
+def test_local_loader_rejects_text_formats(tmp_path: Path, extension: str) -> None:
+    path = tmp_path / f'default_test.{extension}'
+    path.touch()
+    with pytest.raises(ValueError, match='Unsupported dataset format'):
+        LocalDataLoader(data_id_or_path=str(path), split='test').load()
+    with pytest.raises(FileNotFoundError, match='No dataset'):
+        LocalDataLoader(data_id_or_path=str(tmp_path), split='test').load()
+
+
+@pytest.mark.parametrize('direct_path', [False, True])
+@pytest.mark.parametrize('version, expected', [(None, 'new'), (1, 'old'), ('1', 'old'), ('baseline', 'old')])
+def test_load_lance_snapshot(tmp_path: Path, direct_path: bool, version: int | str | None, expected: str) -> None:
+    lance = pytest.importorskip('lance')
+    path = tmp_path / 'default_test.lance'
+    table = lance.write_dataset(pa.table({'input': ['old']}), path)
+    table.tags.create('baseline', 1)
+    lance.write_dataset(pa.table({'input': ['new']}), path, mode='overwrite')
+
+    dataset = LocalDataLoader(
+        data_id_or_path=str(path if direct_path else tmp_path), split='test', version=version
+    ).load()
+    assert [sample.input for sample in dataset] == [expected]

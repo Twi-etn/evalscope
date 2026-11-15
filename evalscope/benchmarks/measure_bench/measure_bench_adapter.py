@@ -97,9 +97,7 @@ class MeasureBenchAdapter(VisionLanguageAdapter):
             logger.warning(f'Record {record.get("question_id")} has no image; skipping.')
             return None
 
-        # evalscope RemoteDataLoader sets decode=False on Image columns, so the
-        # field arrives as a bytes dict {'bytes': b'...', 'path': ...}.
-        # Direct load_dataset_from_hub (without RemoteDataLoader) returns PIL.
+        # Local Parquet and Lance may contain raw image bytes.
         if isinstance(image_field, dict) and image_field.get('bytes'):
             image_b64 = self._image_bytes_to_base64(image_field['bytes'], default_format='jpeg')
         elif hasattr(image_field, 'save'):  # PIL Image fallback

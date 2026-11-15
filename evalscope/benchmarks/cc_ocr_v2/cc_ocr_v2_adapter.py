@@ -8,7 +8,7 @@ from evalscope.api.dataset import (
     DatasetDict,
     Sample,
     build_dataset_dict_from_record_map,
-    resolve_snapshot_or_local_path,
+    resolve_local_dataset_path,
 )
 from evalscope.api.evaluator.state import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
@@ -80,11 +80,9 @@ scanned tables, handwritten formulas, multi-page receipts, and low-quality multi
 - Full-page parsing targets are long, so allow a generous `max_tokens` (4096 or more)
 - Requires: `apted`, `distance`, `lxml`, `python-Levenshtein`, `scipy`, `zss`
   (`pip install 'evalscope[cc_ocr_v2]'`)
-- The dataset is a file tree of images and answers (about 5 GB). Only the tracks listed in
-  `subset_list` are downloaded, so restricting subsets keeps the download small
+- The local dataset is a file tree of images and answers. Include the tracks selected by `subset_list`.
 - Incomplete samples are skipped with a warning. A complete run contains 7,093 samples; if fewer are
-  loaded, check the snapshot and missing-file warnings before reporting results. The official Hugging Face
-  source is available with `--dataset-hub huggingface`
+  loaded, check the local data and missing-file warnings before reporting results.
 """
 
 
@@ -123,9 +121,7 @@ class CCOCRV2Adapter(VisionLanguageAdapter):
             raise ValueError(f'Unknown CC-OCR V2 subsets {unknown}. Valid subsets are: {SUBSET_LIST}')
 
         # Only fetch the selected sub-tasks; the full benchmark is roughly 5 GB of images.
-        dataset_root = resolve_snapshot_or_local_path(
-            self, allow_file_pattern=[f'{SUBSET_TO_TRACK[subset]}/{subset}/*' for subset in self.subset_list]
-        )
+        dataset_root = resolve_local_dataset_path(self)
 
         record_map = {}
         for subset in self.subset_list:

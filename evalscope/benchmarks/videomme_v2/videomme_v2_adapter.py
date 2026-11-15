@@ -5,7 +5,13 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import (
+    DatasetDict,
+    DatasetHub,
+    Sample,
+    build_dataset_from_records,
+    read_local_dataset_records,
+)
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
@@ -148,8 +154,9 @@ class VideoMMEv2Adapter(VisionLanguageAdapter, MultiChoiceAdapter):
     def _load_records(self) -> List[Dict[str, Any]]:
         if self._record_cache is None:
             logger.info(f'Loading Video-MME-v2 records from {self.dataset_hub}: {self.dataset_id}.')
-            dataset = self.source_dataset.load(split=self.eval_split)
-            self._record_cache = list(dataset)
+            self._record_cache = read_local_dataset_records(
+                self.dataset_id, self.eval_split, 'default', version=self.dataset_revision
+            )
             if not self._record_cache:
                 raise ValueError('No records found for Video-MME-v2.')
         return list(self._record_cache)

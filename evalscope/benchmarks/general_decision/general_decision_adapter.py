@@ -1,8 +1,9 @@
+import json
 from typing import Any
 
 from evalscope.api.benchmark import BenchmarkMeta
 from evalscope.api.benchmark.adapters.decision_adapter import DecisionAdapter
-from evalscope.api.dataset import DatasetDict
+from evalscope.api.dataset import Sample
 from evalscope.api.metric import MetricSelector
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
@@ -23,7 +24,7 @@ from evalscope.constants import Tags
         description="""
 ## Overview
 
-Evaluate local JSONL datasets containing one Choice, Noul or Score question per record.
+Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score question per record.
 
 ## Task Description
 
@@ -34,7 +35,7 @@ Evaluate local JSONL datasets containing one Choice, Noul or Score question per 
 
 ## Key Features
 
-- Reads `default_test.jsonl` from a directory passed through `dataset_args.general_decision.local_path`
+- Reads `default_test.parquet` from a directory passed through `dataset_args.general_decision.local_path`
 - Fields: `id`, `state`, `question` (type/instructions/criteria), `expected`; one question per record
 - Preserves option order, source IDs and rubric descriptions
 - Supports System One and native AutoTrust APIs within their declared capabilities
@@ -46,7 +47,7 @@ Evaluate local JSONL datasets containing one Choice, Noul or Score question per 
 - Probability metrics are separated by type; Score retains its expectation and normalized RPS
 - Invalid responses are excluded from ordinary metrics and reflected in execution coverage
 - This is a local data entry point; no upload is required
-- See [Custom decision datasets](../advanced_guides/custom_dataset/decision.md) for runnable JSONL examples,
+- See [Custom decision datasets](../advanced_guides/custom_dataset/decision.md) for runnable examples,
   required and optional fields, question types, metrics, continuous scores, and configuration
 - See the [decision evaluation best practice](../best_practice/decision_evaluation.md) for deployment and Web UI
 """,
@@ -57,6 +58,8 @@ class GeneralDecisionAdapter(DecisionAdapter):
 
     requires_local_dataset = True
 
-    def load_from_disk(self, **kwargs: Any) -> tuple[DatasetDict, DatasetDict | None]:
-        """Read named local files directly, preserving heterogeneous decision records."""
-        return super().load_from_disk(use_local_loader=True)
+    def record_to_sample(self, record: dict[str, Any]) -> Sample:
+        """Decode JSON payload columns for records with heterogeneous question schemas."""
+        if isinstance(record['question'], str):
+            record = {**record, 'question': json.loads(record['question']), 'state': json.loads(record['state'])}
+        return super().record_to_sample(record)

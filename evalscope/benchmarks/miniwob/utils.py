@@ -18,7 +18,7 @@ import numpy as np
 from evalscope.api.tool import ToolInfo
 from evalscope.api.tool.tool_info import ToolParams
 from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR
-from evalscope.utils.download_utils import download_url, file_sha256
+from evalscope.utils.download_utils import file_sha256
 from evalscope.utils.json_schema import JSONSchema
 
 BROWSERGYM_COMMIT = '0a785fbed075224ae81ca9c1fe924f66050696fe'
@@ -135,19 +135,10 @@ def ensure_miniwob_metadata(cache_root: Optional[str | Path] = None) -> Path:
     if destination.is_file() and file_sha256(str(destination)) == BROWSERGYM_METADATA_SHA256:
         return destination
 
-    try:
-        download_url(
-            BROWSERGYM_METADATA_URL,
-            str(destination),
-            sha256=BROWSERGYM_METADATA_SHA256,
-            headers={'User-Agent': 'EvalScope-MiniWoB/1.0'},
-        )
-    except Exception as exc:
-        raise RuntimeError(
-            f'Unable to load pinned MiniWoB metadata. Cache path: {destination}; '
-            f'source: {BROWSERGYM_METADATA_URL}. No ModelScope or Hugging Face fallback is configured.'
-        ) from exc
-    return destination
+    raise FileNotFoundError(
+        f'Expected a checksum-verified MiniWoB metadata file at {destination}. '
+        f'Prepare the local file from {BROWSERGYM_METADATA_URL}.'
+    )
 
 
 def ensure_miniwob_assets(cache_root: Optional[str | Path] = None) -> Path:
@@ -164,13 +155,11 @@ def ensure_miniwob_assets(cache_root: Optional[str | Path] = None) -> Path:
         if sentinel.is_file():
             return html_dir
         archive_path = source_parent / f'{MINIWOB_COMMIT}.tar.gz'
-        download_url(
-            MINIWOB_ARCHIVE_URL,
-            str(archive_path),
-            sha256=MINIWOB_ARCHIVE_SHA256,
-            headers={'User-Agent': 'EvalScope-MiniWoB/1.0'},
-        )
-        source_parent.mkdir(parents=True, exist_ok=True)
+        if not archive_path.is_file() or file_sha256(str(archive_path)) != MINIWOB_ARCHIVE_SHA256:
+            raise FileNotFoundError(
+                f'Expected a checksum-verified MiniWoB archive at {archive_path}. '
+                f'Prepare the local archive from {MINIWOB_ARCHIVE_URL}.'
+            )
         with tempfile.TemporaryDirectory(prefix='extract-', dir=source_parent) as temp_dir:
             temp_path = Path(temp_dir)
             with tarfile.open(archive_path, 'r:gz') as archive:

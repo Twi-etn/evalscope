@@ -3,7 +3,13 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import (
+    DatasetDict,
+    DatasetHub,
+    Sample,
+    build_dataset_from_records,
+    read_local_dataset_records,
+)
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.metric import AggScore, SampleScore, Score
@@ -43,7 +49,7 @@ The native adapter treats each video as one evaluation sample and uses all avail
 ## Evaluation Notes
 
 - Default data source: `evalscope/MSVD` on ModelScope, `test` split
-- Hugging Face `VLM2Vec/MSVD` remains available by setting `dataset_hub="huggingface"` in TaskConfig
+- Prepare local Parquet or Lance annotations and supply the video files locally.
 - Primary metric: **CIDEr**
 - Additional metrics: BLEU-1/2/3/4, METEOR, ROUGE-L
 - Set `extra_params.video_dir` when the dataset only provides video file names and local media files are required
@@ -78,15 +84,6 @@ class MSVDAdapter(VisionLanguageAdapter):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.use_batch_scoring = True
-
-    @property
-    def source_dataset(self) -> DatasetHub:
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-        )
 
     def load(self) -> Tuple[DatasetDict, None]:
         dataset_dict = {}
@@ -156,8 +153,7 @@ class MSVDAdapter(VisionLanguageAdapter):
 
     def _load_records(self) -> List[Dict[str, Any]]:
         logger.info(f'Loading MSVD from {self.dataset_hub}: {self.dataset_id}, split={self.eval_split}.')
-        dataset = self.source_dataset.load(split=self.eval_split, subset='default')
-        return list(dataset)
+        return read_local_dataset_records(self.dataset_id, self.eval_split, 'default', version=self.dataset_revision)
 
     def _resolve_video(self, record: Dict[str, Any]) -> Optional[str]:
         video_name = record.get('video') or record.get('video_path')

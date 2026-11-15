@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 from evalscope.api.benchmark import AgentAdapter, BenchmarkMeta
-from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_snapshot_or_local_path
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_path
 from evalscope.api.evaluator import InferenceResult
 from evalscope.api.messages.chat_message import ChatMessageUser
 from evalscope.api.metric import Score
@@ -105,7 +105,7 @@ class Tau2BenchAdapter(AgentAdapter):
             dataset_path = dataset_name_or_path
         else:
             logger.info(f'Loading dataset from modelscope: > dataset_name: {dataset_name_or_path}')
-            dataset_path = resolve_snapshot_or_local_path(self)
+            dataset_path = resolve_local_dataset_path(self)
 
         # Set Tau2 data dir
         os.environ['TAU2_DATA_DIR'] = dataset_path

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict
 
 from evalscope.api.agent import NativeAgentConfig
 from evalscope.api.benchmark import BenchmarkMeta, BrowserGymAdapter
 from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records
 from evalscope.api.registry import register_benchmark
-from evalscope.constants import Tags
+from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR, Tags
 
 from .utils import (
     BROWSER_ACTION_TOOL_INFO,
@@ -43,13 +44,16 @@ scrolling and dragging items.
 """
 
 
+BROWSERGYM_REPO = 'https://github.com/ServiceNow/BrowserGym'
+
+
 @register_benchmark(
     BenchmarkMeta(
         name='miniwob',
         pretty_name='MiniWoB',
         tags=[Tags.AGENT, Tags.FUNCTION_CALLING, Tags.MULTI_MODAL, Tags.MULTI_TURN],
         description=_DESCRIPTION,
-        dataset_id='https://github.com/ServiceNow/BrowserGym',
+        dataset_id=BROWSERGYM_REPO,
         subset_list=['default'],
         default_subset='default',
         eval_split='test',
@@ -70,7 +74,7 @@ class MiniWobAdapter(BrowserGymAdapter):
 
     def load(self) -> tuple[DatasetDict, None]:
         """Generate the deterministic task schedule from pinned BrowserGym metadata."""
-        records, metadata_path = load_miniwob_records(repeats=self.repeats)
+        records, metadata_path = load_miniwob_records(repeats=self.repeats, cache_root=self._source_root)
         dataset = build_dataset_from_records(
             records=records,
             sample_fields=self.record_to_sample,
@@ -101,9 +105,15 @@ class MiniWobAdapter(BrowserGymAdapter):
             metadata=dict(record),
         )
 
+    @property
+    def _source_root(self) -> Path:
+        if self.dataset_id == BROWSERGYM_REPO:
+            return Path(DEFAULT_EVALSCOPE_CACHE_DIR)
+        return Path(self.dataset_id)
+
     def browsergym_task_kwargs(self, sample: Sample) -> Dict[str, Any]:
         """Use the checksum-verified local MiniWoB pages."""
-        assets_dir = ensure_miniwob_assets()
+        assets_dir = ensure_miniwob_assets(self._source_root)
         return {'base_url': f'{assets_dir.as_uri()}/'}
 
     def _validate_agent_config(self) -> None:

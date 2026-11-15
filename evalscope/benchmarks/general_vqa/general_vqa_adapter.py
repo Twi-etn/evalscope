@@ -31,7 +31,7 @@ It supports OpenAI-compatible message format with flexible image/video/audio inp
 - **Task Type**: Visual Question Answering
 - **Input**: Images/videos/audio + questions in OpenAI chat format
 - **Output**: Free-form text answer
-- **Flexibility**: Supports custom datasets via TSV/JSONL files
+- **Flexibility**: Supports custom datasets in Parquet or Lance
 
 ## Key Features
 
@@ -67,10 +67,9 @@ class GeneralVQAAdapter(VisionLanguageAdapter):
     General VQA Adapter for custom multimodal evaluation.
 
     This adapter supports OpenAI-compatible message format for multimodal inputs:
-    - TSV format: Tab-separated file with 'messages' and 'answer' columns
-    - JSONL format: JSON lines with 'messages' and 'answer' fields
+    - Parquet or Lance containing 'messages' and 'answer' columns
 
-    The 'messages' field should be a JSON string (in TSV) or object (in JSONL)
+    The 'messages' field should be a JSON string or structured value
     following OpenAI chat completion format with support for:
     - Text content: {"type": "text", "text": "..."}
     - Image URLs: {"type": "image_url", "image_url": {"url": "path/to/image.jpg"}}
@@ -81,9 +80,6 @@ class GeneralVQAAdapter(VisionLanguageAdapter):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def load_from_disk(self, **kwargs):
-        return super().load_from_disk(use_local_loader=True)
 
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         """
@@ -98,7 +94,7 @@ class GeneralVQAAdapter(VisionLanguageAdapter):
         messages_data = record.get('messages')
         answer = record.get('answer', '')
 
-        # Parse messages if it's a JSON string (from TSV)
+        # Parse messages if it's stored as a JSON string
         if isinstance(messages_data, str):
             try:
                 messages_data = json.loads(messages_data)

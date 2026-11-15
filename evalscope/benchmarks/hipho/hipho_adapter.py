@@ -10,7 +10,7 @@ from evalscope.api.dataset import (
     DatasetDict,
     Sample,
     build_dataset_dict_from_record_map,
-    resolve_snapshot_or_local_path,
+    resolve_local_dataset_path,
 )
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import JudgeCase, JudgeContext, JudgeDefinition, JudgeRequest, OutputContract, ReducedVerdict
@@ -146,7 +146,7 @@ class HiPhOAdapter(VisionLanguageAdapter):
 
     def load(self) -> Tuple[DatasetDict, None]:
         """Read the per-exam JSON files and their figures from the snapshot."""
-        snapshot_dir = resolve_snapshot_or_local_path(self)
+        snapshot_dir = resolve_local_dataset_path(self)
         self.data_root = os.path.join(snapshot_dir, 'data')
 
         record_map: Dict[str, List[Dict[str, Any]]] = {}

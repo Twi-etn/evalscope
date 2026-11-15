@@ -5,6 +5,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
@@ -174,7 +176,7 @@ def local_data(tmp_path: Path) -> Path:
         {'question': 'First question', 'A': 'yes', 'B': 'no', 'answer': 'A'},
         {'question': 'Second question', 'A': 'yes', 'B': 'no', 'answer': 'B'},
     ]
-    (data / 'tiny_val.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in rows))
+    pq.write_table(pa.Table.from_pylist(rows), data / 'tiny_val.parquet')
     return data
 
 

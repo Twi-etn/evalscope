@@ -3,6 +3,8 @@
 import json
 from typing import Any
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
@@ -45,8 +47,10 @@ def test_every_affected_benchmark_declares_the_next_minor_version(benchmark: str
 def test_gsm8k_old_review_is_blocked_and_predictions_can_be_rescored(tmp_path: Any, monkeypatch: Any) -> None:
     data = tmp_path / 'data'
     data.mkdir()
-    (data/'test.jsonl').write_text(json.dumps({'question':'A fixed actual-style word problem',
-                                             'answer':'Reasoning. #### 18'})+'\n')
+    pq.write_table(
+        pa.Table.from_pylist([{'question': 'A fixed actual-style word problem', 'answer': 'Reasoning. #### 18'}]),
+        data / 'default_test.parquet',
+    )
     base = dict(model='offline',eval_type='mock_llm',datasets=['gsm8k'],no_timestamp=True,
                 work_dir=str(tmp_path/'run'),judge={'strategy':'rule'},
                 dataset_args={'gsm8k':{'local_path':str(data),'few_shot_num':0,'subset_list':['default']}})
@@ -77,7 +81,7 @@ def test_math_extraction_failure_is_persisted_without_aborting_evaluation(
     data = tmp_path / 'data'
     data.mkdir()
     records = [{'question': f'Fixed question {i}', 'answer': 'Reasoning. #### 1'} for i in range(2)]
-    (data / 'test.jsonl').write_text(''.join(json.dumps(record) + '\n' for record in records))
+    pq.write_table(pa.Table.from_pylist(records), data / 'default_test.parquet')
     # Warm up before patching: isolated calls fork from the warmed process.
     extract_answer('1')
     original_parse = math_verify.parse
@@ -114,8 +118,6 @@ def test_instrument_old_review_is_blocked_and_predictions_can_be_rescored(
 ) -> None:
     import io
 
-    import pyarrow as pa
-    import pyarrow.parquet as pq
     from PIL import Image
 
     image = io.BytesIO()
@@ -132,17 +134,11 @@ def test_instrument_old_review_is_blocked_and_predictions_can_be_rescored(
         subset, prediction, metric = 'real_world', r'\boxed{\frac{3}{4}} m', 'acc'
     data = tmp_path / 'data'
     data.mkdir()
-    pq.write_table(pa.Table.from_pylist([record]), data / 'data.parquet')
-    config_name = subset if benchmark == 'chartqa' else 'default'
-    split = 'test' if benchmark == 'chartqa' else subset
-    (data / 'README.md').write_text(
-        f'---\nconfigs:\n- config_name: {config_name}\n  data_files:\n  - split: {split}\n'
-        '    path: data.parquet\n---\n'
-    )
+    pq.write_table(pa.Table.from_pylist([record]), data / 'table.parquet')
     work = tmp_path / 'run'
     base = dict(model='offline', eval_type='mock_llm', datasets=[benchmark], no_timestamp=True,
                 work_dir=str(work), judge={'strategy': 'rule'},
-                dataset_args={benchmark: {'local_path': str(data), 'subset_list': [subset]}})
+                dataset_args={benchmark: {'local_path': str(data / 'table.parquet'), 'subset_list': [subset]}})
     get_benchmark(benchmark)
     meta = BENCHMARK_REGISTRY[benchmark]
     monkeypatch.setattr(MockLLM, 'default_output', prediction)

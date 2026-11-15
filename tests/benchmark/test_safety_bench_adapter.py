@@ -265,15 +265,3 @@ def test_full_zh_report_preserves_official_accuracy(snapshot: Path, tmp_path: Pa
     assert sum(correct) == 5718
     assert report.score == round(5718 / 11435, 4) == 0.5
     assert Report.from_dict(report.to_dict()).score == 0.5
-
-
-def test_remote_loading_uses_shared_snapshot_downloader(snapshot: Path) -> None:
-    config = TaskConfig(datasets=['safety_bench'], limit=2)
-    adapter = get_benchmark('safety_bench', config)
-    module = 'evalscope.benchmarks.safety_bench.safety_bench_adapter'
-    with patch(f'{module}.resolve_snapshot_or_local_path', return_value=str(snapshot)) as download:
-        datasets = adapter.load_dataset()
-    assert {key: len(value) for key, value in datasets.items()} == {'zh': 2, 'en': 2, 'zh_subset': 2}
-    assert [call.kwargs for call in download.call_args_list] == [
-        {'allow_file_pattern': f'data/{subset}/test.parquet'} for subset in ['zh', 'en', 'zh_subset']
-    ]

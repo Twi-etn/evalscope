@@ -3,9 +3,8 @@
 import inspect
 import os
 import re
-from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, List, Mapping, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Sequence, Union
 
 from evalscope.constants import HubType
 from evalscope.utils.logger import get_logger
@@ -14,7 +13,6 @@ logger = get_logger()
 
 if TYPE_CHECKING:
     from datasets import Dataset as HFDataset
-    from datasets import DownloadConfig
     from datasets import IterableDataset as HFIterableDataset
 
 
@@ -82,7 +80,7 @@ class DatasetSource:
 
 @dataclass(frozen=True)
 class DatasetHub:
-    """Small hub handle shared by dataset loaders and benchmark-specific media resolvers."""
+    """Handle for performance datasets and benchmark-specific local media resolution."""
 
     data_id_or_path: str
     data_source: Optional[str] = HubType.MODELSCOPE
@@ -95,16 +93,14 @@ class DatasetHub:
         self,
         split: str,
         subset: str = 'default',
-        *,
-        _snapshot_cache_dir: Optional[Callable[[], str]] = None,
         **kwargs: Any,
     ) -> 'Union[HFDataset, HFIterableDataset]':
-        """Load a split, optionally using caller-owned storage for cached snapshot parsing."""
+        """Load a split from the configured source."""
         source = _resolve_data_source(self.data_id_or_path, self.data_source)
         if source in (HubType.LOCAL, HubType.HUGGINGFACE):
             return self._load_huggingface(self.data_id_or_path, split, subset, kwargs)
         if source == HubType.MODELSCOPE:
-            return self._load_modelscope(split, subset, kwargs, _snapshot_cache_dir)
+            return self._load_modelscope(split, subset, kwargs)
         raise ValueError(f'Unsupported dataset hub: {source}')
 
     def _load_huggingface(
@@ -115,7 +111,6 @@ class DatasetHub:
         options: Mapping[str, Any],
         *,
         cached_snapshot: bool = False,
-        snapshot_cache_dir: Optional[Callable[[], str]] = None,
     ) -> 'Union[HFDataset, HFIterableDataset]':
         import datasets
 
@@ -136,7 +131,7 @@ class DatasetHub:
         if 'trust_remote_code' in inspect.signature(datasets.load_dataset).parameters:
             load_kwargs['trust_remote_code'] = self.trust_remote
         if cached_snapshot:
-            load_kwargs = _prepare_cached_dataset_kwargs(load_kwargs, snapshot_cache_dir)
+            load_kwargs = _prepare_cached_dataset_kwargs(load_kwargs)
         return datasets.load_dataset(**load_kwargs)
 
     def _load_modelscope(
@@ -144,7 +139,6 @@ class DatasetHub:
         split: str,
         subset: str,
         options: Mapping[str, Any],
-        snapshot_cache_dir: Optional[Callable[[], str]],
     ) -> 'Union[HFDataset, HFIterableDataset]':
         """Try the SDK snapshot, falling back only when cached files or splits are missing."""
         import datasets
@@ -160,7 +154,6 @@ class DatasetHub:
                     subset,
                     options,
                     cached_snapshot=True,
-                    snapshot_cache_dir=snapshot_cache_dir,
                 )
             except (FileNotFoundError, ValueError) as exc:
                 if not _is_missing_cached_data(exc):
@@ -271,7 +264,6 @@ def _validate_cached_shards(data_files: Mapping[str, Sequence[str]]) -> None:
 
 def _prepare_cached_dataset_kwargs(
     load_kwargs: Mapping[str, Any],
-    snapshot_cache_dir: Optional[Callable[[], str]] = None,
 ) -> dict[str, Any]:
     """Resolve snapshot files for validation and a distinct Hugging Face cache identity."""
     import datasets
@@ -285,30 +277,7 @@ def _prepare_cached_dataset_kwargs(
         _validate_cached_shards(builder.config.data_files)
     # Absolute files and their metadata distinguish snapshots in the HF cache key.
     prepared_kwargs['data_files'] = builder.config.data_files
-    # Script loaders may create resources inside their builder output directory.
-    # Only standard file builders use temporary Arrow storage; explicit cache settings remain authoritative.
-    if snapshot_cache_dir is None or load_kwargs.get('cache_dir') is not None:
-        return prepared_kwargs
-    if not type(builder).__module__.startswith('datasets.packaged_modules.'):
-        return prepared_kwargs
-    prepared_kwargs['cache_dir'] = snapshot_cache_dir()
-    prepared_kwargs['download_config'] = _persistent_download_config(load_kwargs)
     return prepared_kwargs
-
-
-def _persistent_download_config(load_kwargs: Mapping[str, Any]) -> 'DownloadConfig':
-    """Keep downloaded resources outside temporary Arrow storage without mutating caller options."""
-    import datasets
-
-    config = deepcopy(load_kwargs.get('download_config')) or datasets.DownloadConfig(
-        num_proc=load_kwargs.get('num_proc'),
-        token=load_kwargs.get('token'),
-        storage_options=load_kwargs.get('storage_options') or {},
-        use_etag=False,
-    )
-    if config.cache_dir is None:
-        config.cache_dir = str(datasets.config.DOWNLOADED_DATASETS_PATH)
-    return config
 
 
 def _is_missing_cached_data(exc: Exception) -> bool:
@@ -331,7 +300,6 @@ def load_dataset_from_hub(
     version: Optional[str] = None,
     trust_remote: bool = True,
     force_redownload: bool = False,
-    _snapshot_cache_dir: Optional[Callable[[], str]] = None,
     **kwargs: Any,
 ) -> 'Union[HFDataset, HFIterableDataset]':
     """Load a dataset split from ModelScope, Hugging Face, or a local dataset path."""
@@ -342,7 +310,7 @@ def load_dataset_from_hub(
         trust_remote=trust_remote,
         force_redownload=force_redownload,
     )
-    return hub.load(split=split, subset=subset, _snapshot_cache_dir=_snapshot_cache_dir, **kwargs)
+    return hub.load(split=split, subset=subset, **kwargs)
 
 
 def download_dataset_file(

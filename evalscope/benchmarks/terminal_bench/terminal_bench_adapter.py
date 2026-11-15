@@ -14,14 +14,14 @@ from packaging.version import Version
 
 from evalscope.api.agent import AgentTrace, AgentTraceEvent, EventType
 from evalscope.api.benchmark import AgentAdapter, BenchmarkMeta
-from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_path
 from evalscope.api.evaluator import InferenceResult
 from evalscope.api.messages import ChatMessage, ChatMessageAssistant, ChatMessageTool, ChatMessageUser
 from evalscope.api.metric import Score
 from evalscope.api.model import Model, ModelOutput
 from evalscope.api.registry import register_benchmark
 from evalscope.api.tool import ToolCall, ToolFunction
-from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR, Tags
+from evalscope.constants import Tags
 from evalscope.utils.asyncio_runtime import AsyncioLoopRunner
 from evalscope.utils.import_utils import check_import
 from evalscope.utils.logger import get_logger
@@ -133,8 +133,6 @@ def _phase_timeout_options(
 class _TerminalBenchBase(AgentAdapter):
     """Shared logic for Terminal-Bench adapters."""
 
-    hub_dataset_name: str = ''
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -153,20 +151,14 @@ class _TerminalBenchBase(AgentAdapter):
         self.max_turns = self.extra_params.get('max_turns', 200)
         self.environment_kwargs = self.extra_params.get('environment_kwargs', {})
 
-    def load(self):
+    def load(self) -> tuple[DatasetDict, None]:
         _validate_environment_requirements(self.environment_type)
 
         from harbor.models.job.config import DatasetConfig
 
-        config = DatasetConfig(
-            name=self.hub_dataset_name,
-            ref=self.benchmark_meta.dataset_revision,
-            task_names=self.extra_params.get('task_names'),
-            overwrite=self.force_redownload,
-            download_dir=Path(os.path.join(DEFAULT_EVALSCOPE_CACHE_DIR, self.name)),
-        )
-
-        logger.info(f'Downloading dataset for {self.pretty_name} from Harbor Hub...')
+        dataset_path = resolve_local_dataset_path(self)
+        config = DatasetConfig(path=Path(dataset_path), task_names=self.extra_params.get('task_names'))
+        logger.info(f'Loading local dataset for {self.pretty_name} from {dataset_path}.')
         task_configs = AsyncioLoopRunner.run(config.get_task_configs())
 
         datasets = {}
@@ -174,7 +166,7 @@ class _TerminalBenchBase(AgentAdapter):
             records=[tc.model_dump(mode='json') for tc in task_configs],
             sample_fields=self.record_to_sample,
             name=self.eval_split,
-            location=self.hub_dataset_name,
+            location=dataset_path,
             limit=self.limit,
             repeats=self.repeats,
             shuffle=self.shuffle,
@@ -518,7 +510,7 @@ Terminal-Bench v2 is a command-line benchmark suite that evaluates AI agents on 
     )
 )
 class TerminalBenchV2Adapter(_TerminalBenchBase):
-    hub_dataset_name = 'terminal-bench/terminal-bench-2'
+    """Run the local Terminal-Bench 2.0 dataset through Harbor."""
 
 
 @register_benchmark(
@@ -563,7 +555,7 @@ Terminal-Bench v2.1 is an improved iteration of Terminal-Bench 2.0, with 26 task
     )
 )
 class TerminalBenchV2_1Adapter(_TerminalBenchBase):
-    hub_dataset_name = 'terminal-bench/terminal-bench-2-1'
+    """Run the local Terminal-Bench 2.1 dataset through Harbor."""
 
 
 @register_benchmark(
@@ -612,8 +604,6 @@ Terminal-Bench 4.0 evaluates agents on 66 challenging terminal tasks using the o
 )
 class TerminalBenchV4Adapter(_TerminalBenchBase):
     """Run the fixed Terminal-Bench 4.0 dataset through Harbor."""
-
-    hub_dataset_name = 'terminal-bench/terminal-bench'
 
     def __init__(self, **kwargs: Any) -> None:
         """Initialize the adapter and reject unsupported Harbor versions."""

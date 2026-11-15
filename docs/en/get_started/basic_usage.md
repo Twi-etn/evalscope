@@ -4,7 +4,7 @@ EvalScope is an evaluation framework designed for large models, aiming to provid
 
 ## Start Your First Evaluation
 
-You can evaluate a model on specified datasets using default configurations through either command line or Python code.
+Prepare the GSM8K evaluation split at `./data/gsm8k/main_test.parquet` and its training split for few-shot examples at `./data/gsm8k/main_train.parquet`. You can then run the evaluation through the command line or Python.
 
 ### Method 1: Using Command Line
 
@@ -14,6 +14,7 @@ Execute the `evalscope eval` command in any path to start evaluation. This is th
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 5
 ```
 
@@ -35,6 +36,7 @@ from evalscope.config import TaskConfig
 task_cfg = TaskConfig(
     model='Qwen/Qwen2.5-0.5B-Instruct',
     datasets=['gsm8k'],
+    dataset_args={'gsm8k': {'local_path': './data/gsm8k'}},
     limit=5
 )
 
@@ -48,6 +50,7 @@ from evalscope.run import run_task
 task_cfg = {
     'model': 'Qwen/Qwen2.5-0.5B-Instruct',
     'datasets': ['gsm8k'],
+    'dataset_args': {'gsm8k': {'local_path': './data/gsm8k'}},
     'limit': 5
 }
 
@@ -61,6 +64,9 @@ run_task(task_cfg=task_cfg)
 model: Qwen/Qwen2.5-0.5B-Instruct
 datasets:
   - gsm8k
+dataset_args:
+  gsm8k:
+    local_path: ./data/gsm8k
 limit: 5
 ```
 ```python
@@ -76,6 +82,7 @@ run_task(task_cfg="config.yaml")
 {
     "model": "Qwen/Qwen2.5-0.5B-Instruct",
     "datasets": ["gsm8k"],
+    "dataset_args": {"gsm8k": {"local_path": "./data/gsm8k"}},
     "limit": 5
 }
 ```
@@ -118,7 +125,7 @@ evalscope eval \
  --model Qwen/Qwen3-0.6B \
  --model-args '{"revision": "master", "precision": "torch.float16", "device_map": "auto"}' \
  --generation-config '{"do_sample":true,"temperature":0.6,"max_tokens":512}' \
- --dataset-args '{"gsm8k": {"few_shot_num": 0, "few_shot_random": false}}' \
+ --dataset-args '{"gsm8k": {"local_path": "./data/gsm8k", "few_shot_num": 0, "few_shot_random": false}}' \
  --datasets gsm8k \
  --limit 10
 ```
@@ -137,7 +144,7 @@ evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
  --limit 10 \
- --dataset-args '{"gsm8k": {"aggregation": "mean_and_vote_at_k"}}' \
+ --dataset-args '{"gsm8k": {"local_path": "./data/gsm8k", "aggregation": "mean_and_vote_at_k"}}' \
  --repeats 5
 ```
 
@@ -174,6 +181,7 @@ evalscope eval \
  --api-key EMPTY \
  --eval-type openai_api \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10
 ```
 
@@ -185,6 +193,7 @@ evalscope eval \
  --api-key $OPENAI_API_KEY \
  --eval-type openai_responses_api \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --generation-config '{"stream": true, "max_tokens": 512}'
 ```
@@ -221,44 +230,34 @@ run_task(task_cfg=task_cfg)
 For detailed configuration of judge models, please refer to: [Judge Model Parameters](./parameters.md#judge-parameters)
 ```
 
-### Loading Datasets from Hugging Face
+### Load Local Datasets
 
-EvalScope loads datasets from ModelScope by default. To use Hugging Face Hub instead, set `--dataset-hub` to `huggingface`. When a dataset uses different repository IDs on Hugging Face and ModelScope, override the dataset's `dataset_id` via `--dataset-args`.
+Native evaluation reads local datasets. Pass a filesystem path through `dataset_args.<benchmark>.local_path`.
 
-For example, the default ID for `ocr_bench` is `evalscope/OCRBench` on ModelScope, while its Hugging Face counterpart is `echo840/OCRBench`:
+The standard loader accepts a Parquet file, a Lance dataset directory, or a parent directory containing named splits. In a parent directory it looks for `<subset>_<split>.parquet` or `<subset>_<split>.lance`, then `<subset>.parquet` or `<subset>.lance`. Specialized benchmarks may require their own directory layout and associated media.
 
-```shell
+Install the optional Lance dependency from the repository:
+
+```bash
+uv pip install -e '.[lance]'
+```
+
+```bash
 evalscope eval \
- --model Qwen/Qwen2.5-VL-7B-Instruct \
- --datasets ocr_bench \
- --dataset-hub huggingface \
- --dataset-args '{"ocr_bench": {"dataset_id": "echo840/OCRBench"}}' \
+ --model local-test --eval-type mock_llm \
+ --datasets general_mcq \
+ --dataset-args '{"general_mcq":{"local_path":"./data/questions.lance","dataset_revision":1,"few_shot_num":0}}' \
  --limit 5
 ```
 
-Equivalent Python usage:
+Omit `dataset_revision` to read the latest Lance version. You can also pass a version number or a tag. Standard Lance loaders record the concrete versions used by the run. To resume after a new version is published, use the same pinned version and configuration as the original run.
 
-```python
-from evalscope import TaskConfig, run_task
+For CSV, TSV, or JSONL inputs, convert each split to Parquet or Lance before evaluation. For example, this converts the repository's JSONL validation fixture:
 
-task_cfg = TaskConfig(
-    model='Qwen/Qwen2.5-VL-7B-Instruct',
-    datasets=['ocr_bench'],
-    dataset_hub='huggingface',
-    dataset_args={
-        'ocr_bench': {
-            'dataset_id': 'echo840/OCRBench',
-        },
-    },
-    limit=5,
-)
-
-run_task(task_cfg=task_cfg)
+```bash
+python -c "from pyarrow import json, parquet; parquet.write_table(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.parquet')"
 ```
 
-```{tip}
-If a dataset uses the same repository ID on both Hugging Face and ModelScope, just set `--dataset-hub huggingface` — no need to override `dataset_id`.
-```
 
 ### Offline Evaluation
 
@@ -266,7 +265,7 @@ In offline environments, you can use locally cached models and datasets for eval
 
 **1. Prepare Local Datasets**
 
-Datasets are hosted on [ModelScope](https://modelscope.cn/datasets) by default and require internet connection to load. For offline environments, you can use local datasets and models with the following process:
+Prepare the benchmark data locally before starting an evaluation. For example, you can download the upstream files from ModelScope in advance:
 
 1) First, check the ModelScope ID of the dataset you want to use: Find the **Dataset ID** of the dataset you need in the [Supported Datasets](./supported_dataset/index.md) list, for example, the ID for `mmlu_pro` is `modelscope/MMLU-Pro`.
 2) Use the modelscope command to download the dataset: Click "Dataset Files" tab -> Click "Download Dataset" -> Copy the command line
@@ -274,7 +273,7 @@ Datasets are hosted on [ModelScope](https://modelscope.cn/datasets) by default a
 # Download dataset
 modelscope download --dataset modelscope/MMLU-Pro --local_dir ./data/mmlu_pro
 ```
-3) Use the directory `./data/mmlu_pro` as the value for the `local_path` parameter.
+3) Convert or rename the downloaded splits to the local layout described above. Pass their parent directory as `local_path`.
 
 **2. Prepare Local Models**
 
@@ -311,6 +310,7 @@ For example, if the following evaluation was interrupted:
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10
 ```
 
@@ -320,6 +320,7 @@ Resume it using the actual output directory from that run:
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --use-cache outputs/20261009_120000
 ```
@@ -342,6 +343,7 @@ In some cases, the model may fail to infer due to overly long inputs, timeouts, 
 evalscope eval \
  --model Qwen/Qwen2.5-0.5B-Instruct \
  --datasets gsm8k \
+ --dataset-args '{"gsm8k":{"local_path":"./data/gsm8k"}}' \
  --limit 10 \
  --ignore-errors
 ```

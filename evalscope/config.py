@@ -252,8 +252,8 @@ class TaskConfig(BaseArgument):
     dataset_dir: str = DEFAULT_DATASET_CACHE_DIR
     """Directory where datasets are cached locally."""
 
-    dataset_hub: str = HubType.MODELSCOPE
-    """Hub platform to download datasets from (e.g., ModelScope, HuggingFace)."""
+    dataset_hub: str = HubType.LOCAL
+    """Legacy field accepted when loading previous task configurations."""
 
     repeats: int = 1
     """Number of times to repeat the dataset items for k-metrics evaluation."""

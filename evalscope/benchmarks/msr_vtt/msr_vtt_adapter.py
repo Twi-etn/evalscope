@@ -3,7 +3,13 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import (
+    DatasetDict,
+    DatasetHub,
+    Sample,
+    build_dataset_from_records,
+    read_local_dataset_records,
+)
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.metric import AggScore, SampleScore, Score
@@ -48,7 +54,7 @@ with multiple reference captions.
 ## Evaluation Notes
 
 - Default data source: `AI-ModelScope/msr-vtt` on ModelScope, `validation` split
-- Hugging Face `VLM2Vec/MSR-VTT` remains available by setting `dataset_hub="huggingface"` in TaskConfig
+- Prepare local Parquet or Lance annotations and supply the video files locally.
 - Primary metric: **CIDEr**
 - Additional metrics: BLEU-1/2/3/4, METEOR, ROUGE-L
 - Set `extra_params.video_dir` to prefer local media files over URL metadata
@@ -80,39 +86,9 @@ with multiple reference captions.
 class MSRVTTAdapter(VisionLanguageAdapter):
     """Adapter for MSR-VTT video captioning."""
 
-    SOURCE_EVAL_SPLITS = {
-        HubType.MODELSCOPE: 'validation',
-        HubType.HUGGINGFACE: 'test',
-    }
-
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.use_batch_scoring = True
-
-    @property
-    def uses_official_hf_dataset(self) -> bool:
-        """Return whether the effective source is the built-in Hugging Face dataset."""
-        return self.dataset_hub == HubType.HUGGINGFACE and self.dataset_id == HUGGINGFACE_DATASET_ID
-
-    @property
-    def source_eval_split(self) -> str:
-        is_default_split = self.eval_split == self.SOURCE_EVAL_SPLITS[HubType.MODELSCOPE]
-        if self.uses_official_hf_dataset and is_default_split:
-            return self.SOURCE_EVAL_SPLITS[HubType.HUGGINGFACE]
-        return self.eval_split
-
-    @property
-    def source_subset(self) -> str:
-        return 'test_1k' if self.uses_official_hf_dataset else 'default'
-
-    @property
-    def source_dataset(self) -> DatasetHub:
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-        )
 
     def load(self) -> Tuple[DatasetDict, None]:
         dataset_dict = {}
@@ -189,13 +165,11 @@ class MSRVTTAdapter(VisionLanguageAdapter):
         return aggregate_caption_scores(sample_scores)
 
     def _load_records(self) -> List[Dict[str, Any]]:
-        subset = self.source_subset
+        subset = self.default_subset
         logger.info(
-            f'Loading MSR-VTT from {self.dataset_hub}: '
-            f'{self.dataset_id}, subset={subset}, split={self.source_eval_split}.'
+            f'Loading MSR-VTT from {self.dataset_hub}: {self.dataset_id}, subset={subset}, split={self.eval_split}.'
         )
-        dataset = self.source_dataset.load(split=self.source_eval_split, subset=subset)
-        return list(dataset)
+        return read_local_dataset_records(self.dataset_id, self.eval_split, subset, version=self.dataset_revision)
 
     def _resolve_video(self, record: Dict[str, Any]) -> Optional[str]:
         video_name = record.get('video') or record.get('video_path')

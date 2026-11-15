@@ -36,11 +36,9 @@ scanned tables, handwritten formulas, multi-page receipts, and low-quality multi
 - Full-page parsing targets are long, so allow a generous `max_tokens` (4096 or more)
 - Requires: `apted`, `distance`, `lxml`, `python-Levenshtein`, `scipy`, `zss`
   (`pip install 'evalscope[cc_ocr_v2]'`)
-- The dataset is a file tree of images and answers (about 5 GB). Only the tracks listed in
-  `subset_list` are downloaded, so restricting subsets keeps the download small
+- The local dataset is a file tree of images and answers. Include the tracks selected by `subset_list`.
 - Incomplete samples are skipped with a warning. A complete run contains 7,093 samples; if fewer are
-  loaded, check the snapshot and missing-file warnings before reporting results. The official Hugging Face
-  source is available with `--dataset-hub huggingface`
+  loaded, check the local data and missing-file warnings before reporting results.
 
 
 ## Properties
