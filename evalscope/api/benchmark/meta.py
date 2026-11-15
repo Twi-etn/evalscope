@@ -25,7 +25,7 @@ class BenchmarkMeta:
     """ Unique name of the benchmark."""
 
     dataset_id: str
-    """ Dataset id on modelscope or path to local dataset."""
+    """Default data source. Set a local Parquet file, Lance dataset, or split directory for local evaluation."""
 
     data_adapter: Optional[Type['DataAdapter']] = None
     """ Data adapter class for the benchmark."""
@@ -55,7 +55,7 @@ class BenchmarkMeta:
     """ Training split to use for the benchmark."""
 
     eval_split: Optional[str] = None
-    """ Evaluation split to use for the benchmark."""
+    """Evaluation split name for a split directory. Optional for a single Parquet or Lance dataset."""
 
     prompt_template: Optional[str] = None
     """ Prompt template to use for the benchmark."""
@@ -150,8 +150,8 @@ class BenchmarkMeta:
     evaluation_version: str = 'v1.0'
     """Published evaluation semantics version used for cache compatibility."""
 
-    dataset_revision: Optional[str] = None
-    """Optional dataset revision. With a local Lance dataset, use a version number or tag."""
+    dataset_revision: Optional[Union[int, str]] = None
+    """Dataset revision. For Lance, use a version ID or tag, or omit it to use the latest version."""
 
     hf_dataset_id: Optional[str] = None
     """Optional Hugging Face dataset repo id when it differs from the ModelScope dataset id.
@@ -165,10 +165,15 @@ class BenchmarkMeta:
         from evalscope.evaluation_versioning import validate_evaluation_version
 
         validate_evaluation_version(self.evaluation_version)
+        self._normalize_dataset_revision()
         self._validate_few_shot_metadata()
         self._normalize_metric_list()
         self._normalize_primary_metric()
         self._validate_primary_metric()
+
+    def _normalize_dataset_revision(self) -> None:
+        if isinstance(self.dataset_revision, int) and not isinstance(self.dataset_revision, bool):
+            self.dataset_revision = str(self.dataset_revision)
 
     def _validate_few_shot_metadata(self) -> None:
         """Validate benchmark-declared few-shot capabilities."""
@@ -340,7 +345,7 @@ class BenchmarkMeta:
 
         if args.get('local_path'):
             self.dataset_id = args['local_path']
-            # A local mirror fully replaces the remote source, including any hub-specific mapping.
+            # A replacement path has its own version history and source metadata.
             self.dataset_revision = None
             self.hf_dataset_id = None
             self.hf_dataset_revision = None
@@ -361,14 +366,12 @@ class BenchmarkMeta:
             self._update_extra_params(args['extra_params'])
             del args['extra_params']
 
-        if isinstance(args.get('dataset_revision'), int) and not isinstance(args['dataset_revision'], bool):
-            args['dataset_revision'] = str(args['dataset_revision'])
-
         # Update fields with validation
         for key, value in args.items():
             if hasattr(self, key):
                 setattr(self, key, value)
 
+        self._normalize_dataset_revision()
         self._validate_few_shot_metadata()
         self._normalize_metric_list()
         self._normalize_primary_metric()

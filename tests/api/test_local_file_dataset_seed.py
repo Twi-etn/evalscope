@@ -2,6 +2,7 @@
 
 import random
 from collections.abc import Iterator
+from dataclasses import replace
 from pathlib import Path
 
 import pyarrow as pa
@@ -97,3 +98,11 @@ def test_native_loader_pins_and_records_lance_versions(tmp_path: Path) -> None:
     pinned = get_benchmark('general_qa', config)
     assert ResolvedBenchmarkSpec.from_adapter(pinned, config).dataset_versions == {str(path): 1}
     assert pinned.load_dataset()['default'][0].target == 'first'
+
+    declared_config = TaskConfig(datasets=['general_qa'])
+    meta = replace(latest.benchmark_meta, dataset_id=str(path), dataset_revision=1, eval_split=None)
+    declared = type(latest)(benchmark_meta=meta, task_config=declared_config)
+    spec = ResolvedBenchmarkSpec.from_adapter(declared, declared_config)
+    assert spec.dataset_revision == '1'
+    assert spec.dataset_versions == {str(path): 1}
+    assert declared.load_dataset()['default'][0].target == 'first'
