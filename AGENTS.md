@@ -128,7 +128,9 @@ Use the relevant source pointers below when the task touches that area; this is 
 
 ## Adding a benchmark
 
-1. Create `evalscope/benchmarks/<name>/<name>_adapter.py`.
+1. For STEM, create `evalscope/benchmarks/stem/<name>_adapter.py`, or put the adapter in
+   `evalscope/benchmarks/stem/<name>/` when it needs its own helpers or resources.
+   For other benchmarks, follow the existing layout for that area.
 2. Extend `DefaultDataAdapter`, override `record_to_sample()` (and optionally `sample_to_fewshot()`, `extract_answer()`).
 3. Reuse the standard dataset flow (`load_subset()` and existing `DataLoader` implementations) for shuffle, limit, repeats, filtering, conversion, and indexing. Override the full `load()` flow only when the standard loaders cannot represent the source format, and keep custom loading limited to benchmark-specific parsing or validation.
 4. Use `download_dataset_file()` or `download_dataset_snapshot()` for benchmark media and raw files; do not duplicate hub resolution, cache, path-safety, or download state inside an adapter.

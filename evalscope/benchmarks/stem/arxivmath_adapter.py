@@ -1,4 +1,4 @@
-# evalscope/benchmarks/arxivmath/arxivmath_adapter.py
+# evalscope/benchmarks/stem/arxivmath_adapter.py
 from __future__ import annotations
 
 from typing import Any, Dict

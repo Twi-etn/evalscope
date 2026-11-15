@@ -14,7 +14,7 @@ from evalscope.api.evaluator import TaskState
 from evalscope.api.metric import Score
 from evalscope.api.model import ModelOutput
 from evalscope.api.registry import get_benchmark
-from evalscope.benchmarks.phyx.utils import (
+from evalscope.benchmarks.stem.phyx.utils import (
     build_mc_question,
     build_oe_question,
     extract_boxed_content,

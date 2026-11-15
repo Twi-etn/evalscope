@@ -1,4 +1,4 @@
-# evalscope/benchmarks/imo_answerbench/imo_answerbench_adapter.py
+# evalscope/benchmarks/stem/imo_answerbench_adapter.py
 from __future__ import annotations
 
 from typing import Any, Dict

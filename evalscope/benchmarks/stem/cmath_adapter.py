@@ -1,4 +1,4 @@
-# evalscope/benchmarks/cmath/cmath_adapter.py
+# evalscope/benchmarks/stem/cmath_adapter.py
 from __future__ import annotations
 
 from typing import Any, Dict

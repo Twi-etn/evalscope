@@ -1,6 +1,6 @@
 from evalscope.api.benchmark import BenchmarkMeta
 from evalscope.api.metric import SampleScore, Score
-from evalscope.benchmarks.process_bench.process_bench_adapter import ProcessBenchAdapter
+from evalscope.benchmarks.stem.process_bench_adapter import ProcessBenchAdapter
 from evalscope.config import TaskConfig
 
 

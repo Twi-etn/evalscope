@@ -23,7 +23,7 @@ from evalscope.benchmarks import _INDEX_PATH, adapter_modules, build_index
 # A benchmark whose name matches its module leaf.
 SIMPLE_NAME = 'gsm8k'
 # Two benchmarks registered by one single module, whose names are not derivable
-# from the module path (``evalscope.benchmarks.aime.aime_adapter``).
+# from the module path (``evalscope.benchmarks.stem.aime_adapter``).
 MULTI_NAME_SIBLINGS = ('aime24', 'aime25')
 # A benchmark whose name is a suffixed variant of its module leaf.
 SUFFIXED_NAME = 'gpqa_diamond'

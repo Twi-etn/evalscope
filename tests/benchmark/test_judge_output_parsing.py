@@ -1,6 +1,6 @@
 from typing import Optional
 
-from evalscope.benchmarks.aime.aime_adapter import EQUIVALENCE_CONTRACT
+from evalscope.benchmarks.stem.aime_adapter import EQUIVALENCE_CONTRACT
 
 
 class StubJudge:
