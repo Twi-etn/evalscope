@@ -139,7 +139,7 @@ evalscope service
 Option probabilities describe the model's predicted distribution over answers, while `confidence` has a provider-defined meaning that may differ. The UI can switch between raw distributions and distributions used for scoring. Scoring may normalize a distribution to account for rounding; original response values are retained.
 
 ```{dropdown} Where requests and probabilities are saved
-- `model_output.metadata.choice_request` in prediction JSONL stores the actual request sent to the model.
+- `model_output.metadata.choice_request` in the decoded prediction Parquet record stores the actual request sent to the model.
 - `model_output.metadata.choice_response.answers.answer` stores the provider's answer, including the probabilities for that question type and optional provider confidence.
 - `score.metadata.decision` in per-sample reviews stores the scoring distribution. `score.metadata.probabilities_normalized_for_scoring` records whether it was normalized.
 

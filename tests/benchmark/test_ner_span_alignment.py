@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import List
 
 import pytest
+from datasets import Dataset
 
 from evalscope import run_task
 from evalscope.api.evaluator import TaskState
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.metric import SampleScore
 from evalscope.api.registry import BENCHMARK_REGISTRY, get_benchmark
 from evalscope.config import TaskConfig
@@ -104,7 +106,7 @@ def test_ner_reviews_require_rescoring_after_span_alignment_changes(
     tokens, tags = CASES[1]
     data = tmp_path / 'data'
     data.mkdir()
-    (data / 'test.jsonl').write_text(json.dumps({'tokens': tokens, 'ner_tags': tags}) + '\n')
+    Dataset.from_list([{'tokens': tokens, 'ner_tags': tags}]).to_parquet(data / 'default_test.parquet')
     work = tmp_path / 'run'
     config = dict(
         model='offline', eval_type='mock_llm', datasets=['conll2003'], no_timestamp=True,
@@ -117,7 +119,7 @@ def test_ner_reviews_require_rescoring_after_span_alignment_changes(
     monkeypatch.setattr(MockLLM, 'default_output', create_target_text(tokens, tags, ENTITY_MAP))
     monkeypatch.setattr(metadata, 'evaluation_version', 'v1.0')
     run_task(TaskConfig(**config))
-    prediction_path = work / 'predictions/offline/conll2003_default.jsonl'
+    prediction_path = work / 'predictions/offline/conll2003_default.parquet'
     previous_predictions = prediction_path.read_bytes()
     monkeypatch.setattr(metadata, 'evaluation_version', 'v1.1')
     with pytest.raises(ValueError, match='rerun_review=True'):
@@ -127,7 +129,7 @@ def test_ner_reviews_require_rescoring_after_span_alignment_changes(
     run_task(TaskConfig(**config, use_cache=str(work), rerun_review=True))
 
     assert prediction_path.read_bytes() == previous_predictions
-    review = json.loads((work / 'reviews/offline/conll2003_default.jsonl').read_text())
+    review = read_result_rows(work / 'reviews/offline/conll2003_default.parquet')[0]
     assert review['sample_score']['score']['metadata']['y_pred'] == tags
     assert review['sample_score']['score']['value']['f1'] == 1.0
     report = json.loads((work / 'reports/offline/conll2003.json').read_text())

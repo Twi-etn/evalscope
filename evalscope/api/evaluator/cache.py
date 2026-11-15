@@ -10,10 +10,17 @@ from evalscope.api.dataset import Dataset
 from evalscope.api.messages import ChatMessage, messages_pretty_str, messages_to_markdown
 from evalscope.api.metric import SampleScore
 from evalscope.api.model import ModelOutput
-from evalscope.utils.io_utils import JsonlWriter, OutputsStructure, convert_normal_types, jsonl_to_list
+from evalscope.utils.io_utils import OutputsStructure, convert_normal_types
 from evalscope.utils.logger import get_logger
 
-from .state import TaskState
+from .result_io import (
+    PREDICTION_SCHEMA,
+    REVIEW_SCHEMA,
+    ParquetResultWriter,
+    read_result_rows,
+    result_rows_exist,
+)
+from .state import Target, TaskState
 
 logger = get_logger()
 
@@ -44,23 +51,18 @@ class CacheManager:
         self.outputs = outputs
         self.model_name = model_name
         self.benchmark_name = benchmark_name
-        self._writers: Dict[str, JsonlWriter] = {}
-        self._review_reruns: Dict[str, str] = {}
+        self._writers: Dict[str, ParquetResultWriter] = {}
+        self._review_reruns: Dict[str, ParquetResultWriter] = {}
 
-    def _get_writer(self, cache_file: str) -> JsonlWriter:
-        """Return a persistent writer for *cache_file*, opening on first use.
-
-        Keeping a single writer open per file avoids the rapid open/close
-        cycle that triggers ``PermissionError`` on Windows due to file-lock
-        release latency.
-        """
+    def _get_writer(self, cache_file: str, *, review: bool = False) -> ParquetResultWriter:
         cache_file = os.path.expanduser(cache_file)
         if cache_file not in self._writers:
-            self._writers[cache_file] = JsonlWriter(cache_file)
+            self._writers[cache_file] = ParquetResultWriter(cache_file, REVIEW_SCHEMA if review else PREDICTION_SCHEMA)
         return self._writers[cache_file]
 
     def close(self) -> None:
-        """Close all open writers. Idempotent — safe to call multiple times."""
+        """Publish buffered predictions and reviews. Discard unfinished review reruns."""
+        self.discard_review_reruns()
         for writer in self._writers.values():
             writer.close()
         self._writers.clear()
@@ -88,13 +90,14 @@ class CacheManager:
             Tuple of (cached task states, filtered dataset with remaining samples)
         """
         cache_file = self.get_prediction_cache_path(subset)
-        if not os.path.exists(cache_file):
+        if not result_rows_exist(cache_file):
             # No cache file exists, return empty cache and full dataset
             return [], dataset
 
         cached_by_sample_id = {}
         duplicate_rows = 0
-        cache_items = jsonl_to_list(cache_file, skip_invalid=True)
+        self._get_writer(cache_file)
+        cache_items = read_result_rows(cache_file, skip_invalid=True)
 
         # Process each cached item
         for cache_item in cache_items:
@@ -141,7 +144,9 @@ class CacheManager:
         Returns:
             Path to the prediction cache file
         """
-        file_path = os.path.join(self.outputs.predictions_dir, self.model_name, f'{self.benchmark_name}_{subset}.jsonl')
+        file_path = os.path.join(
+            self.outputs.predictions_dir, self.model_name, f'{self.benchmark_name}_{subset}.parquet'
+        )
         # Ensure the directory exists
         if self.outputs.is_make:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -183,7 +188,7 @@ class CacheManager:
             Tuple of (cached sample scores, filtered task states for remaining reviews)
         """
         cache_file = self.get_review_cache_path(subset)
-        if not os.path.exists(cache_file):
+        if not result_rows_exist(cache_file):
             # No review cache exists, return empty scores and all task states
             return [], task_states
 
@@ -191,7 +196,8 @@ class CacheManager:
         valid_sample_ids = {state.sample_id for state in task_states}
         orphan_rows = 0
         duplicate_rows = 0
-        cache_items = jsonl_to_list(cache_file, skip_invalid=True)
+        self._get_writer(cache_file, review=True)
+        cache_items = read_result_rows(cache_file, skip_invalid=True)
 
         # Process each cached review result
         for cache_item in cache_items:
@@ -232,40 +238,30 @@ class CacheManager:
         Returns:
             Path to the review cache file
         """
-        file_path = os.path.join(self.outputs.reviews_dir, self.model_name, f'{self.benchmark_name}_{subset}.jsonl')
+        file_path = os.path.join(self.outputs.reviews_dir, self.model_name, f'{self.benchmark_name}_{subset}.parquet')
         # Ensure the directory exists
         if self.outputs.is_make:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
         return file_path
 
-    def delete_review_cache(self, subset: str):
+    def delete_review_cache(self, subset: str) -> None:
         """Start a transactional review rerun without touching the previous review file."""
         file_path = self.get_review_cache_path(subset)
         temporary = f'{file_path}.rerun-{uuid.uuid4().hex}'
-        # A tolerated scoring failure must publish an empty cache, not retain old scores.
-        with open(temporary, 'x', encoding='utf-8'):
-            pass
-        self._review_reruns[file_path] = temporary
+        self._review_reruns[file_path] = ParquetResultWriter(temporary, REVIEW_SCHEMA)
         logger.debug(f'Rescoring reviews into temporary cache: {temporary}')
 
     def commit_review_reruns(self) -> None:
         """Atomically publish every fully written review rerun."""
-        for file_path, temporary in list(self._review_reruns.items()):
-            writer = self._writers.pop(temporary, None)
-            if writer is not None:
-                writer.close()
-            os.replace(temporary, file_path)
+        for file_path, writer in list(self._review_reruns.items()):
+            writer.close(publish_to=file_path)
             del self._review_reruns[file_path]
 
     def discard_review_reruns(self) -> None:
-        """Close and remove incomplete transactional review files after a failed rerun."""
-        for file_path, temporary in list(self._review_reruns.items()):
-            writer = self._writers.pop(temporary, None)
-            if writer is not None:
-                writer.close()
-            if os.path.exists(temporary):
-                os.unlink(temporary)
-            del self._review_reruns[file_path]
+        """Discard incomplete transactional review files after a failed rerun."""
+        for writer in self._review_reruns.values():
+            writer.discard()
+        self._review_reruns.clear()
 
     def save_review_cache(
         self,
@@ -286,12 +282,12 @@ class CacheManager:
             The saved review result object
         """
         cache_file = self.get_review_cache_path(subset)
-        cache_file = self._review_reruns.get(cache_file, cache_file)
+        writer = self._review_reruns.get(cache_file) or self._get_writer(cache_file, review=True)
         # Convert score and state to serializable review result
         review_result = ReviewResult.from_score_state(sample_score, task_state, save_metadata)
         # Serialize to dictionary, convert non-JSON types (numpy, datetime), append.
         review_result_dict = convert_normal_types(review_result.model_dump())
-        self._get_writer(cache_file).write(review_result_dict)
+        writer.write(review_result_dict)
         return review_result
 
     def get_report_path(self) -> str:
@@ -450,39 +446,22 @@ class ReviewResult(BaseModel):
     sample_score: SampleScore
     """The computed evaluation score for this sample."""
 
-    @model_validator(mode='before')
+    @field_validator('target', mode='before')
     @classmethod
-    def _migrate_legacy_input(cls, data: Any) -> Any:
-        """Migrate legacy review cache rows into the structured contract."""
-        if not isinstance(data, dict):
-            return data
-        data = dict(data)
-        target = data.get('target')
+    def _parse_target_text(cls, target: Any) -> Any:
         if isinstance(target, str):
-            target = target.strip()
-            data['target'] = [target] if target else None
-        elif isinstance(target, list):
-            data['target'] = list(dict.fromkeys(value.strip() for value in target if value.strip()))
-        legacy_input = data.pop('input', None)
-        if legacy_input and not data.get('messages'):
-            data['messages'] = [
-                {
-                    'role': 'user',
-                    'content': legacy_input,
-                }
-            ]
-        # Drop obsolete TrajectoryStep list (the new ``agent_trace`` has a
-        # different shape; legacy values are not useful and would fail
-        # validation).
-        data.pop('trajectory', None)
-        return data
+            return list(Target(target)) or None
+        return target
 
     @field_validator('target')
     @classmethod
     def _validate_target(cls, target: Optional[List[str]]) -> Optional[List[str]]:
-        if target is not None and not target:
+        if target is None:
+            return None
+        normalized = list(Target(target))
+        if not normalized:
             raise ValueError('ReviewResult.target must not be an empty list.')
-        return target
+        return normalized
 
     @classmethod
     def from_cache_item(cls, data: Any) -> 'ReviewResult':

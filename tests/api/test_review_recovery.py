@@ -12,6 +12,7 @@ import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator.cache import CacheManager
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.registry import BENCHMARK_REGISTRY
 from evalscope.benchmarks.general_mcq.general_mcq_adapter import GeneralMCQAdapter
 from evalscope.config import TaskConfig
@@ -66,7 +67,7 @@ class LocalRun:
         return yaml_to_dict(str(self.snapshot_path))['evaluation_identity']['benchmarks']
 
     def cache_path(self, kind: str, benchmark: str = BENCHMARK, subset: str = 'default') -> Path:
-        return self.work_dir / kind / MODEL / f'{benchmark}_{subset}.jsonl'
+        return self.work_dir / kind / MODEL / f'{benchmark}_{subset}.parquet'
 
 
 @pytest.fixture
@@ -264,7 +265,7 @@ def test_ignored_review_errors_replace_stale_scores_with_empty_cache(
 
     assert report.execution_summary.incomplete is True
     assert report.execution_summary.errored == 1
-    assert local_run.cache_path('reviews').read_bytes() == b''
+    assert read_result_rows(local_run.cache_path('reviews')) == []
     recovered = local_run.identities()[BENCHMARK]
     assert recovered['review_pending'] is False
     assert run_task(local_run.config(pattern='A', resume=True))[BENCHMARK].score == 0
@@ -354,7 +355,7 @@ def test_empty_subset_during_rerun_does_not_keep_stale_reviews(
         assert run_task(local_run.config(subsets=subsets, pattern='A', resume=True, rerun_review=True))[BENCHMARK].score == 0
 
     assert local_run.identities()[BENCHMARK]['review_pending'] is False
-    assert local_run.cache_path('reviews', subset='second').read_bytes() == b''
+    assert read_result_rows(local_run.cache_path('reviews', subset='second')) == []
     assert run_task(local_run.config(subsets=subsets, pattern='A', resume=True))[BENCHMARK].score == 0
     for subset in subsets:
         assert local_run.cache_path('predictions', subset=subset).read_bytes() == predictions[subset]
@@ -372,7 +373,7 @@ def test_partial_subset_commit_failure_requires_explicit_recovery(
     replace = os.replace
 
     def fail_second_subset(source: str, destination: str) -> None:
-        if '.rerun-' in source and destination.endswith('_second.jsonl'):
+        if str(destination).endswith('_second.parquet'):
             raise OSError('injected subset commit failure')
         replace(source, destination)
 

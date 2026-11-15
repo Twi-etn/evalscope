@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pytest
 
@@ -196,10 +197,11 @@ def test_public_run_task_report_and_cache_resume(local_data: Path, tmp_path: Pat
     assert len(report.to_dataframe()) == 2
     original = report.to_dict()
 
-    review_path = work / 'reviews' / 'bayes-at-n-test' / 'general_mcq_tiny.jsonl'
-    review_rows = review_path.read_text().splitlines()
+    review_path = work / 'reviews' / 'bayes-at-n-test' / 'general_mcq_tiny.parquet'
+    review_table = pq.read_table(review_path)
+    review_rows = review_table.to_pylist()
     assert len(review_rows) == 4
-    review_path.write_text('\n'.join(reversed(review_rows + [review_rows[0]])) + '\n')
+    pq.write_table(pa.Table.from_pylist(list(reversed(review_rows + [review_rows[0]])), review_table.schema), review_path)
     monkeypatch.setattr(MockLLM, 'generate', lambda *args, **kwargs: pytest.fail('Cached predictions must be reused.'))
     run_task(config_for(local_data, work, use_cache=str(work)))
     resumed = Report.from_json(str(report_path))
@@ -289,9 +291,9 @@ def test_partial_cache_resume_fills_one_missing_generation(local_data: Path, tmp
     report_path = work / 'reports' / 'bayes-at-n-test' / 'general_mcq.json'
     original_metrics = Report.from_json(str(report_path)).metrics
     for kind in ['predictions', 'reviews']:
-        cache = work / kind / 'bayes-at-n-test' / 'general_mcq_tiny.jsonl'
-        records = [json.loads(line) for line in cache.read_text().splitlines()]
-        cache.write_text(''.join(json.dumps(record) + '\n' for record in records if record['index'] != 1))
+        cache = work / kind / 'bayes-at-n-test' / 'general_mcq_tiny.parquet'
+        table = pq.read_table(cache)
+        pq.write_table(table.filter(pc.not_equal(table['index'], 1)), cache)
 
     calls = []
     original_generate = MockLLM.generate

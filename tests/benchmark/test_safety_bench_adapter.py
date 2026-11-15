@@ -11,6 +11,7 @@ import pytest
 
 from evalscope import TaskConfig, run_task
 from evalscope.api.evaluator import TaskState
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.metric import AggScore
 from evalscope.api.model import ModelOutput
 from evalscope.api.registry import get_benchmark
@@ -216,10 +217,10 @@ def test_mock_end_to_end(snapshot: Path, tmp_path: Path, unavailable: bool) -> N
         assert metric['score'] == pytest.approx(0 if unavailable else 2 / 3, abs=1e-4)
         assert metric['num'] == 3
     assert report['execution_summary']['incomplete'] == unavailable
-    reviews = list((tmp_path / 'outputs').rglob('reviews/**/*.jsonl'))
+    reviews = list((tmp_path / 'outputs').rglob('reviews/**/*.parquet'))
     if not unavailable:
         assert len(reviews) == 3
-        assert all(len(path.read_text().splitlines()) == 3 for path in reviews)
+        assert all(len(read_result_rows(path)) == 3 for path in reviews)
 
 
 def test_dashboard_counts_all_configurations(snapshot: Path, tmp_path: Path) -> None:

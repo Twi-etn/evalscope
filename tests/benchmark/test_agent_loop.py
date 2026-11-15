@@ -101,17 +101,12 @@ def _base_cfg(**overrides) -> dict:
     return cfg
 
 
-def _read_review_results(benchmark: str, model: str = 'qwen3.8-flash', work_dir: str = './outputs'):
-    """Read all ReviewResult dicts from the JSONL review cache."""
+def _read_review_results(benchmark: str, model: str = 'qwen3.8-flash', work_dir: str = './outputs') -> list[dict]:
+    """Read all saved reviews for a benchmark."""
+    from evalscope.api.evaluator.result_io import read_result_rows
+
     reviews_dir = Path(work_dir) / 'reviews' / model
-    results = []
-    for jsonl_file in reviews_dir.glob(f'{benchmark}_*.jsonl'):
-        with open(jsonl_file) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    results.append(json.loads(line))
-    return results
+    return [row for path in sorted(reviews_dir.glob(f'{benchmark}_*.parquet')) for row in read_result_rows(path)]
 
 
 # ---------------------------------------------------------------------------

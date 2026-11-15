@@ -83,32 +83,35 @@ class TestReportEndpoints(unittest.TestCase):
         )
         self.assertEqual(res.status_code, 400)
 
-    def test_predictions_returns_rows(self):
-        import pandas as pd
-        frame = pd.DataFrame([{
-            'Index': '0',
-            'Input': 'question',
-            'Metadata': {},
-            'Generated': 'answer',
-            'Gold': 'answer',
-            'Pred': 'answer',
-            'Score': {},
-            'NScore': 1.0,
-        }])
-        with mock.patch(
-            'evalscope.service.blueprints.reports.get_model_prediction',
-            return_value=frame,
+    def test_predictions_returns_rows_from_parquet(self) -> None:
+        from evalscope.api.evaluator.result_io import PREDICTION_SCHEMA, REVIEW_SCHEMA, ParquetResultWriter
+
+        run = Path(self.tmp) / '20260101_120000'
+        prediction = {'index': 0, 'model': 'model-a', 'model_output': {'perf_metrics': {'latency': 0.25}}}
+        review = {
+            'index': 0,
+            'target': ['answer'],
+            'messages': [{'role': 'user', 'content': 'question'}],
+            'sample_score': {'score': {'prediction': 'answer', 'value': {'accuracy': 1.0}}},
+        }
+        for directory, schema, row in (
+            ('predictions', PREDICTION_SCHEMA, prediction),
+            ('reviews', REVIEW_SCHEMA, review),
         ):
-            res = self.client.get(
-                '/api/v1/reports/runs/20260101_120000/models/model-a/predictions',
-                query_string={
-                    'root_path': self.tmp,
-                    'dataset_name': 'gsm8k',
-                    'subset_name': 'main'
-                },
-            )
+            path = run / directory / 'model-a' / 'gsm8k_main.parquet'
+            path.parent.mkdir(parents=True, exist_ok=True)
+            writer = ParquetResultWriter(path, schema)
+            writer.write(row)
+            writer.close()
+        res = self.client.get(
+            '/api/v1/reports/runs/20260101_120000/models/model-a/predictions',
+            query_string={'root_path': self.tmp, 'dataset_name': 'gsm8k', 'subset_name': 'main'},
+        )
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(res.get_json()['predictions']), 1)
+        row, = res.get_json()['predictions']
+        self.assertEqual(row['Generated'], 'answer')
+        self.assertEqual(row['NScore'], 1.0)
+        self.assertEqual(row['PerfMetrics']['latency'], 0.25)
 
     def test_predictions_returns_multiple_gold_answers(self):
         import pandas as pd

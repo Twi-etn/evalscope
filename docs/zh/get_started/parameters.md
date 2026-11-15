@@ -280,13 +280,13 @@ EvalScope 使用嵌套的 `--sandbox` 配置（对应 `SandboxTaskConfig`）统�
 │   └── eval_log.log                 # 评测日志
 ├── predictions/
 │   └── {model_id}/
-│       └── {dataset}.jsonl          # 模型推理结果
+│       └── {dataset}_{subset}.parquet  # 模型推理结果
 ├── reports/
 │   └── {model_id}/
 │       └── {dataset}.json           # 评测报告
 ├── reviews/
 │   └── {model_id}/
-│       └── {dataset}.jsonl          # 评测结果详情
+│       └── {dataset}_{subset}.parquet  # 评测结果详情
 └── progress.json                    # 进度追踪文件（启用--enable-progress-tracker时生成）
 ```
 

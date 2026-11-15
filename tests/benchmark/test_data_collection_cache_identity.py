@@ -9,6 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.registry import BENCHMARK_REGISTRY, get_benchmark
 from evalscope.collections import CollectionSchema, DatasetInfo, WeightedSampler
 from evalscope.config import TaskConfig
@@ -54,7 +55,7 @@ def test_child_semantics_change_rejects_old_reviews_before_writes(
 ) -> None:
     run_task(TaskConfig(**collection_config))
     root = Path(collection_config['work_dir'])
-    protected = [_snapshot(collection_config), *root.rglob('*.jsonl')]
+    protected = [_snapshot(collection_config), *root.rglob('*.parquet')]
     before = {path: path.read_bytes() for path in protected}
     changed = copy.deepcopy(collection_config)
     if change == 'version':
@@ -86,8 +87,8 @@ def test_unchanged_child_semantics_reuses_cache(collection_config: dict, monkeyp
 def test_rerun_review_reuses_predictions_and_records_new_child_semantics(collection_config: dict) -> None:
     run_task(TaskConfig(**collection_config))
     root = Path(collection_config['work_dir'])
-    prediction = root / 'predictions' / 'collection-mock' / 'data_collection_default.jsonl'
-    review = root / 'reviews' / 'collection-mock' / 'data_collection_default.jsonl'
+    prediction = root / 'predictions' / 'collection-mock' / 'data_collection_default.parquet'
+    review = root / 'reviews' / 'collection-mock' / 'data_collection_default.parquet'
     previous_prediction = prediction.read_bytes()
     previous_review = review.read_bytes()
     previous = _identity(collection_config)
@@ -101,7 +102,7 @@ def test_rerun_review_reuses_predictions_and_records_new_child_semantics(collect
     assert current['review_pending'] is False
     assert prediction.read_bytes() == previous_prediction
     assert review.read_bytes() != previous_review
-    assert 'multi_choice_acc' in review.read_text()
+    assert 'multi_choice_acc' in read_result_rows(review)[0]['sample_score']['score']['value']
     snapshot = yaml_to_dict(str(_snapshot(changed)))
     dependency = snapshot['resolved_benchmarks']['data_collection']['dependencies']['general_mcq']
     assert dependency['evaluation_version'] == 'v1.1'

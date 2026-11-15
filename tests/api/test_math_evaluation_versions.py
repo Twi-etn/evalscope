@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.registry import BENCHMARK_REGISTRY, get_benchmark
 from evalscope.models.mockllm import MockLLM
 
@@ -59,7 +60,7 @@ def test_gsm8k_old_review_is_blocked_and_predictions_can_be_rescored(tmp_path: A
     monkeypatch.setattr(MockLLM,'default_output',r'\boxed{18}')
     monkeypatch.setattr(metadata,'evaluation_version','v1.0')
     run_task(TaskConfig(**base))
-    prediction = tmp_path/'run/predictions/offline/gsm8k_default.jsonl'
+    prediction = tmp_path/'run/predictions/offline/gsm8k_default.parquet'
     previous = prediction.read_bytes()
     monkeypatch.setattr(metadata,'evaluation_version','v1.1')
     with pytest.raises(ValueError,match='rerun_review=True'):
@@ -67,7 +68,7 @@ def test_gsm8k_old_review_is_blocked_and_predictions_can_be_rescored(tmp_path: A
     monkeypatch.setattr(MockLLM,'generate',lambda *args,**kwargs: pytest.fail('Prediction reuse must not infer again'))
     run_task(TaskConfig(**base,use_cache=str(tmp_path/'run'),rerun_review=True))
     assert prediction.read_bytes() == previous
-    review = json.loads((tmp_path/'run/reviews/offline/gsm8k_default.jsonl').read_text().strip())
+    review = read_result_rows(tmp_path / 'run/reviews/offline/gsm8k_default.parquet')[0]
     assert review['sample_score']['score']['value']['accuracy'] == 1
 
 
@@ -103,7 +104,7 @@ def test_math_extraction_failure_is_persisted_without_aborting_evaluation(
         dataset_args={'gsm8k': {'local_path': str(data), 'few_shot_num': 0, 'subset_list': ['default']}},
     ))
 
-    reviews = [json.loads(line) for line in (work / 'reviews/offline/gsm8k_default.jsonl').read_text().splitlines()]
+    reviews = read_result_rows(work / 'reviews/offline/gsm8k_default.parquet')
     scores = [review['sample_score']['score'] for review in reviews]
     assert [score['status'] for score in scores] == ['excluded', 'success']
     assert scores[0]['value'] == {} and scores[0]['metadata']['metric_unavailable'] is True
@@ -144,7 +145,7 @@ def test_instrument_old_review_is_blocked_and_predictions_can_be_rescored(
     monkeypatch.setattr(MockLLM, 'default_output', prediction)
     monkeypatch.setattr(meta, 'evaluation_version', 'v1.0')
     run_task(TaskConfig(**base))
-    prediction_path = work / f'predictions/offline/{benchmark}_{subset}.jsonl'
+    prediction_path = work / f'predictions/offline/{benchmark}_{subset}.parquet'
     previous = prediction_path.read_bytes()
     monkeypatch.setattr(meta, 'evaluation_version', 'v1.1')
     with pytest.raises(ValueError, match='rerun_review=True'):
@@ -152,5 +153,5 @@ def test_instrument_old_review_is_blocked_and_predictions_can_be_rescored(
     monkeypatch.setattr(MockLLM, 'generate', lambda *args, **kwargs: pytest.fail('Must reuse saved predictions'))
     run_task(TaskConfig(**base, use_cache=str(work), rerun_review=True))
     assert prediction_path.read_bytes() == previous
-    review = json.loads((work / f'reviews/offline/{benchmark}_{subset}.jsonl').read_text().strip())
+    review = read_result_rows(work / f'reviews/offline/{benchmark}_{subset}.parquet')[0]
     assert review['sample_score']['score']['value'][metric] == 1

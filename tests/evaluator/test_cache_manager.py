@@ -1,15 +1,17 @@
 """Unit tests for cache resume behavior."""
 
-import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.dataset import MemoryDataset, Sample
 from evalscope.api.evaluator import TaskState
 from evalscope.api.evaluator.cache import CacheManager, ModelResult, ReviewResult
+from evalscope.api.evaluator.result_io import PREDICTION_SCHEMA, REVIEW_SCHEMA, ParquetResultWriter, read_result_rows
 from evalscope.api.model import ModelOutput
 from evalscope.utils.io_utils import OutputsStructure
 
@@ -22,7 +24,7 @@ def _make_task_state(sample_id: int, group_id: Optional[int] = None) -> TaskStat
 def _review_row(sample_id: int, value: float) -> Dict[str, Any]:
     return {
         'index': sample_id,
-        'target': 'answer',
+        'target': ['answer'],
         'messages': [],
         'sample_score': {
             'sample_id': sample_id,
@@ -35,11 +37,9 @@ def _review_row(sample_id: int, value: float) -> Dict[str, Any]:
     }
 
 
-def test_review_result_migrates_legacy_target_to_alternatives() -> None:
-    legacy = ReviewResult.from_cache_item(_review_row(0, 1.0))
+def test_review_result_requires_a_nonempty_target_list_when_present() -> None:
     current = ReviewResult.from_cache_item({**_review_row(1, 1.0), 'target': ['A', 'B']})
 
-    assert legacy.target == ['answer']
     assert current.target == ['A', 'B']
     with pytest.raises(ValueError, match='must not be an empty list'):
         ReviewResult.from_cache_item({**_review_row(2, 1.0), 'target': []})
@@ -50,12 +50,11 @@ def _make_manager(tmp_path: Path) -> CacheManager:
     return CacheManager(outputs=outputs, model_name='mock-model', benchmark_name='mock-bench')
 
 
-def _write_review_cache(manager: CacheManager, subset: str, rows: list[Dict[str, Any]]) -> str:
-    review_file = manager.get_review_cache_path(subset)
-    with open(review_file, 'w', encoding='utf-8') as f:
-        for row in rows:
-            f.write(json.dumps(row) + '\n')
-    return review_file
+def _write_review_cache(manager: CacheManager, subset: str, rows: list[Dict[str, Any]]) -> None:
+    writer = ParquetResultWriter(manager.get_review_cache_path(subset), REVIEW_SCHEMA)
+    for row in rows:
+        writer.write(row)
+    writer.close()
 
 
 @pytest.fixture
@@ -132,23 +131,25 @@ def test_filter_review_cache_skips_malformed_and_schema_invalid_rows(
 ) -> None:
     manager = _make_manager(tmp_path)
     task_states = [_make_task_state(0), _make_task_state(1)]
-    review_file = _write_review_cache(
+    _write_review_cache(
         manager,
         'default',
         [
             _review_row(0, 1.0),
-            {'legacy_field': 'not a valid ReviewResult'},
+            {'index': 0, 'sample_score': {}},
             _review_row(1, 0.0),
         ],
     )
-    with open(review_file, 'a', encoding='utf-8') as f:
-        f.write('{"sample_score":')
+    path = manager.get_review_cache_path('default')
+    rows = pq.read_table(path).to_pylist()
+    rows.append({'index': 1, 'sample_score': '{'})
+    pq.write_table(pa.Table.from_pylist(rows, schema=REVIEW_SCHEMA), path)
 
     cached_scores, remaining_states = manager.filter_review_cache('default', task_states)
 
     assert [score.sample_id for score in cached_scores] == [0, 1]
     assert remaining_states == []
-    assert 'Skipping invalid JSONL row' in caplog_evalscope.text
+    assert 'Skipping invalid Parquet result row' in caplog_evalscope.text
     assert 'Skipping invalid review cache row' in caplog_evalscope.text
 
 
@@ -167,18 +168,20 @@ def test_filter_prediction_cache_skips_malformed_and_schema_invalid_rows(
     valid_row = ModelResult.from_task_state(_make_task_state(0)).model_dump(mode='json')
     incomplete_row = ModelResult.from_task_state(_make_task_state(1)).model_dump(mode='json')
     incomplete_row['model_output'] = None
-    prediction_file = manager.get_prediction_cache_path('default')
-    with open(prediction_file, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(valid_row) + '\n')
-        f.write(json.dumps(incomplete_row) + '\n')
-        f.write(json.dumps({'legacy_field': 'not a valid ModelResult'}) + '\n')
-        f.write('{"index":')
+    path = manager.get_prediction_cache_path('default')
+    writer = ParquetResultWriter(path, PREDICTION_SCHEMA)
+    writer.write(valid_row)
+    writer.write(incomplete_row)
+    writer.close()
+    rows = pq.read_table(path).to_pylist()
+    rows.append({'index': 1, 'model_output': '{'})
+    pq.write_table(pa.Table.from_pylist(rows, schema=PREDICTION_SCHEMA), path)
 
     cached_task_states, filtered_dataset = manager.filter_prediction_cache('default', dataset)
 
     assert [state.sample_id for state in cached_task_states] == [0]
     assert [sample.id for sample in filtered_dataset.samples] == [1]
-    assert 'Skipping invalid JSONL row' in caplog_evalscope.text
+    assert 'Skipping invalid Parquet result row' in caplog_evalscope.text
     assert 'Skipping invalid prediction cache row' in caplog_evalscope.text
 
 
@@ -194,8 +197,9 @@ def test_filter_prediction_cache_keeps_last_valid_prediction(tmp_path: Path, inv
     if invalid_tail:
         row = ModelResult.from_task_state(_make_task_state(0)).model_dump(mode='json')
         row['model_output'] = None
-        with open(manager.get_prediction_cache_path('default'), 'a', encoding='utf-8') as f:
-            f.write(json.dumps(row) + '\n')
+        writer = ParquetResultWriter(manager.get_prediction_cache_path('default'), PREDICTION_SCHEMA)
+        writer.write(row)
+        writer.close()
 
     cached_states, remaining_dataset = manager.filter_prediction_cache('default', dataset)
 
@@ -217,3 +221,81 @@ def test_filter_prediction_cache_keeps_distinct_repeat_samples(tmp_path: Path) -
     assert [state.sample_id for state in cached_states] == [0, 1]
     assert [state.group_id for state in cached_states] == [0, 0]
     assert len(remaining_dataset) == 0
+
+
+def test_parquet_checkpoints_resume_and_keep_dynamic_review_fields(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from evalscope.api.evaluator import result_io
+
+    monkeypatch.setattr(result_io, '_BATCH_SIZE', 2)
+    manager = _make_manager(tmp_path)
+    path = Path(manager.get_review_cache_path('default'))
+    first = _review_row(0, 1.0)
+    first['target'] = ['answer', 'alternative']
+    first['sample_score']['score']['metadata'] = {'judge_attempts': [{'parsed_value': {'letter': 'A'}, 'messages': []}]}
+    second = _review_row(1, 0.0)
+    second['target'] = None
+    second['sample_score']['score']['metadata'] = {'judge_attempts': [{'parsed_value': 0.5}, {'error': 'timeout'}]}
+
+    writer = result_io.ParquetResultWriter(path, result_io.REVIEW_SCHEMA)
+    writer.write(first)
+    writer.write(second)
+    assert result_io.read_result_rows(path) == [{**row, 'agent_trace': None} for row in (first, second)]
+
+    restarted = _make_manager(tmp_path)
+    states = [_make_task_state(0), _make_task_state(1)]
+    scores, remaining = restarted.filter_review_cache('default', states)
+    assert [score.sample_id for score in scores] == [0, 1]
+    assert remaining == []
+    restarted.close()
+    assert pq.read_table(path).num_rows == 2
+    assert pq.read_table(path)['target'].to_pylist() == [['answer', 'alternative'], None]
+    assert list(path.parent.glob('*.parquet')) == [path]
+    assert result_io.read_result_rows(path)[1]['sample_score']['score']['metadata'] == second['sample_score']['score']['metadata']
+
+
+def test_parquet_compaction_ignores_checkpoint_parts_already_in_final_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from evalscope.api.evaluator import result_io
+
+    path = tmp_path / 'result.parquet'
+    writer = result_io.ParquetResultWriter(path, result_io.PREDICTION_SCHEMA)
+    writer.write({'index': 0, 'model': 'example'})
+    with monkeypatch.context() as interrupted:
+        interrupted.setattr(writer, '_remove_parts', lambda *_: None)
+        writer.close()
+
+    assert [row['index'] for row in result_io.read_result_rows(path)] == [0]
+    resumed = result_io.ParquetResultWriter(path, result_io.PREDICTION_SCHEMA)
+    resumed.write({'index': 1, 'model': 'example'})
+    resumed.close()
+    assert [row['index'] for row in result_io.read_result_rows(path)] == [0, 1]
+
+
+def test_parquet_review_replaces_previous_cache_even_when_new_review_is_empty(tmp_path: Path) -> None:
+    manager = _make_manager(tmp_path)
+    _write_review_cache(manager, 'default', [_review_row(0, 1.0)])
+    path = manager.get_review_cache_path('default')
+    assert len(read_result_rows(path)) == 1
+
+    manager.delete_review_cache('default')
+    assert len(read_result_rows(path)) == 1
+    manager.commit_review_reruns()
+
+    assert Path(path).is_file()
+    assert read_result_rows(path) == []
+
+
+def test_resume_ignores_jsonl_files(tmp_path: Path) -> None:
+    manager = _make_manager(tmp_path)
+    dataset = MemoryDataset(samples=[Sample(id=0, input='question', target='answer')])
+    states = [_make_task_state(0)]
+    for path in (manager.get_prediction_cache_path('default'), manager.get_review_cache_path('default')):
+        cache_path = Path(path)
+        old_path = cache_path.with_suffix('.jsonl')
+        old_path.write_text('{"index": 0}\n', encoding='utf-8')
+        with pytest.raises(FileNotFoundError):
+            read_result_rows(cache_path)
+        with pytest.raises(ValueError, match=r'must use the \.parquet extension'):
+            read_result_rows(old_path)
+
+    assert manager.filter_prediction_cache('default', dataset) == ([], dataset)
+    assert manager.filter_review_cache('default', states) == ([], states)

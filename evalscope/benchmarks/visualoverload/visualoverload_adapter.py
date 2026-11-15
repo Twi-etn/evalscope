@@ -5,11 +5,11 @@ from typing import Any, Dict, List
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
 from evalscope.api.dataset import Sample
 from evalscope.api.evaluator import TaskState
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.messages import ChatMessageUser, ContentImage, ContentText
 from evalscope.api.metric import Score
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
-from evalscope.utils.io_utils import jsonl_to_list
 from evalscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -111,8 +111,8 @@ class VisualOverloadAdapter(VisionLanguageAdapter):
         review_dir = report_dir.parent.parent / 'reviews' / report_dir.name
         records: List[Dict[str, str]] = []
         for subset in self.subset_list:
-            review_file = review_dir / f'{self.name}_{subset}.jsonl'
-            for item in jsonl_to_list(str(review_file)):
+            review_file = review_dir / f'{self.name}_{subset}.parquet'
+            for item in read_result_rows(review_file):
                 sample_score = item['sample_score']
                 question_id = sample_score['sample_metadata']['question_id']
                 if question_id is None:

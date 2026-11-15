@@ -12,6 +12,7 @@ import pytest
 from evalscope.api.dataset import MemoryDataset, Sample
 from evalscope.api.evaluator import TaskState
 from evalscope.api.evaluator.cache import ModelResult
+from evalscope.api.evaluator.result_io import PREDICTION_SCHEMA, ParquetResultWriter, read_result_rows
 from evalscope.api.metric import SampleScore, Score
 from evalscope.api.model import ModelOutput
 from evalscope.api.registry import get_benchmark
@@ -147,7 +148,7 @@ def test_native_run_and_legacy_cache_rereview(
         {'prompt': json.dumps([{'role': 'user', 'content': f'tokens:{n - 1}'}]), 'answer': answer}
         for n, answer in [(5001, 'X'), (100, 'Y'), (2097152, 'Y')]
     ]
-    (data_path / 'train.jsonl').write_text('\n'.join(json.dumps(record) for record in records))
+    datasets.Dataset.from_list(records).to_parquet(data_path / 'default_train.parquet')
     output_path = tmp_path / 'output'
     base = {
         'model': 'mock', 'eval_type': 'mock_llm', 'datasets': ['openai_mrcr'],
@@ -163,12 +164,16 @@ def test_native_run_and_legacy_cache_rereview(
         ({'min_tokens': 4096, 'max_tokens': 8192}, 1.0, 1),
     ]
 
-    prediction_path = output_path / 'predictions' / 'mock' / 'openai_mrcr_default.jsonl'
-    predictions = [json.loads(line) for line in prediction_path.read_text().splitlines()]
+    prediction_path = output_path / 'predictions' / 'mock' / 'openai_mrcr_default.parquet'
+    predictions = read_result_rows(prediction_path)
     for prediction in predictions:
         prediction['metadata']['bin_index'] = 0
-    prediction_path.write_text('\n'.join(json.dumps(prediction) for prediction in predictions) + '\n')
-    legacy_predictions = prediction_path.read_text()
+    prediction_path.unlink()
+    writer = ParquetResultWriter(prediction_path, PREDICTION_SCHEMA)
+    for prediction in predictions:
+        writer.write(prediction)
+    writer.close()
+    legacy_predictions = prediction_path.read_bytes()
     snapshot_path = output_path / 'configs' / 'task_config.yaml'
     snapshot = yaml_to_dict(str(snapshot_path))
     spec = ResolvedBenchmarkSpec.model_validate(snapshot['resolved_benchmarks']['openai_mrcr'])
@@ -187,7 +192,7 @@ def test_native_run_and_legacy_cache_rereview(
     report = json.loads(report_path.read_text())
     assert Report.from_dict(report).score == Report.from_dict(first_report).score
     assert report['metrics'] == first_report['metrics']
-    assert prediction_path.read_text() == legacy_predictions
+    assert prediction_path.read_bytes() == legacy_predictions
     identity = yaml_to_dict(str(snapshot_path))['evaluation_identity']['benchmarks']['openai_mrcr']
     assert identity['evaluation_version'] == 'v1.1'
     assert identity['cache_source']['evaluation_version'] == 'v1.0'

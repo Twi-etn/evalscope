@@ -289,13 +289,13 @@ For full usage, examples and Trace visualization, see [Agent Evaluation](../user
 │   └── eval_log.log                 # Evaluation log
 ├── predictions/
 │   └── {model_id}/
-│       └── {dataset}.jsonl          # Model inference results
+│       └── {dataset}_{subset}.parquet  # Model inference results
 ├── reports/
 │   └── {model_id}/
 │       └── {dataset}.json           # Evaluation report
 ├── reviews/
 │   └── {model_id}/
-│       └── {dataset}.jsonl          # Evaluation result details
+│       └── {dataset}_{subset}.parquet  # Evaluation result details
 └── progress.json                    # Progress tracking file (generated when --enable-progress-tracker is enabled)
 ```
 

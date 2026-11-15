@@ -11,13 +11,14 @@ from evalscope.api.agent import AgentLoopResult, AgentTrace, prepare_environment
 from evalscope.api.benchmark import BenchmarkMeta
 from evalscope.api.benchmark.adapters import AgentLoopAdapter, DefaultDataAdapter
 from evalscope.api.dataset import MemoryDataset, Sample
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.messages import ChatMessageUser
 from evalscope.api.metric import SampleScore, Score
 from evalscope.api.model import ModelOutput
 from evalscope.config import TaskConfig
 from evalscope.evaluator.evaluator import DefaultEvaluator
 from evalscope.utils.asyncio_runtime import AsyncioLoopRunner
-from evalscope.utils.io_utils import OutputsStructure, jsonl_to_list
+from evalscope.utils.io_utils import OutputsStructure
 
 
 @pytest.mark.parametrize('ignore_errors', [False, True])
@@ -77,8 +78,8 @@ def test_preparation_error_policy_and_resume(
             results = evaluator._run_pool(context)
             evaluator._aggregate_scores({'test': dataset}, context, results)
             manager.close()
-            assert [row['index'] for row in jsonl_to_list(manager.get_prediction_cache_path('test'))] == [1]
-            assert [row['index'] for row in jsonl_to_list(manager.get_review_cache_path('test'))] == [1]
+            assert [row['index'] for row in read_result_rows(manager.get_prediction_cache_path('test'))] == [1]
+            assert [row['index'] for row in read_result_rows(manager.get_review_cache_path('test'))] == [1]
             assert [call.kwargs['task_state'].sample_id for call in adapter.calculate_metrics.call_args_list] == [1]
             summary = evaluator._execution_tracker.summarize({'test': dataset}, evaluator._sample_scores_by_subset)
             assert (summary.requested, summary.succeeded, summary.errored, summary.incomplete) == (2, 1, 1, True)
@@ -94,8 +95,8 @@ def test_preparation_error_policy_and_resume(
         results = evaluator._run_pool(resumed)
         evaluator._aggregate_scores({'test': dataset}, resumed, results)
         manager.close()
-        assert sorted(row['index'] for row in jsonl_to_list(manager.get_prediction_cache_path('test'))) == [0, 1]
-        assert sorted(row['index'] for row in jsonl_to_list(manager.get_review_cache_path('test'))) == [0, 1]
+        assert sorted(row['index'] for row in read_result_rows(manager.get_prediction_cache_path('test'))) == [0, 1]
+        assert sorted(row['index'] for row in read_result_rows(manager.get_review_cache_path('test'))) == [0, 1]
         assert model.generate.call_count == 2
         summary = evaluator._execution_tracker.summarize({'test': dataset}, evaluator._sample_scores_by_subset)
         assert (summary.succeeded, summary.errored, summary.incomplete) == (2, 0, False)
@@ -134,7 +135,7 @@ def test_grading_preparation_failure_reuses_prediction(tmp_path: Path, ignore_er
             with pytest.raises(ConnectionError, match='grading sandbox unavailable'):
                 evaluator._run_pool(context)
         manager.close()
-        assert len(jsonl_to_list(manager.get_prediction_cache_path('test'))) == 1
+        assert len(read_result_rows(manager.get_prediction_cache_path('test'))) == 1
         assert not Path(manager.get_review_cache_path('test')).exists()
         env.prepare.side_effect = None
         evaluator = DefaultEvaluator(adapter, model, outputs, task)
@@ -143,7 +144,7 @@ def test_grading_preparation_failure_reuses_prediction(tmp_path: Path, ignore_er
         assert len(resumed.work_items) == 1 and not resumed.work_items[0].needs_predict
         evaluator._run_pool(resumed)
         manager.close()
-        assert len(jsonl_to_list(manager.get_review_cache_path('test'))) == 1
+        assert len(read_result_rows(manager.get_review_cache_path('test'))) == 1
         assert model.generate.call_count == 1
     finally:
         manager.close()

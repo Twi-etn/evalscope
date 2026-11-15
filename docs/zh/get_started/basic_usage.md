@@ -98,6 +98,16 @@ run_task(task_cfg="config.json")
 
 ### 查看评测结果
 
+原生评测在每次运行的 `predictions/` 和 `reviews/` 下，按模型、benchmark 和 subset 分别保存 Parquet 文件。每行对应一个样本。`messages`、`model_output` 和 `sample_score` 等结构可变的嵌套字段以 JSON 文本列保存。指标汇总继续写入 `reports/` 下的 JSON。
+
+可以用 PyArrow 或 Pandas 查询列，也可以用 `read_result_rows` 直接取得展开后的 Python 对象。Dashboard 和断点续跑都通过这个入口读取 Parquet 结果。
+
+```python
+from evalscope.api.evaluator.result_io import read_result_rows
+
+rows = read_result_rows('outputs/<run>/reviews/<model>/<benchmark>_<subset>.parquet')
+```
+
 评测完成后，终端会打印出如下格式的得分报告：
 
 ```text

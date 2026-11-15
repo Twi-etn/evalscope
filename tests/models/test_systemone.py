@@ -10,6 +10,7 @@ import pytest
 
 from evalscope import TaskConfig, run_task
 from evalscope.api.dataset import DatasetDict, MemoryDataset, Sample
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.messages import ChatMessage, ChatMessageAssistant, ChatMessageSystem, ChatMessageUser, ContentImage
 from evalscope.api.model import GenerateConfig, Model, ModelOutput
 from evalscope.api.model.decision import DecisionAnswer
@@ -320,7 +321,7 @@ def test_failure_is_excluded_with_execution_coverage(tmp_path: Path, monkeypatch
     assert report['execution_summary']['succeeded'] == 1
     assert report['execution_summary']['errored'] == 1
     assert report['execution_summary']['incomplete'] is True
-    review = json.loads(next((output / 'reviews').rglob('*.jsonl')).read_text())
+    review = read_result_rows(next((output / 'reviews').rglob('*.parquet')))[0]
     assert review['sample_score']['score']['value']['acc'] == 1.0
 
 
@@ -376,8 +377,8 @@ def test_native_pipeline_and_reports(name: str, eval_type: str, tmp_path: Path, 
     config = TaskConfig(model='test', eval_type=eval_type, api_url='https://example.test/v1', datasets=[name],
                         dataset_args={name: {'few_shot_num': 0}}, work_dir=str(tmp_path), no_timestamp=True)
     run_task(config)
-    prediction = json.loads(next((tmp_path / 'predictions').rglob('*.jsonl')).read_text())
-    review = json.loads(next((tmp_path / 'reviews').rglob('*.jsonl')).read_text())
+    prediction = read_result_rows(next((tmp_path / 'predictions').rglob('*.parquet')))[0]
+    review = read_result_rows(next((tmp_path / 'reviews').rglob('*.parquet')))[0]
     report = json.loads(next((tmp_path / 'reports').rglob(f'{name}.json')).read_text())
     assert 'SECRET_GOLD' not in json.dumps(seen[0])
     if eval_type == 'systemone_api':

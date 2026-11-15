@@ -16,6 +16,8 @@ from unittest import mock
 
 import pytest
 
+from evalscope.api.evaluator.result_io import PREDICTION_SCHEMA, ParquetResultWriter
+
 flask = pytest.importorskip('flask')  # noqa: F841  (service extra not installed → skip)
 
 
@@ -36,7 +38,11 @@ class TestReportDelete(unittest.TestCase):
         # Two models share the run directory; each has reports + predictions.
         for model in ('model-a', 'model-b'):
             _write_json(os.path.join(run_dir, 'reports', model, 'gsm8k.json'), {})
-            _write_json(os.path.join(run_dir, 'predictions', model, 'gsm8k.jsonl'), {})
+            prediction_dir = os.path.join(run_dir, 'predictions', model)
+            os.makedirs(prediction_dir)
+            writer = ParquetResultWriter(os.path.join(prediction_dir, 'gsm8k_main.parquet'), PREDICTION_SCHEMA)
+            writer.write({'index': 0, 'model': model})
+            writer.close()
         with open(os.path.join(run_dir, 'reports', 'report.html'), 'w', encoding='utf-8') as f:
             f.write('<html><body>model-a model-b</body></html>')
         os.makedirs(os.path.join(run_dir, 'logs'), exist_ok=True)

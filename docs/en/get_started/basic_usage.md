@@ -96,6 +96,16 @@ run_task(task_cfg="config.json")
 
 ### View Evaluation Results
 
+Native evaluation saves one Parquet file per model, benchmark, and subset under each run's `predictions/` and `reviews/` directories. Each row represents a sample. Fields with flexible nested shapes, such as `messages`, `model_output`, and `sample_score`, are stored as JSON text columns. Benchmark aggregates remain JSON under `reports/`.
+
+Use PyArrow or Pandas to query the columns directly, or use `read_result_rows` to expand JSON fields into Python objects. The Dashboard and cache resume read the Parquet results through this same function.
+
+```python
+from evalscope.api.evaluator.result_io import read_result_rows
+
+rows = read_result_rows('outputs/<run>/reviews/<model>/<benchmark>_<subset>.parquet')
+```
+
 After evaluation is complete, the terminal will print a score report in the following format:
 
 ```text

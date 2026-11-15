@@ -10,20 +10,18 @@ sample in the local fixture — and assert the resulting score is 1.0.
 That pins both the score path and the agent → model wiring.
 """
 
-import os
+from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.model import ModelOutput
 from evalscope.constants import EvalType
 from evalscope.models.mockllm import MockLLM
 from evalscope.report.report import Report
 from evalscope.run import run_task
-
-# Resolve relative to the repo root so the test does not silently skip
-# depending on pytest's invocation directory.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-_MCQ_FIXTURE = os.path.join(_REPO_ROOT, 'custom_eval', 'text', 'mcq')
 
 # The MockLLM emits exactly this text; the first general_mcq sample expects ``B``.
 _MOCK_ANSWER = 'B'
@@ -43,18 +41,22 @@ def _patch_mock_llm(monkeypatch):
     yield
 
 
-@pytest.mark.skipif(not os.path.isdir(_MCQ_FIXTURE), reason=f'general_mcq fixture missing at {_MCQ_FIXTURE}')
-def test_external_agent_through_evaluator(tmp_path):
+def test_external_agent_through_evaluator(tmp_path: Path) -> None:
     """``general_mcq`` + mock LLM + mock external agent, scored end-to-end."""
     from evalscope.config import TaskConfig
 
+    dataset_path = tmp_path / 'example_val.parquet'
+    pq.write_table(
+        pa.Table.from_pylist([{'question': 'Choose the second option.', 'A': 'first', 'B': 'second', 'answer': 'B'}]),
+        dataset_path,
+    )
     task_cfg = TaskConfig(
         model='mock_llm',
         eval_type=EvalType.MOCK_LLM,
         datasets=['general_mcq'],
         dataset_args={
             'general_mcq': {
-                'local_path': _MCQ_FIXTURE,
+                'local_path': str(dataset_path),
                 'subset_list': ['example'],
             },
         },
@@ -81,22 +83,7 @@ def test_external_agent_through_evaluator(tmp_path):
     assert report.primary_metric.score == pytest.approx(1.0)
 
     # Spot-check that the external-agent path actually ran by looking at the
-    # serialized review file — adapter returns InferenceResult whose trace
-    # is persisted as ``ReviewResult.agent_trace``.  run_task injects a
-    # timestamp segment under work_dir and reviews are nested under
-    # ``reviews/<model_id>/<dataset>_<subset>.jsonl``.
-    matches = []
-    for root, _, files in os.walk(tmp_path):
-        if 'reviews' not in root.split(os.sep):
-            continue
-        for fname in files:
-            if fname.endswith(('.jsonl', '.json')):
-                with open(os.path.join(root, fname), encoding='utf-8') as fp:
-                    matches.append((fname, fp.read()))
-    assert matches, f'no review files written under {tmp_path}'
-    blob = matches[0][1]
-    assert 'agent_trace' in blob, (
-        f'expected agent_trace in {matches[0][0]}; '
-        f'the bridge path did not surface the trace'
-    )
-    assert '"mock"' in blob, f'expected framework "mock" recorded in {matches[0][0]}'
+    # serialized review file; the adapter's trace is persisted with the score.
+    review_path, = tmp_path.glob('*/reviews/*/general_mcq_example.parquet')
+    review, = read_result_rows(review_path)
+    assert review['agent_trace']['framework'] == 'mock'

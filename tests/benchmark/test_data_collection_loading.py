@@ -8,6 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.registry import get_benchmark
 from evalscope.collections import CollectionSchema, DatasetInfo, WeightedSampler
 from evalscope.config import TaskConfig
@@ -137,10 +138,10 @@ def test_documented_jsonl_path_completes_evaluation_and_cache_reuse(
     report = run_task(TaskConfig(**config))['data_collection']
     assert len(report.metrics) == 1
     assert (report.metrics[0].score, report.metrics[0].num) == (1.0, 6)
-    predictions = work_dir / 'predictions' / 'collection-file-mock' / 'data_collection_default.jsonl'
-    reviews = work_dir / 'reviews' / 'collection-file-mock' / 'data_collection_default.jsonl'
-    assert len(predictions.read_text().splitlines()) == 6
-    assert len(reviews.read_text().splitlines()) == 6
+    predictions = work_dir / 'predictions' / 'collection-file-mock' / 'data_collection_default.parquet'
+    reviews = work_dir / 'reviews' / 'collection-file-mock' / 'data_collection_default.parquet'
+    assert len(read_result_rows(predictions)) == 6
+    assert len(read_result_rows(reviews)) == 6
     before = (predictions.read_bytes(), reviews.read_bytes())
     details = list((work_dir / 'reports').rglob(DataCollection.REPORT_NAME))
     assert len(details) == 1

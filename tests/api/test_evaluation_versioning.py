@@ -335,8 +335,8 @@ def test_native_rerun_review_records_the_prediction_source(tmp_path, mcq_path) -
     snapshot_path = tmp_path / 'configs' / 'task_config.yaml'
     previous_identity = yaml_to_dict(str(snapshot_path))['evaluation_identity']['benchmarks']['general_mcq']
     previous_fingerprint = previous_identity['fingerprint']
-    prediction_path = tmp_path / 'predictions' / 'mock-model' / 'general_mcq_example.jsonl'
-    previous_prediction = prediction_path.read_text()
+    prediction_path = tmp_path / 'predictions' / 'mock-model' / 'general_mcq_example.parquet'
+    previous_prediction = prediction_path.read_bytes()
 
     run_task(
         TaskConfig(
@@ -356,7 +356,7 @@ def test_native_rerun_review_records_the_prediction_source(tmp_path, mcq_path) -
         'prediction_reused': True,
         'reuse_mode': 'rerun_review_override',
     }
-    assert prediction_path.read_text() == previous_prediction
+    assert prediction_path.read_bytes() == previous_prediction
 
 
 def test_legacy_full_meta_snapshot_preserves_pre_fix_identity() -> None:

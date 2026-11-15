@@ -111,12 +111,12 @@ task_config = TaskConfig(
 
 **A:** 请遵循以下步骤：
 1.  **检查模型接口**：确认模型服务或本地模型能正常生成回复。
-2.  **查看预测文件**：检查 `outputs/<timestamp>/predictions/` 目录下的 JSONL 文件，确认模型输出是否符合预期。
+2.  **查看预测文件**：检查 `outputs/<timestamp>/predictions/` 目录下的 Parquet 文件，确认模型输出是否符合预期。
 3.  **可视化分析**：使用 `evalscope service` 启动可视化界面，直观地查看和分析评测结果。
 
 **Q: 为什么 OpenAI 兼容接口的响应会出现 `stop_reason="unknown"`？**
 
-**A:** 服务商可能返回 OpenAI 标准值以外的结束原因，例如 MiMo 的 `repetition_truncation`。EvalScope 会保留回答，将无法识别的原因映射为 `unknown`，而不是视为正常结束或达到 token 上限。预测 JSONL 文件中的 `model_output.metadata.finish_reasons` 会按原始 choice 索引保存这些字符串，例如 `{"0": "repetition_truncation"}`。流式和非流式响应均适用。
+**A:** 服务商可能返回 OpenAI 标准值以外的结束原因，例如 MiMo 的 `repetition_truncation`。EvalScope 会保留回答，将无法识别的原因映射为 `unknown`，而不是视为正常结束或达到 token 上限。预测 Parquet 文件中的 `model_output.metadata.finish_reasons` 会按原始 choice 索引保存这些字符串，例如 `{"0": "repetition_truncation"}`。流式和非流式响应均适用。
 
 **Q: 评测结果不稳定，两次运行结果不一致怎么办？**
 

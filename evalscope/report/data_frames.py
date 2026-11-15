@@ -14,13 +14,14 @@ import pandas as pd
 from pydantic import ValidationError
 
 from evalscope.api.evaluator import CacheManager, ReviewResult
+from evalscope.api.evaluator.result_io import read_result_rows, result_rows_exist
 from evalscope.constants import DataCollection
 from evalscope.metrics.semantics import format_metric_value
 from evalscope.metrics.semantics.ranking import bounded_quality_ratio
 from evalscope.report.combinator import get_report_list
 from evalscope.report.ref import ReportRef
 from evalscope.report.report import Report, ReportKey
-from evalscope.utils.io_utils import OutputsStructure, jsonl_to_list, yaml_to_dict
+from evalscope.utils.io_utils import OutputsStructure, yaml_to_dict
 from evalscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -228,9 +229,7 @@ def get_report_analysis(report_list: List[Report], dataset_name: str) -> str:
 def _load_perf_map(cache_manager: CacheManager, dataset_name: str, subset_name: str) -> Dict[int, Any]:
     """Build an index -> perf_metrics mapping from the prediction cache.
 
-    Old single-turn caches store perf data at the ModelOutput level rather than
-    on individual ChatMessages.  This map is used as a fallback so that the
-    PerfChip in the UI still renders correctly for legacy cache files.
+    This map supplies performance data when review messages lack per-message metrics.
 
     Returns an empty dict when the prediction cache is absent or cannot be read.
     """
@@ -238,19 +237,19 @@ def _load_perf_map(cache_manager: CacheManager, dataset_name: str, subset_name: 
     try:
         pred_subset = 'default' if dataset_name == DataCollection.NAME else subset_name
         pred_cache_path = cache_manager.get_prediction_cache_path(pred_subset)
-        if os.path.exists(pred_cache_path):
-            for item in jsonl_to_list(pred_cache_path):
+        if result_rows_exist(pred_cache_path):
+            for item in read_result_rows(pred_cache_path):
                 idx = item.get('index')
                 mo = item.get('model_output') or {}
                 pm = mo.get('perf_metrics')
                 if pm is not None and idx is not None:
                     # Extract only the fields we want to expose
                     perf_map[int(idx)] = {
-                        'latency': pm.get('latency'),
+                        'latency': pm.get('latency') or 0.0,
                         'ttft': pm.get('ttft'),
                         'tpot': pm.get('tpot'),
-                        'input_tokens': pm.get('input_tokens'),
-                        'output_tokens': pm.get('output_tokens'),
+                        'input_tokens': pm.get('input_tokens') or 0,
+                        'output_tokens': pm.get('output_tokens') or 0,
                     }
     except Exception as e:
         logger.debug(f'Could not load perf metrics from prediction cache: {e}')
@@ -294,7 +293,7 @@ def _serialize_messages(review_result: ReviewResult) -> List[Dict[str, Any]]:
 
         { role, content, perf_metrics? }
 
-    ``content`` is either a plain string (text-only / legacy) or a list of
+    ``content`` is either a plain string or a list of
     ContentBlock dicts for multimodal messages.  Block types include:
 
     - ``{type:'text',  text:'...'}``          – markdown text
@@ -316,7 +315,7 @@ def _serialize_messages(review_result: ReviewResult) -> List[Dict[str, Any]]:
                 # TypeScript ContentBlock interface in types.ts.
                 serialised_content = [_absolutize_media_path(c.model_dump()) for c in m.content]
             else:
-                # Text-only / legacy path – content is already a str.
+                # Text-only messages already contain a string.
                 serialised_content = m.content
 
             entry: Dict[str, Any] = {
@@ -367,27 +366,12 @@ def _serialize_messages(review_result: ReviewResult) -> List[Dict[str, Any]]:
     return messages_data
 
 
-def _apply_legacy_perf_compat(
+def _fill_prediction_messages(
     messages_data: List[Dict[str, Any]],
     fallback_perf: Any,
     prediction: Any,
 ) -> List[Dict[str, Any]]:
-    """Apply legacy-compatibility fixes for perf_metrics on message lists.
-
-    Two scenarios are handled:
-
-    1. **Back-fill** – the messages list exists but the last assistant message
-       has no ``perf_metrics`` (legacy cache format).  The fallback value from
-       the prediction-level cache is propagated so the UI shows consistent
-       performance chips.
-
-    2. **Inject** – older review caches stored the model output only in
-       ``score.prediction`` and did NOT include an assistant ChatMessage in
-       ``review_result.messages``.  An assistant message is appended when
-       absent to avoid a blank conversation view in the UI.
-
-    Returns the (possibly mutated) messages list.
-    """
+    """Fill in missing assistant output or performance metrics from the result rows."""
     # Back-fill perf onto the last assistant message when it is missing
     if messages_data and fallback_perf:
         for msg in reversed(messages_data):
@@ -395,7 +379,7 @@ def _apply_legacy_perf_compat(
                 msg['perf_metrics'] = fallback_perf
                 break
 
-    # Inject a synthetic assistant message for legacy caches that omit it
+    # Supply an assistant turn when the review only stores the prediction text.
     if prediction:
         has_assistant = any(m['role'] == 'assistant' for m in messages_data)
         if not has_assistant:
@@ -462,7 +446,7 @@ def get_model_prediction(work_dir: str, model_name: str, dataset_name: str, subs
     cache_key = 'default' if dataset_name == DataCollection.NAME else subset_name
     review_cache_path = cache_manager.get_review_cache_path(cache_key)
     logger.debug(f'review_path: {review_cache_path}')
-    review_caches = jsonl_to_list(review_cache_path)
+    review_caches = read_result_rows(review_cache_path)
 
     # Build index -> perf_metrics fallback map from the prediction cache
     perf_map = _load_perf_map(cache_manager, dataset_name, subset_name)
@@ -486,9 +470,8 @@ def get_model_prediction(work_dir: str, model_name: str, dataset_name: str, subs
         # Resolve per-sample fallback perf from the prediction-level cache
         fallback_perf = perf_map.get(int(review_result.index))
 
-        # Apply legacy-compatibility fixes for perf and missing assistant turns
         prediction = sample_score.score.prediction
-        messages_data = _apply_legacy_perf_compat(messages_data, fallback_perf, prediction)
+        messages_data = _fill_prediction_messages(messages_data, fallback_perf, prediction)
 
         ds.append(_build_prediction_row(review_result, fallback_perf, messages_data))
 

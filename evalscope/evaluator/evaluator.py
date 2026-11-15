@@ -76,7 +76,7 @@ class _PoolContext:
         cached_scores_by_subset: Fully cached (predict + review) scores per subset.
         review_pending_by_subset: TaskStates whose prediction is cached but review
             is still needed; populated only for ``use_batch_scoring`` benchmarks.
-        model_prediction_dir: Shared parent directory for prediction JSONL files.
+        model_prediction_dir: Shared parent directory for prediction Parquet files.
         total_cached: Number of samples already fully cached (skipped in pool).
     """
 
@@ -101,7 +101,7 @@ class DefaultEvaluator(Evaluator):
     1. Loading datasets from all subsets
     2. Flattening all subsets into a single unified work pool
     3. Running model inference and metric calculation atomically per sample
-    4. Writing results to per-subset JSONL cache as each sample completes
+    4. Writing completed results to per-subset Parquet checkpoints
     5. Aggregating scores and generating the final report
 
     Args:
@@ -163,7 +163,7 @@ class DefaultEvaluator(Evaluator):
         All subsets are merged into a **single unified work pool** so slow
         samples in one subset never block samples in another.  Each sample is
         predicted and reviewed atomically; results are persisted to per-subset
-        JSONL caches as they complete.
+        Parquet checkpoints as results accumulate.
 
         Returns:
             Report: The complete evaluation report.
@@ -219,6 +219,7 @@ class DefaultEvaluator(Evaluator):
             # Phase 3 – aggregate scores per subset (batch review happens here too)
             agg_score_dict = self._aggregate_scores(dataset_dict, context, results_by_subset)
             self.cache_manager.commit_review_reruns()
+            self.cache_manager.close()
             execution_summary = self._execution_tracker.summarize(dataset_dict, self._sample_scores_by_subset)
 
             # Phase 4 – generate report
@@ -239,7 +240,7 @@ class DefaultEvaluator(Evaluator):
 
             logger.info(f'Benchmark {self.benchmark_name} evaluation finished.')
             return report
-        except Exception:
+        except BaseException:
             self.cache_manager.discard_review_reruns()
             raise
         finally:
@@ -622,5 +623,7 @@ class DefaultEvaluator(Evaluator):
         return report
 
     def finalize(self, *args, **kwargs):
-        self.benchmark.finalize(*args, **kwargs)
-        self.cache_manager.close()
+        try:
+            self.benchmark.finalize(*args, **kwargs)
+        finally:
+            self.cache_manager.close()

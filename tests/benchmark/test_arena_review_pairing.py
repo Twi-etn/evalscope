@@ -1,13 +1,15 @@
 """Arena imports must compare the same observation from each model's review cache."""
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
 
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator import ReviewResult
+from evalscope.api.evaluator.result_io import REVIEW_SCHEMA, ParquetResultWriter
 from evalscope.api.messages import (
     ChatMessageAssistant,
     ChatMessageSystem,
@@ -68,9 +70,15 @@ def _adapter(
     identity = MetricIdentity(name='accuracy', aggregation='mean')
     for name, rows in [('candidate', candidate), ('baseline', baseline)]:
         report_path = tmp_path / 'reports' / name
-        review_path = tmp_path / 'reviews' / name / 'general_qa_example.jsonl'
+        review_path = tmp_path / 'reviews' / name / 'general_qa_example.parquet'
         review_path.parent.mkdir(parents=True, exist_ok=True)
-        review_path.write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
+        if rows:
+            writer = ParquetResultWriter(review_path, REVIEW_SCHEMA)
+            for row in rows:
+                writer.write(row)
+            writer.close()
+        else:
+            pq.write_table(pa.Table.from_pylist([], schema=REVIEW_SCHEMA), review_path)
         Report(
             dataset_name='general_qa',
             model_name=name,
@@ -206,7 +214,7 @@ def test_matching_tool_conversations_ignore_call_ids_without_mutating_reviews(
     baseline['messages'] = _tool_input(*baseline_ids) + baseline['messages'][1:]
     native = ReviewResult.from_cache_item(dict(candidate))
     before = native.model_dump(mode='json')
-    GeneralArenaAdapter._review_input(native, legacy_input=False)
+    GeneralArenaAdapter._review_input(native)
     assert native.model_dump(mode='json') == before
     pairs = _pairs(_adapter(tmp_path, [candidate], [baseline]))
     assert len(pairs) == 1
@@ -234,38 +242,16 @@ def test_tool_id_normalization_preserves_relationships_and_payloads(tmp_path: Pa
         _pairs(_adapter(tmp_path, [candidate], [baseline]))
 
 
-def test_legacy_input_strings_and_missing_optional_identity_are_accepted(tmp_path: Path) -> None:
+def test_missing_optional_identity_is_accepted(tmp_path: Path) -> None:
     candidate = _review(0, 'Candidate response')
     baseline = _review(0, 'Baseline response')
     for record in [candidate, baseline]:
-        record.pop('messages')
-        record['input'] = 'Legacy input'
         for field in ['sample_id', 'group_id', 'generation_index']:
             record['sample_score'].pop(field)
     pairs = _pairs(_adapter(tmp_path, [candidate], [baseline]))
     assert len(pairs) == 1
-    assert 'Legacy input' in pairs[0]['question']
+    assert 'Question 0' in pairs[0]['question']
     assert (pairs[0]['answer_1'], pairs[0]['answer_2']) == ('Candidate response', 'Baseline response')
-
-
-@pytest.mark.parametrize('legacy_side', ['candidate', 'baseline'])
-def test_legacy_rendered_input_matches_modern_message_prefix(tmp_path: Path, legacy_side: str) -> None:
-    prefix = [
-        ChatMessageUser(content='Example question', source='input'),
-        ChatMessageAssistant(content='Example answer', source='input'),
-        ChatMessageUser(content='Current question', source='input'),
-    ]
-    records = {}
-    for name in ['candidate', 'baseline']:
-        record = _review(0, f'{name} response', modern=True)
-        record['messages'] = [message.model_dump(mode='json') for message in prefix] + record['messages'][1:]
-        if name == legacy_side:
-            record.pop('messages')
-            record['input'] = messages_to_markdown(prefix)
-        records[name] = record
-    pairs = _pairs(_adapter(tmp_path, [records['candidate']], [records['baseline']]))
-    assert len(pairs) == 1
-    assert (pairs[0]['answer_1'], pairs[0]['answer_2']) == ('candidate response', 'baseline response')
 
 
 def test_unmarked_assistant_demonstrations_are_part_of_the_input(tmp_path: Path) -> None:
@@ -338,23 +324,21 @@ def test_matching_structured_inputs_ignore_message_ids_and_run_metadata(tmp_path
     assert (pairs[0]['answer_1'], pairs[0]['answer_2']) == ('candidate response', 'baseline response')
 
 
-@pytest.mark.parametrize('latest_is_modern', [True, False])
-def test_duplicate_replacement_uses_latest_rows_legacy_status(tmp_path: Path, latest_is_modern: bool) -> None:
-    legacy = _review(0, 'Legacy response')
-    legacy.pop('messages')
-    legacy['input'] = 'Same rendered input'
-    modern = _review(0, 'Modern response')
-    modern['messages'] = [ChatMessageSystem(content='Same rendered input').model_dump(mode='json')]
-    baseline = _review(0, 'Baseline response', question='Same rendered input')
-    candidate_rows = [legacy, modern] if latest_is_modern else [modern, legacy]
+@pytest.mark.parametrize('latest_matches', [True, False])
+def test_duplicate_replacement_checks_input_of_latest_row(tmp_path: Path, latest_matches: bool) -> None:
+    matching = _review(0, 'Matching response', question='Same question')
+    mismatched = _review(0, 'Mismatched response')
+    mismatched['messages'] = [ChatMessageSystem(content='Same question').model_dump(mode='json')]
+    baseline = _review(0, 'Baseline response', question='Same question')
+    candidate_rows = [mismatched, matching] if latest_matches else [matching, mismatched]
     adapter = _adapter(tmp_path, candidate_rows, [baseline])
-    if latest_is_modern:
-        with pytest.raises(ValueError, match=r'(?i)input|prompt|question'):
-            _pairs(adapter)
-    else:
+    if latest_matches:
         pairs = _pairs(adapter)
         assert len(pairs) == 1
-        assert pairs[0]['answer_1'] == 'Legacy response'
+        assert pairs[0]['answer_1'] == 'Matching response'
+    else:
+        with pytest.raises(ValueError, match='Mismatched input prompt'):
+            _pairs(adapter)
 
 
 def test_repeated_observations_with_distinct_indices_remain_distinct(tmp_path: Path) -> None:

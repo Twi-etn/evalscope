@@ -139,7 +139,7 @@ evalscope service
 选项概率描述模型对各答案的预测分布，`confidence` 则是厂商定义的置信度，含义可能不同。查看概率时，界面可以切换原始分布和评分所用分布；后者可能因舍入误差而做了归一化，原始返回值仍会保留。
 
 ```{dropdown} 原始请求和概率保存在哪里
-- 预测 JSONL 的 `model_output.metadata.choice_request` 保存实际发送的请求。
+- 预测 Parquet 的 `model_output` 列保存为 JSON，解码后的 `metadata.choice_request` 记录实际发送的请求。
 - `model_output.metadata.choice_response.answers.answer` 保存服务返回的答案，包括对应题型的概率和可选的厂商置信度。
 - 逐题 review 的 `score.metadata.decision` 保存评分所用分布；`score.metadata.probabilities_normalized_for_scoring` 标记是否做了归一化。
 

@@ -199,33 +199,32 @@ class GeneralArenaAdapter(DefaultDataAdapter):
 
     def _load_common_datasets(self) -> Dict[tuple[str, str], Dict[str, List[Dict[str, Any]]]]:
         """Load common datasets from the local path."""
+        from evalscope.api.evaluator.result_io import read_result_rows, result_rows_exist
         from evalscope.utils import OutputsStructure
-        from evalscope.utils.io_utils import jsonl_to_list
 
         dataset_dict = defaultdict(dict)
         for dataset_name, subset_name in self.overall_datasets:
             for model in self.models:
                 dataset_path = model['report_path'].replace(OutputsStructure.REPORTS_DIR, OutputsStructure.REVIEWS_DIR)
-                dataset_file_path = os.path.join(dataset_path, f'{dataset_name}_{subset_name}.jsonl')
-                if not os.path.exists(dataset_file_path):
+                dataset_file_path = os.path.join(dataset_path, f'{dataset_name}_{subset_name}.parquet')
+                if not result_rows_exist(dataset_file_path):
                     raise ValueError(
                         f'Dataset {dataset_name} with subset {subset_name} not found in model {model["name"]}.'
                     )
-                dataset = jsonl_to_list(dataset_file_path)
+                dataset = read_result_rows(dataset_file_path)
                 dataset_dict[(dataset_name, subset_name)][model['name']] = dataset
 
         return dataset_dict
 
     def _index_reviews(
         self, items: List[Dict[str, Any]], dataset_name: str, subset_name: str, model_name: str
-    ) -> Dict[int, tuple[ReviewResult, bool]]:
+    ) -> Dict[int, ReviewResult]:
         context = f'model {model_name!r}, dataset {dataset_name!r}, subset {subset_name!r}'
         reviews = {}
         duplicates = 0
         for row, item in enumerate(items, start=1):
             try:
-                # Legacy input migration mutates its argument; retain the loaded cache row.
-                review = ReviewResult.from_cache_item(dict(item))
+                review = ReviewResult.from_cache_item(item)
             except ValidationError as error:
                 raise ValueError(f'Invalid review for {context} at row {row}: {error}') from error
             sample_id = review.sample_score.sample_id
@@ -234,8 +233,7 @@ class GeneralArenaAdapter(DefaultDataAdapter):
             if review.index in reviews:
                 duplicates += 1
             # Match CacheManager's resume policy: the last saved row is authoritative.
-            legacy_input = bool(item.get('input')) and not item.get('messages')
-            reviews[review.index] = (review, legacy_input)
+            reviews[review.index] = review
 
         if not reviews:
             raise ValueError(f'No reviews for {context}; arena comparisons require matching non-empty review sets.')
@@ -246,18 +244,15 @@ class GeneralArenaAdapter(DefaultDataAdapter):
     @staticmethod
     def _review_input_messages(review: ReviewResult) -> List[ChatMessage]:
         # Native caches include generated answers and agent trajectories after the input.
-        # Unmarked legacy input and assistant demonstrations must remain part of the prompt.
+        # Unmarked prompt messages and assistant demonstrations remain part of the input.
         for position, message in enumerate(review.messages):
             if message.source == 'generate':
                 return review.messages[:position]
         return review.messages
 
     @classmethod
-    def _review_input(cls, review: ReviewResult, *, legacy_input: bool) -> str | List[Dict[str, Any]]:
+    def _review_input(cls, review: ReviewResult) -> List[Dict[str, Any]]:
         messages = cls._review_input_messages(review)
-        if legacy_input:
-            # Legacy caches retained only rendered text, without roles or typed content.
-            return messages_to_markdown(messages)
 
         # Rename native tool IDs consistently so call/result relationships survive comparison.
         # IDs inside arguments or opaque provider payloads remain part of the actual input.
@@ -315,8 +310,8 @@ class GeneralArenaAdapter(DefaultDataAdapter):
                     )
                 pairs = []
                 for index in sorted(baseline_indices):
-                    model_review, model_legacy = model_reviews[index]
-                    baseline_review, baseline_legacy = baseline_reviews[index]
+                    model_review = model_reviews[index]
+                    baseline_review = baseline_reviews[index]
                     for field in ('group_id', 'generation_index'):
                         model_value = getattr(model_review.sample_score, field)
                         baseline_value = getattr(baseline_review.sample_score, field)
@@ -326,10 +321,7 @@ class GeneralArenaAdapter(DefaultDataAdapter):
                             and str(model_value) != str(baseline_value)
                         ):
                             raise ValueError(f'Conflicting {field} at review index {index} for {context}.')
-                    legacy_input = model_legacy or baseline_legacy
-                    if self._review_input(model_review, legacy_input=legacy_input) != self._review_input(
-                        baseline_review, legacy_input=legacy_input
-                    ):
+                    if self._review_input(model_review) != self._review_input(baseline_review):
                         raise ValueError(
                             f'Mismatched input prompt at review index {index} for {context}. '
                             'Review indices must refer to the same input in every model.'

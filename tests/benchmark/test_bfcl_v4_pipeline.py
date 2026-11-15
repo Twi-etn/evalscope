@@ -21,6 +21,7 @@ pytest.importorskip('bfcl_eval')
 from bfcl_eval.utils import load_dataset_entry
 
 from evalscope import TaskConfig, run_task
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.report import Report
 
 # Correct actions for the first two official multi_turn_base cases. The dataset,
@@ -186,9 +187,9 @@ def _task_config(server: _ScriptedBFCLServer, output: Path, model: str, is_fc_mo
 
 
 def _cache_rows(output: Path, kind: str) -> list[dict[str, Any]]:
-    files = list((output / kind).rglob('bfcl_v4_multi_turn_base.jsonl'))
+    files = list((output / kind).rglob('bfcl_v4_multi_turn_base.parquet'))
     assert len(files) == 1
-    return [json.loads(line) for line in files[0].read_text().splitlines() if line.strip()]
+    return read_result_rows(files[0])
 
 
 def _assert_report(report: Report) -> None:

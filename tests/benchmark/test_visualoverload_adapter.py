@@ -8,6 +8,7 @@ from PIL import Image
 
 from evalscope.api.dataset import Sample
 from evalscope.api.evaluator import TaskState
+from evalscope.api.evaluator.result_io import REVIEW_SCHEMA, ParquetResultWriter
 from evalscope.api.registry import BENCHMARK_REGISTRY
 from evalscope.benchmarks.visualoverload.visualoverload_adapter import VisualOverloadAdapter
 from evalscope.config import TaskConfig
@@ -72,12 +73,16 @@ def test_readiness_is_not_accuracy(adapter: VisualOverloadAdapter, response: str
 def _write_reviews(report_dir: Path, records: list[dict]) -> None:
     review_dir = report_dir.parent.parent / 'reviews' / report_dir.name
     review_dir.mkdir(parents=True, exist_ok=True)
-    with (review_dir / 'visualoverload_default.jsonl').open('w', encoding='utf-8') as stream:
-        for record in records:
-            stream.write(json.dumps({'sample_score': {
+    writer = ParquetResultWriter(review_dir / 'visualoverload_default.parquet', REVIEW_SCHEMA)
+    for index, record in enumerate(records):
+        writer.write({
+            'index': index,
+            'sample_score': {
                 'sample_metadata': {'question_id': record['question_id']},
                 'score': {'prediction': record['response']},
-            }}) + '\n')
+            },
+        })
+    writer.close()
 
 
 def test_export_from_persisted_reviews(adapter: VisualOverloadAdapter, tmp_path: Path) -> None:
@@ -120,7 +125,7 @@ def test_mock_pipeline_exports_submission(
     dataset = Dataset.from_list(records).cast_column('image', DatasetImage(decode=False))
     dataset_path = tmp_path / 'dataset'
     dataset_path.mkdir()
-    dataset.to_parquet(dataset_path / 'test.parquet')
+    dataset.to_parquet(dataset_path / 'default_test.parquet')
     config = TaskConfig(
         model='mock-model', eval_type='mock_llm', datasets=['visualoverload'],
         dataset_args={'visualoverload': {'local_path': str(dataset_path)}},

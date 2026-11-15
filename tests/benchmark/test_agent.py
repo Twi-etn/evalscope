@@ -18,6 +18,7 @@ import numpy as np
 from evalscope.api.agent import NativeAgentConfig
 from evalscope.api.agent.mcp import MCPServerConfigStdio
 from evalscope.api.benchmark.adapters.browsergym_adapter import BrowserGymStep
+from evalscope.api.evaluator.result_io import read_result_rows
 from evalscope.api.messages import ChatMessageAssistant
 from evalscope.api.model import ModelOutput
 from evalscope.api.model.model_output import ChatCompletionChoice
@@ -84,9 +85,9 @@ class TestAgentBenchmark(TestBenchmark):
 
         self._run_dataset_test('browsecomp', **config_overrides)
 
-        review_files = list(Path('outputs/test_agent_browsecomp').glob('reviews/*/browsecomp_default.jsonl'))
+        review_files = list(Path('outputs/test_agent_browsecomp').glob('reviews/*/browsecomp_default.parquet'))
         self.assertEqual(len(review_files), 1)
-        review = json.loads(review_files[0].read_text(encoding='utf-8').strip())
+        review = read_result_rows(review_files[0])[0]
         self.assertNotIn('canary', review['sample_score']['sample_metadata'])
 
     def test_miniwob(self):
@@ -176,8 +177,8 @@ class TestAgentBenchmark(TestBenchmark):
             )
 
             self.assertEqual(reports['miniwob'].score, 1.0)
-            reviews = list(Path(work_dir).glob('reviews/**/*.jsonl'))
-            rows = [json.loads(line) for line in reviews[0].read_text(encoding='utf-8').splitlines()]
+            reviews = list(Path(work_dir).glob('reviews/**/*.parquet'))
+            rows = read_result_rows(reviews[0])
             self.assertEqual(len(rows), 5)
             self.assertEqual([row['sample_score']['sample_metadata']['seed'] for row in rows], [28, 29, 30, 31, 32])
             self.assertTrue(all(row['agent_trace']['events'][0]['payload']['backend'] == 'browsergym' for row in rows))
