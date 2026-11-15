@@ -49,7 +49,7 @@ evalscope eval --model qwen-plus --datasets mmlu gsm8k \
 **Steps**:
 1. List available: `evalscope benchmark-info --list`
 2. Check spelling — names are case-sensitive and use underscores (e.g. `gsm8k`, `mm_bench`)
-3. Some benchmarks require extra install: `pip install 'evalscope[vlmeval]'` for multimodal
+3. Check the benchmark documentation for any additional dependencies.
 
 ## Perf Results Anomalous
 

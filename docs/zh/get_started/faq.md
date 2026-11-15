@@ -171,7 +171,7 @@ judge={'strategy': 'llm_recall', 'models': {
 
 **Q: 如何评测多模态模型（如 Qwen-VL, Gemma3）？**
 
-**A:** 推荐使用 Native 后端 + API 方式评测：先用 vLLM、ms-swift、LMDeploy 等框架将多模态模型部署为 OpenAI 兼容服务，再通过 `evalscope eval` 选择多模态评测集（如 `ocr_bench`、`mmmu`、`math_vista` 等，完整列表见 [VLM 评测集](../get_started/supported_dataset/vlm.md)）。Native 后端不支持直接本地加载多模态模型进行评测。如需使用 VLMEvalKit 后端，请参考 [VLMEvalKit 后端](../user_guides/backend/vlmevalkit_backend.md)。
+**A:** 推荐使用 Native 后端 + API 方式评测：先用 vLLM、ms-swift、LMDeploy 等框架将多模态模型部署为 OpenAI 兼容服务，再通过 `evalscope eval` 选择多模态评测集（如 `ocr_bench`、`mmmu`、`math_vista` 等，完整列表见 [VLM 评测集](../get_started/supported_dataset/vlm.md)）。Native 后端不支持直接本地加载多模态模型进行评测。
 
 
 **Q: 使用 API 服务评测 `embeddings` 模型时报错 `dimensions is currently not supported`？**
@@ -208,10 +208,6 @@ judge={'strategy': 'llm_recall', 'models': {
 **Q: 如何调试或修改 EvalScope 源码？**
 
 **A:** 请使用源码安装方式。将项目克隆到本地后，在项目根目录执行 `pip install -e .`。这样您对代码的任何修改都会立即生效。
-
-**Q: EvalScope 与 OpenCompass 的评测指标为何无法对齐？**
-
-**A:** 不同评测框架在实现细节（如 Prompt 模板、后处理逻辑、指标计算方式）上存在差异，导致结果难以完全对齐。建议在同一框架内进行模型间的横向对比。
 
 ## 性能压测 (perf)
 

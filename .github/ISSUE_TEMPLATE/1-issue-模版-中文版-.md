@@ -23,8 +23,6 @@ v0.xx.x
 
 ## 使用的工具
 - [ ] Native / 原生框架
-- [ ] Opencompass backend
-- [ ] VLMEvalKit backend
 - [ ] RAGEval backend
 - [ ] Perf / 模型推理压测工具
 - [ ] Arena / 竞技场模式

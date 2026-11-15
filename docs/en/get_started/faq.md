@@ -171,7 +171,7 @@ Reference documentation: [Judge Model Parameters](https://evalscope.readthedocs.
 
 **Q: How to evaluate multimodal models (like Qwen-VL, Gemma3)?**
 
-**A:** The recommended approach is the Native backend with API-based evaluation: deploy the multimodal model as an OpenAI-compatible service using vLLM, ms-swift, LMDeploy, etc., then run `evalscope eval` against multimodal benchmarks (e.g. `ocr_bench`, `mmmu`, `math_vista` — see the full list in [VLM Benchmarks](../get_started/supported_dataset/vlm.md)). The Native backend does not support loading multimodal model checkpoints locally for evaluation. If you need the VLMEvalKit backend, see [VLMEvalKit Backend](../user_guides/backend/vlmevalkit_backend.md).
+**A:** The recommended approach is the Native backend with API-based evaluation: deploy the multimodal model as an OpenAI-compatible service using vLLM, ms-swift, LMDeploy, etc., then run `evalscope eval` against multimodal benchmarks (e.g. `ocr_bench`, `mmmu`, `math_vista` — see the full list in [VLM Benchmarks](../get_started/supported_dataset/vlm.md)). The Native backend does not support loading multimodal model checkpoints locally for evaluation.
 
 **Q: Error when evaluating `embeddings` models via API service: `dimensions is currently not supported`?**
 
@@ -207,10 +207,6 @@ Reference documentation: [Judge Model Parameters](https://evalscope.readthedocs.
 **Q: How to debug or modify EvalScope source code?**
 
 **A:** Please use source code installation. After cloning the project locally, execute `pip install -e .` in the project root directory. This way, any modifications to the code will take effect immediately.
-
-**Q: Why can't evaluation metrics align between EvalScope and OpenCompass?**
-
-**A:** Different evaluation frameworks have differences in implementation details (like prompt templates, post-processing logic, metric calculation methods), making it difficult to achieve complete alignment. We recommend conducting horizontal comparisons between models within the same framework.
 
 ## Performance Testing (perf)
 

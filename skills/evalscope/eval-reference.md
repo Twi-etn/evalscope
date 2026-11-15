@@ -45,7 +45,7 @@ Common per-dataset options:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `--eval-type` | str | auto | Evaluation type (see below) |
-| `--eval-backend` | str | `Native` | Backend: `Native`, `OpenCompass`, `VLMEvalKit`, `RAGEval` |
+| `--eval-backend` | str | `Native` | Backend: `Native`, `RAGEval` |
 | `--eval-config` | str | None | Config file path for non-Native backends |
 | `--eval-batch-size` | int | 1 | Batch size for evaluation |
 | `--limit` | float | None | Max samples per subset (int for count, float < 1 for fraction) |
@@ -71,8 +71,6 @@ Common per-dataset options:
 | Backend | Use Case | Extra Install |
 |---------|----------|---------------|
 | `Native` | Default, built-in evaluation | None |
-| `OpenCompass` | Use OpenCompass evaluation suite | `pip install 'evalscope[opencompass]'` |
-| `VLMEvalKit` | Multimodal model evaluation | `pip install 'evalscope[vlmeval]'` |
 | `RAGEval` | RAG pipeline evaluation (RAGAS, MTEB) | `pip install 'evalscope[rag]'` |
 
 ## Generation Configuration

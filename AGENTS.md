@@ -9,7 +9,7 @@ pip install -e .       # basic install
 make dev               # dev + perf + docs extras + pre-commit
 ```
 
-Python ≥ 3.11. Dependencies: `requirements/framework.txt` + `pyproject.toml [project.optional-dependencies]` (extras: `opencompass`, `vlmeval`, `rag`, `perf`, `app`, `aigc`, `sandbox`, `service`, `dev`, `docs`, `all`, plus per-benchmark extras).
+Python ≥ 3.11. Dependencies: `requirements/framework.txt` + `pyproject.toml [project.optional-dependencies]` (extras: `rag`, `perf`, `app`, `aigc`, `sandbox`, `service`, `dev`, `docs`, `all`, plus per-benchmark extras).
 
 ## Build, lint, test
 
@@ -124,7 +124,7 @@ Use the relevant source pointers below when the task touches that area; this is 
 
 **Adapter base classes** (extend, don't reinvent): `DefaultDataAdapter`, `MultiChoiceAdapter`, `VisionLanguageAdapter`, `NERAdapter`, `AgentAdapter`. Optional capabilities via mixins: `LLMJudgeMixin`, `CodeExecutionSandboxMixin`.
 
-**Non-native backends** live under `evalscope/backend/` (OpenCompass, VLMEvalKit, RAGEval) and are dispatched from `run.py` with their own BackendManager.
+**RAGEval** lives under `evalscope/backend/rag_eval/` and is dispatched from `run.py` through its BackendManager.
 
 ## Adding a benchmark
 

@@ -23,8 +23,6 @@ v0.xx.x
 
 ## Tools Used
 - [ ] Native / Native framework
-- [ ] Opencompass backend
-- [ ] VLMEvalKit backend
 - [ ] RAGEval backend
 - [ ] Perf / Model inference stress testing tool
 - [ ] Arena / Arena mode

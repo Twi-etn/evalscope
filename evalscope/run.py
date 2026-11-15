@@ -86,11 +86,7 @@ def setup_work_directory(task_cfg: TaskConfig):
     outputs = OutputsStructure(outputs_dir=task_cfg.work_dir)
 
     # Unify the output directory structure
-    if task_cfg.eval_backend == EvalBackend.OPEN_COMPASS:
-        task_cfg.eval_config['time_str'] = run_time
-    elif task_cfg.eval_backend == EvalBackend.VLM_EVAL_KIT:
-        task_cfg.eval_config['work_dir'] = task_cfg.work_dir
-    elif task_cfg.eval_backend == EvalBackend.RAG_EVAL:
+    if task_cfg.eval_backend == EvalBackend.RAG_EVAL:
         from evalscope.backend.rag_eval import Tools
 
         eval_cfg = task_cfg.eval_config
@@ -121,25 +117,16 @@ def run_non_native_backend(task_cfg: TaskConfig, outputs: OutputsStructure) -> d
     return dict()
 
 
-def get_backend_manager_class(eval_backend: EvalBackend):
+def get_backend_manager_class(eval_backend: str):
     """Get the backend manager class based on the evaluation backend."""
-    if eval_backend == EvalBackend.OPEN_COMPASS:
-        logger.info('Using OpenCompassBackendManager')
-        from evalscope.backend.opencompass import OpenCompassBackendManager
-
-        return OpenCompassBackendManager
-    elif eval_backend == EvalBackend.VLM_EVAL_KIT:
-        logger.info('Using VLMEvalKitBackendManager')
-        from evalscope.backend.vlm_eval_kit import VLMEvalKitBackendManager
-
-        return VLMEvalKitBackendManager
-    elif eval_backend == EvalBackend.RAG_EVAL:
+    if eval_backend == EvalBackend.RAG_EVAL:
         logger.info('Using RAGEvalBackendManager')
         from evalscope.backend.rag_eval import RAGEvalBackendManager
 
         return RAGEvalBackendManager
     elif eval_backend == EvalBackend.THIRD_PARTY:
         raise NotImplementedError(f'Not implemented for evaluation backend {eval_backend}')
+    raise ValueError(f'Unsupported evaluation backend {eval_backend!r}. Use Native or RAGEval.')
 
 
 def evaluate_model(task_config: TaskConfig, outputs: OutputsStructure) -> dict:

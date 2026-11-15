@@ -39,7 +39,7 @@ evalscope eval --model your-model-name --api-url $OPENAI_API_BASE_URL --api-key 
 - **📚 Comprehensive Evaluation Benchmarks**: Built-in multiple industry-recognized evaluation benchmarks including MMLU, C-Eval, GSM8K, and more.
 - **🧩 Multi-modal and Multi-domain Support**: Supports evaluation of various model types including Large Language Models (LLM), Vision Language Models (VLM), Embedding, Reranker, and more.
 - **🧭 System One Evaluation**: Evaluate text Choice decision models via `--eval-type systemone_api`, with task instructions, few-shot examples and structured probabilities/confidence. See the [usage guide](https://evalscope.readthedocs.io/en/latest/user_guides/systemone.html).
-- **🚀 Multi-backend Integration**: Seamlessly integrates multiple evaluation backends including OpenCompass, VLMEvalKit, RAGEval to meet different evaluation needs.
+- **🚀 Multi-backend Integration**: Runs Native benchmark evaluation and RAGEval for retrieval and generation tasks.
 - **🤖 Agent Evaluation Mode**: Drives benchmarks (e.g. GSM8K, AIME) inside a controlled multi-turn AgentLoop with pluggable strategies and tools, plus Docker or [E2B remote sandboxes](https://evalscope.readthedocs.io/en/latest/user_guides/sandbox.html#e2b); full per-sample Agent Trace is recorded and visualizable.
 - **⚡ Inference Performance Testing**: Provides powerful model service stress testing tools, supporting multiple performance metrics such as TTFT, TPOT.
 - **📊 Interactive Reports**: Provides a Web Dashboard for multi-dimensional model comparison, report overview and detailed inspection.
@@ -322,8 +322,6 @@ For details, please refer to [📖 Performance Testing Usage Guide](https://eval
 EvalScope supports launching evaluation tasks through third-party evaluation frameworks (we call them "backends") to meet diverse evaluation needs.
 
 - **Native**: EvalScope's default evaluation framework with comprehensive functionality.
-- **OpenCompass**: Focuses on text-only evaluation. [📖 Usage Guide](https://evalscope.readthedocs.io/en/latest/user_guides/backend/opencompass_backend.html)
-- **VLMEvalKit**: Focuses on multi-modal evaluation. [📖 Usage Guide](https://evalscope.readthedocs.io/en/latest/user_guides/backend/vlmevalkit_backend.html)
 - **RAGEval**: Focuses on RAG evaluation, supporting Embedding and Reranker models. [📖 Usage Guide](https://evalscope.readthedocs.io/en/latest/user_guides/backend/rageval_backend/index.html)
 - **Third-party Evaluation Tools**: Supports evaluation tasks like [ToolBench](https://evalscope.readthedocs.io/en/latest/third_party/toolbench.html).
 
@@ -339,7 +337,7 @@ EvalScope supports launching evaluation tasks through third-party evaluation fra
     - **Datasets**: Standard evaluation benchmarks (MMLU/GSM8k etc.), Custom data (MCQ/QA)
 
 2.  **Core Functions**
-    - **Multi-backend Evaluation**: Native backend, OpenCompass, MTEB, VLMEvalKit, RAGAS
+    - **Multi-backend Evaluation**: Native and RAGEval
     - **Performance Monitoring**: Supports multiple model service APIs and data formats, tracking TTFT/TPOT and other metrics
     - **Tool Extensions**: Integrates Tool-Bench, Needle-in-a-Haystack, etc.
 

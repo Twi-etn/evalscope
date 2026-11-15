@@ -28,7 +28,7 @@ EvalScope 不仅仅是一个评测工具，它是您模型优化之旅的得力�
 2. 核心功能
 - **多后端评估**
    - 原生后端：LLM/VLM/Embedding/T2I模型统一评估
-   - 集成框架：OpenCompass/MTEB/VLMEvalKit/RAGAS
+   - 集成框架：MTEB/RAGAS
 
 - **性能监控**
    - 模型插件：支持多种模型服务API
@@ -54,6 +54,5 @@ EvalScope 不仅仅是一个评测工具，它是您模型优化之旅的得力�
   - **Pairwise (all) mode**：所有模型间的两两对比。
 - **可视化工具**：提供直观的评测结果展示。
 - **模型性能评测**：提供模型推理服务压测工具和详细统计，详见[模型性能评测文档](../user_guides/stress_test/index.md)。
-- **OpenCompass集成**：支持OpenCompass作为评测后端，对其进行了高级封装和任务简化，您可以更轻松地提交任务进行评测。
-- **多模态评测**：Native 后端原生支持 40+ 个多模态评测集（OCRBench、MMMU、MMBench、MathVista、ChartQA、DocVQA 等），覆盖图文、视频、音频任务；同时保留 VLMEvalKit 后端作为兼容选项。
+- **多模态评测**：Native 后端原生支持 40+ 个多模态评测集（OCRBench、MMMU、MMBench、MathVista、ChartQA、DocVQA 等），覆盖图文、视频、音频任务。
 - **全链路支持**：通过与[ms-swift](https://github.com/modelscope/ms-swift)训练框架的无缝集成，实现模型训练、模型部署、模型评测、评测报告查看的一站式开发流程，提升用户的开发效率。

@@ -28,7 +28,7 @@ The architecture includes the following modules:
 2. Core Functions  
 - **Multi-backend Evaluation**  
    - Native backends: Unified evaluation for LLM/VLM/Embedding/T2I models  
-   - Integrated frameworks: OpenCompass/MTEB/VLMEvalKit/RAGAS  
+   - Integrated frameworks: MTEB/RAGAS
 
 - **Performance Monitoring**  
    - Model plugins: Supports various model service APIs  
@@ -54,6 +54,5 @@ The architecture includes the following modules:
   - **Pairwise (all) mode**: Pairwise comparison among all models.
 - **Visualization Tools**: Provides intuitive displays of evaluation results.
 - **Model Performance Evaluation**: Offers a performance testing tool for model inference services and detailed statistics, see [Model Performance Evaluation Documentation](../user_guides/stress_test/index.md).
-- **OpenCompass Integration**: Supports OpenCompass as the evaluation backend, providing advanced encapsulation and task simplification, allowing for easier task submission for evaluation.
-- **Multimodal Evaluation**: The Native backend supports 40+ multimodal benchmarks out of the box (OCRBench, MMMU, MMBench, MathVista, ChartQA, DocVQA, etc.), covering vision, video and audio tasks; the VLMEvalKit backend remains available as a compatibility option.
+- **Multimodal Evaluation**: The Native backend supports 40+ multimodal benchmarks out of the box (OCRBench, MMMU, MMBench, MathVista, ChartQA, DocVQA, etc.), covering vision, video and audio tasks.
 - **Full-Link Support**: Through seamless integration with the [ms-swift](https://github.com/modelscope/ms-swift) training framework, provides a one-stop development process for model training, model deployment, model evaluation, and report viewing, enhancing user development efficiency.

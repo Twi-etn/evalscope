@@ -96,8 +96,6 @@ class OutputType:
 
 class EvalBackend:
     NATIVE = 'Native'
-    OPEN_COMPASS = 'OpenCompass'
-    VLM_EVAL_KIT = 'VLMEvalKit'
     RAG_EVAL = 'RAGEval'
     THIRD_PARTY = 'ThirdParty'
 

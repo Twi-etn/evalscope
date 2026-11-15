@@ -25,10 +25,8 @@ pip install evalscope
     ```shell
     pip install 'evalscope[service]'
     ```
-  - If you want to use other evaluation backends, you can optionally install OpenCompass, VLMEvalKit, and RAGEval:
+  - To use the RAGEval backend, install the RAG extra:
     ```shell
-    pip install 'evalscope[opencompass]'
-    pip install 'evalscope[vlmeval]'
     pip install 'evalscope[rag]'
     ```
   - To install all dependencies:
@@ -69,10 +67,8 @@ pip install -e .
    ```shell
    pip install '.[app]'
    ```
- - If you want to use other evaluation backends, you can optionally install OpenCompass, VLMEvalKit, and RAGEval:
+ - To use the RAGEval backend, install the RAG extra:
    ```shell
-   pip install '.[opencompass]'
-   pip install '.[vlmeval]'
    pip install '.[rag]'
    ```
  - To install all dependencies:

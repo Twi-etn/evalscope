@@ -42,8 +42,6 @@ version = {attr = "evalscope.version.__version__"}
 dependencies = {file = ["requirements/framework.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
-opencompass      = {file = ["requirements/opencompass.txt"]}
-vlmeval          = {file = ["requirements/vlmeval.txt"]}
 rag              = {file = ["requirements/rag.txt"]}
 perf             = {file = ["requirements/perf.txt"]}
 agentx           = {file = ["requirements/perf.txt", "requirements/agentx.txt"]}
@@ -78,8 +76,6 @@ bfcl             = {file = ["evalscope/benchmarks/bfcl/requirements.txt"]}
 wide_search      = {file = ["evalscope/benchmarks/wide_search/requirements.txt"]}
 vtcbench         = {file = ["evalscope/benchmarks/vtcbench/requirements.txt"]}
 all = {file = [
-  "requirements/opencompass.txt",
-  "requirements/vlmeval.txt",
   "requirements/rag.txt",
   "requirements/perf.txt",
   "requirements/app.txt",

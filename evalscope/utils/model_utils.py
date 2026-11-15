@@ -13,8 +13,6 @@ if TYPE_CHECKING:
 class EvalBackend(Enum):
     #  NOTE: compatible with ms-swfit v2.x
     NATIVE = 'Native'
-    OPEN_COMPASS = 'OpenCompass'
-    VLM_EVAL_KIT = 'VLMEvalKit'
     RAG_EVAL = 'RAGEval'
     THIRD_PARTY = 'ThirdParty'
 

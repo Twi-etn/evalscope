@@ -269,7 +269,7 @@ class TaskConfig(BaseArgument):
     'server' -> 'openai_api'."""
 
     eval_backend: str = EvalBackend.NATIVE
-    """Backend framework to use for evaluation."""
+    """Evaluation framework: Native or RAGEval."""
 
     eval_config: Union[str, Dict, None] = None
     """Additional evaluation configuration parameters."""
@@ -405,6 +405,13 @@ class TaskConfig(BaseArgument):
             if v == 0:
                 return None
         return v
+
+    @field_validator('eval_backend')
+    @classmethod
+    def _validate_eval_backend(cls, value: str) -> str:
+        if value not in (EvalBackend.NATIVE, EvalBackend.RAG_EVAL, EvalBackend.THIRD_PARTY):
+            raise ValueError(f'Unsupported evaluation backend {value!r}. Use Native or RAGEval.')
+        return value
 
     @field_validator('eval_config', mode='before')
     @classmethod

@@ -75,7 +75,7 @@ def add_argument(parser: argparse.ArgumentParser):
                         ],
                         help='Evaluation backend type. Auto-inferred from --api-url / --model when omitted.')  # noqa: E501
     parser.add_argument('--eval-backend', type=str, help='The evaluation backend to use.',
-                        choices=[EvalBackend.NATIVE, EvalBackend.OPEN_COMPASS, EvalBackend.VLM_EVAL_KIT, EvalBackend.RAG_EVAL])  # noqa: E501
+                        choices=[EvalBackend.NATIVE, EvalBackend.RAG_EVAL])  # noqa: E501
     parser.add_argument('--eval-config', type=str, required=False, help='The eval task config file path for evaluation backend.')  # noqa: E501
     parser.add_argument(
         '--eval-batch-size',

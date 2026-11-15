@@ -39,7 +39,7 @@ evalscope eval --model your-model-name --api-url $OPENAI_API_BASE_URL --api-key 
 - **📚 全面的评测基准**: 内置 MMLU, C-Eval, GSM8K 等多个业界公认的评测基准。
 - **🧩 多模态与多领域支持**: 支持大语言模型 (LLM)、多模态 (VLM)、Embedding、Reranker等多种模型的评测。
 - **🧭 System One 评测**: 通过 `--eval-type systemone_api` 评测文本 Choice 决策模型，支持任务指令、few-shot 示例，并保留概率与置信度。详见[使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/systemone.html)。
-- **🚀 多后端集成**: 无缝集成 OpenCompass, VLMEvalKit, RAGEval 等多种评测后端，满足不同评测需求。
+- **🚀 多后端集成**: 使用 Native 后端运行基准评测，使用 RAGEval 评测检索和生成任务。
 - **🤖 Agent 评测模式**: 在受控的多轮 AgentLoop 中驱动 GSM8K、AIME 等基准；支持可插拔的策略和工具，以及 Docker 或 [E2B 远端沙箱](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/sandbox.html#e2b)，每条样本完整记录 Agent Trace 并可在仪表盘中按步骤回放。
 - **⚡ 推理性能测试**: 提供强大的模型服务压力测试工具，支持 TTFT, TPOT 等多项性能指标。
 - **📊 交互式报告**: 提供 Web Dashboard，支持多维度模型对比、报告概览和详情查阅。
@@ -323,8 +323,6 @@ EvalScope 提供了一个强大的压力测试工具，用于评估大语言模�
 EvalScope 支持通过第三方评测框架（我们称之为"后端"）发起评测任务，以满足多样化的评测需求。
 
 - **Native**: EvalScope 的默认评测框架，功能全面。
-- **OpenCompass**: 专注于纯文本评测。 [📖 使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/backend/opencompass_backend.html)
-- **VLMEvalKit**: 专注于多模态评测。 [📖 使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/backend/vlmevalkit_backend.html)
 - **RAGEval**: 专注于 RAG 评测，支持 Embedding 和 Reranker 模型。 [📖 使用指南](https://evalscope.readthedocs.io/zh-cn/latest/user_guides/backend/rageval_backend/index.html)
 - **第三方评测工具**: 支持 [ToolBench](https://evalscope.readthedocs.io/zh-cn/latest/third_party/toolbench.html) 等评测任务。
 
@@ -340,7 +338,7 @@ EvalScope 支持通过第三方评测框架（我们称之为"后端"）发起�
     - **数据集**: 标准评测基准（MMLU/GSM8k等）、自定义数据（MCQ/QA）
 
 2.  **核心功能**
-    - **多后端评估**: 原生后端、OpenCompass、MTEB、VLMEvalKit、RAGAS
+    - **多后端评估**: Native 和 RAGEval
     - **性能监控**: 支持多种模型服务 API 和数据格式，追踪 TTFT/TPOT 等指标
     - **工具扩展**: 集成 Tool-Bench, Needle-in-a-Haystack 等
 
