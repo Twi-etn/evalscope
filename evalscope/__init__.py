@@ -14,7 +14,6 @@ from evalscope.evaluator import (  # registered evaluators
 from evalscope.filters import extraction, selection  # registered filters
 from evalscope.metrics import (  # noqa: F401  # registered metrics & aggregators
     aggregators,
-    audio,
     decision,
     nlp,
     vision,

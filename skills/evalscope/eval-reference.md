@@ -62,7 +62,6 @@ Common per-dataset options:
 | `litellm` | LiteLLM multi-provider routing (100+ providers, use `provider/model` naming) |
 | `mock_llm` | Pipeline testing without a real model |
 | `text2image` | Image generation models |
-| `text2speech` | Text-to-speech evaluation |
 | `image_editing` | Image editing evaluation |
 | `custom` | Custom evaluation type |
 

@@ -28,4 +28,3 @@ sacrebleu
 tabulate
 tqdm
 transformers>=4.33,!=4.57.2
-zhconv

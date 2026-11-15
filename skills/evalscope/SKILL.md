@@ -57,7 +57,6 @@ this `SKILL.md` and the relevant reference file.
   - OpenAI Responses API → `--eval-type openai_responses_api`
   - Pipeline test → `--model mock --eval-type mock_llm`
   - Image generation → `--eval-type text2image`
-  - TTS → `--eval-type text2speech`
   - Image editing → `--eval-type image_editing`
 - User wants **performance test** (throughput / latency / QPS / 压测)
   - → `evalscope perf` workflow

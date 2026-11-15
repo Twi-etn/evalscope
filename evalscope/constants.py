@@ -76,7 +76,6 @@ class EvalType:
     MOCK_LLM = 'mock_llm'
     CHECKPOINT = 'llm_ckpt'  # native model checkpoint
     TEXT2IMAGE = 'text2image'  # image generation service
-    TEXT2SPEECH = 'text2speech'  # text-to-speech service
     IMAGE_EDITING = 'image_editing'  # image editing service
     OPENAI_API = 'openai_api'
     SYSTEMONE_API = 'systemone_api'
@@ -191,7 +190,6 @@ class Tags:
     RETRIEVAL = 'Retrieval'
     FUNCTION_CALLING = 'FunctionCalling'
     TEXT_TO_IMAGE = 'TextToImage'
-    TEXT_TO_SPEECH = 'TextToSpeech'
     IMAGE_EDITING = 'ImageEditing'
     MULTI_MODAL = 'MultiModal'
     MULTI_LINGUAL = 'MultiLingual'
@@ -202,7 +200,6 @@ class Tags:
     AGENT = 'Agent'
     MT = 'MachineTranslation'
     GROUNDING = 'Grounding'
-    SPEECH_RECOGNITION = 'SpeechRecognition'
     AUDIO = 'Audio'
     IMAGE_CAPTIONING = 'ImageCaptioning'
     VIDEO = 'Video'

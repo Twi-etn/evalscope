@@ -222,14 +222,14 @@ def test_get_metric_args_returns_a_copy() -> None:
         default_subset='default',
         eval_split='test',
         prompt_template='{question}',
-        metric_list=[{'audio_wer': {'api_key': 'k'}}, 'plain_metric'],
+        metric_list=[{'configured_metric': {'api_key': 'k'}}, 'plain_metric'],
     )
     adapter = DummyReformatAdapter(benchmark_meta=benchmark_meta, task_config=task_config)
 
-    args = adapter.get_metric_args('audio_wer')
+    args = adapter.get_metric_args('configured_metric')
     args['language'] = 'en'
 
-    assert adapter.metric_list == [{'audio_wer': {'api_key': 'k'}}, 'plain_metric']
-    assert adapter.get_metric_args('audio_wer') == {'api_key': 'k'}
+    assert adapter.metric_list == [{'configured_metric': {'api_key': 'k'}}, 'plain_metric']
+    assert adapter.get_metric_args('configured_metric') == {'api_key': 'k'}
     assert adapter.get_metric_args('plain_metric') == {}
     assert adapter.get_metric_args('missing') == {}

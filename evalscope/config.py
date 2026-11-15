@@ -264,7 +264,7 @@ class TaskConfig(BaseArgument):
     # Evaluation-related arguments
     eval_type: Optional[str] = None
     """Evaluation backend type. One of: 'llm_ckpt' (local checkpoint), 'openai_api',
-    'openai_responses_api', 'anthropic_api', 'litellm', 'mock_llm', 'text2image', 'text2speech',
+    'openai_responses_api', 'anthropic_api', 'litellm', 'mock_llm', 'text2image',
     'image_editing', 'custom'. Deprecated aliases normalized on input: 'checkpoint' -> 'llm_ckpt',
     'server' -> 'openai_api'."""
 
