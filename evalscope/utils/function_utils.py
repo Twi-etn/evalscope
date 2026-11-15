@@ -1,7 +1,7 @@
 import asyncio
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from functools import wraps
 from typing import Awaitable, Callable, List, Literal, Optional, Sequence, Tuple, Type, TypeVar
 
@@ -236,7 +236,7 @@ def run_in_threads_with_progress(
     displaying a tqdm progress bar and emitting periodic heartbeat logs.
 
     Key behaviors:
-    - Concurrency: Uses up to `min(len(items), max_workers)` threads.
+    - Concurrency: Uses up to `min(len(items), max_workers)` threads and refills the window as tasks complete.
     - Progress: A tqdm bar advances when each task finishes (success or failure).
     - Heartbeat: If no tasks finish within `log_interval` seconds, a status line is logged.
     - Ordering: Results preserve the original input order.
@@ -330,7 +330,7 @@ def run_in_threads_with_progress(
                 _try_submit_next()
 
             while pending_futures:
-                completed_futures, _ = wait(pending_futures, timeout=1)
+                completed_futures, _ = wait(pending_futures, timeout=1, return_when=FIRST_COMPLETED)
                 if not completed_futures:
                     pbar.check_log()
                     continue

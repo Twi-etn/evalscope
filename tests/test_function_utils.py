@@ -1,13 +1,33 @@
 import asyncio
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ALL_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import AsyncGenerator
 
 import pytest
 
-from evalscope.utils import asyncio_runtime
+from evalscope.utils import asyncio_runtime, function_utils
 from evalscope.utils.asyncio_runtime import AsyncioLoopRunner, AsyncioLoopThread, cancel_and_wait
-from evalscope.utils.function_utils import async_retry_call, retry_call
+from evalscope.utils.function_utils import async_retry_call, retry_call, run_in_threads_with_progress
+
+
+def test_thread_pool_refills_while_another_worker_is_busy(monkeypatch: pytest.MonkeyPatch) -> None:
+    refill_started = threading.Event()
+
+    def wait_without_heartbeat(
+        futures: set[Future[int]], *, timeout: float, return_when: str = ALL_COMPLETED
+    ) -> tuple[set[Future[int]], set[Future[int]]]:
+        assert timeout == 1
+        return wait(futures, return_when=return_when)
+
+    def worker(item: int) -> int:
+        if item == 0:
+            assert refill_started.wait(timeout=5), 'The free worker did not pick up the next item'
+        elif item == 2:
+            refill_started.set()
+        return item
+
+    monkeypatch.setattr(function_utils, 'wait', wait_without_heartbeat)
+    assert run_in_threads_with_progress([0, 1, 2], worker, desc='Refill test', max_workers=2) == [0, 1, 2]
 
 
 class _CountingError(Exception):
