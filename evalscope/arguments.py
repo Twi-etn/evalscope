@@ -53,7 +53,6 @@ def add_argument(parser: argparse.ArgumentParser):
     # Dataset-related arguments
     parser.add_argument('--datasets', type=str, nargs='+', required=False, help='Dataset id list, align to the module name in evalscope.benchmarks')  # noqa: E501
     parser.add_argument('--dataset-args', type=json.loads, default='{}', help='The dataset args, should be a json string.')  # noqa: E501
-    parser.add_argument('--dataset-dir', help='The datasets dir.')
 
     # Generation configuration arguments
     parser.add_argument('--generation-config', type=str, action=ParseStrArgsAction, help='The generation config, should be a string.')  # noqa: E501

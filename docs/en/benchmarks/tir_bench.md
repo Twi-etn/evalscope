@@ -25,7 +25,7 @@ diverse task categories requiring spatial, compositional, and multi-step visual 
 
 - Default evaluation uses the **test** split (1,215 samples)
 - Primary metric: **Accuracy** (`accuracy`)
-- Images are downloaded as `data.zip` from ModelScope and extracted automatically
+- Images are read from the local `data.zip` archive or existing image files
 - Rule-based scoring: OCR (substring match), jigsaw (grid IoU), spot_difference (set IoU),
   word_search (numeric match), all other tasks (MCQ / numeric judge)
 - **Recommended**: set `judge.strategy='llm_recall'` and provide `judge.models`

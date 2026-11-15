@@ -404,13 +404,6 @@ class DataAdapter(LLMJudgeMixin, ABC):
         return self._task_config.seed
 
     @property
-    def dataset_dir(self) -> str:
-        """
-        Return the dataset directory for the benchmark.
-        """
-        return self._task_config.dataset_dir
-
-    @property
     def shuffle(self) -> bool:
         """
         Return whether to shuffle the dataset before evaluation.
@@ -437,20 +430,6 @@ class DataAdapter(LLMJudgeMixin, ABC):
         Set whether to shuffle the choices in multiple-choice datasets.
         """
         self._benchmark_meta.shuffle_choices = value
-
-    @property
-    def force_redownload(self) -> bool:
-        """
-        Return whether to force redownload the dataset from remote source.
-        """
-        return self._benchmark_meta.force_redownload
-
-    @force_redownload.setter
-    def force_redownload(self, value: bool):
-        """
-        Set whether to force redownload the dataset from remote source.
-        """
-        self._benchmark_meta.force_redownload = value
 
     @property
     def review_timeout(self) -> Optional[float]:

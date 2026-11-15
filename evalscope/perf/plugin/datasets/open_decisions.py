@@ -1,6 +1,5 @@
 from typing import Any, Dict, Iterator
 
-from evalscope.api.dataset import DatasetSource
 from evalscope.perf.plugin.datasets.base import DatasetPluginBase
 from evalscope.perf.plugin.registry import register_dataset
 
@@ -14,10 +13,8 @@ class OpenDecisionsDatasetPlugin(DatasetPluginBase):
     decision service without a hand-built ``line_by_line`` file.
     """
 
-    dataset_source = DatasetSource(dataset_id='evalscope/OpenDecisions')
-
     def build_messages(self) -> Iterator[Dict[str, Any]]:
-        dataset = self.load_hub_dataset(split='test', subset='default')
+        dataset = self.load_local_dataset(split='test', subset='default')
         for record in dataset:
             question = {key: value for key, value in record['question'].items() if value is not None}
             yield {'state': record['state'], 'questions': {'answer': question}}

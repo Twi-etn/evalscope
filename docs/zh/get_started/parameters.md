@@ -86,7 +86,6 @@
 | 参数 | 类型 | 说明 | 默认值 |
 |------|------|------|--------|
 | `--datasets` | `list[str]` | 数据集名称列表，空格分隔<br>参考[数据集列表](./supported_dataset/llm.md) | - |
-| `--dataset-dir` | `str` | 部分基准解包媒体文件的缓存目录 | `~/.cache/modelscope/datasets` |
 | `--limit` | `int`/`float` | 每个数据集最大评测数据量<br>• int：评测前N条数据<br>• float：评测前N%数据<br>示例：`100`或`0.1` | `None`（全部评测） |
 | `--repeats` | `int` | 重复推理一个样例多次 | `1` |
 | `--dataset-args` | `str` | 数据集配置参数（JSON字符串），详见下表 | `{}` |

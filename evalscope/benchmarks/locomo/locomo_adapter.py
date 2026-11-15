@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_file
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser
 from evalscope.api.metric import AggScore, SampleScore, Score
@@ -114,18 +114,7 @@ class LoCoMoAdapter(DefaultDataAdapter):
         dataset_path = Path(self.dataset_id)
         if dataset_path.is_file():
             return str(dataset_path)
-        if dataset_path.exists():
-            file_path = dataset_path / DATA_FILE
-            if not file_path.exists():
-                raise FileNotFoundError(f'LoCoMo data file not found: {file_path}')
-            return str(file_path)
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-            cache_dir=self.dataset_dir,
-        ).download_file(DATA_FILE)
+        return resolve_local_dataset_file(dataset_path, DATA_FILE)
 
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         qa = record['qa']

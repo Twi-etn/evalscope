@@ -4,7 +4,7 @@ import zipfile
 from typing import Any, Dict, List, Optional
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import Sample, resolve_local_dataset_path
+from evalscope.api.dataset import DatasetDict, Sample, resolve_local_dataset_file, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.metric.scorer import Score
@@ -40,7 +40,7 @@ diverse task categories requiring spatial, compositional, and multi-step visual 
 
 - Default evaluation uses the **test** split (1,215 samples)
 - Primary metric: **Accuracy** (`accuracy`)
-- Images are downloaded as `data.zip` from ModelScope and extracted automatically
+- Images are read from the local `data.zip` archive or existing image files
 - Rule-based scoring: OCR (substring match), jigsaw (grid IoU), spot_difference (set IoU),
   word_search (numeric match), all other tasks (MCQ / numeric judge)
 - **Recommended**: set `judge.strategy='llm_recall'` and provide `judge.models`
@@ -83,8 +83,7 @@ class TIRBenchAdapter(VisionLanguageAdapter):
     """Data adapter for evalscope/TIR-Bench.
 
     Handles:
-    - Downloading and extracting the image archive (data.zip) via
-      ``modelscope.dataset_snapshot_download``.
+    - Loading local images directly from disk or from data.zip.
     - Converting raw dataset records into multimodal :class:`Sample` objects
       with base64-encoded images.
     - Task-aware answer extraction and scoring.
@@ -94,34 +93,35 @@ class TIRBenchAdapter(VisionLanguageAdapter):
         super().__init__(**kwargs)
         # Set during load(); used by record_to_sample to resolve image paths.
         self.image_root: Optional[str] = None
+        self._image_archive: Optional[zipfile.ZipFile] = None
         self.reformat_subset = True
 
     # ------------------------------------------------------------------
     # Dataset loading
     # ------------------------------------------------------------------
 
-    def load(self):
-        """Download data.zip (if needed), extract images, then load the dataset."""
-        dataset_path = resolve_local_dataset_path(self)
+    def load(self) -> tuple[DatasetDict, Optional[DatasetDict]]:
+        """Read annotations and images directly from the local dataset."""
+        self.image_root = resolve_local_dataset_path(self)
+        zip_path = os.path.join(self.image_root, 'data.zip')
+        if not os.path.isfile(zip_path):
+            return super().load()
+        with zipfile.ZipFile(resolve_local_dataset_file(self.image_root, 'data.zip')) as archive:
+            with self._temporary_attribute('_image_archive', archive):
+                return super().load()
 
-        # Save for use in record_to_sample
-        self.image_root = dataset_path
-
-        # Extract data.zip if the extracted directory does not yet exist
-        extract_dir = os.path.join(dataset_path, 'data')
-        zip_path = os.path.join(dataset_path, 'data.zip')
-        if not os.path.exists(extract_dir):
-            if os.path.exists(zip_path):
-                logger.info(f'Extracting {zip_path} to {dataset_path} ...')
-                with zipfile.ZipFile(zip_path, 'r') as zf:
-                    zf.extractall(dataset_path)
-                logger.info('Extraction complete.')
-            else:
-                logger.warning(
-                    f'data.zip not found at {zip_path}. Image loading may fail if images are not already extracted.'
-                )
-
-        return super().load()
+    def _read_image(self, image_path: str) -> bytes:
+        try:
+            path = resolve_local_dataset_file(self.image_root, image_path)
+        except FileNotFoundError:
+            if self._image_archive is None:
+                raise
+            try:
+                return self._image_archive.read(image_path)
+            except KeyError as exc:
+                raise FileNotFoundError(image_path) from exc
+        with open(path, 'rb') as image:
+            return image.read()
 
     # ------------------------------------------------------------------
     # Sample construction
@@ -140,15 +140,15 @@ class TIRBenchAdapter(VisionLanguageAdapter):
             img_path = record.get(img_key)
             if not img_path:
                 continue
-            full_path = os.path.join(self.image_root, img_path)
-            if not os.path.exists(full_path):
-                logger.warning(f'Image not found: {full_path}')
+            try:
+                image = self._read_image(img_path)
+            except FileNotFoundError:
+                logger.warning(f'Image not found: {img_path}')
                 continue
             ext = os.path.splitext(img_path)[1].lower().lstrip('.')
             if not ext:
                 ext = 'jpg'
-            with open(full_path, 'rb') as fh:
-                image_b64 = bytes_to_base64(fh.read(), format=ext, add_header=True)
+            image_b64 = bytes_to_base64(image, format=ext, add_header=True)
             content_list.append(ContentImage(image=image_b64))
 
         content_list.append(ContentText(text=record['prompt']))

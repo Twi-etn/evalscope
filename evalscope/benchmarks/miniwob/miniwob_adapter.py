@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict
 
 from evalscope.api.agent import NativeAgentConfig
 from evalscope.api.benchmark import BenchmarkMeta, BrowserGymAdapter
-from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_path
 from evalscope.api.registry import register_benchmark
-from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR, Tags
+from evalscope.constants import Tags
 
 from .utils import (
     BROWSER_ACTION_TOOL_INFO,
@@ -72,9 +73,13 @@ class MiniWobAdapter(BrowserGymAdapter):
     max_steps_default = MINIWOB_MAX_STEPS
     validate_browser_action = staticmethod(validate_miniwob_action)
 
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._asset_work_dir = TemporaryDirectory(prefix='evalscope-miniwob-')
+
     def load(self) -> tuple[DatasetDict, None]:
         """Generate the deterministic task schedule from pinned BrowserGym metadata."""
-        records, metadata_path = load_miniwob_records(repeats=self.repeats, cache_root=self._source_root)
+        records, metadata_path = load_miniwob_records(repeats=self.repeats, dataset_root=self._source_root)
         dataset = build_dataset_from_records(
             records=records,
             sample_fields=self.record_to_sample,
@@ -107,13 +112,11 @@ class MiniWobAdapter(BrowserGymAdapter):
 
     @property
     def _source_root(self) -> Path:
-        if self.dataset_id == BROWSERGYM_REPO:
-            return Path(DEFAULT_EVALSCOPE_CACHE_DIR)
-        return Path(self.dataset_id)
+        return Path(resolve_local_dataset_path(self))
 
     def browsergym_task_kwargs(self, sample: Sample) -> Dict[str, Any]:
         """Use the checksum-verified local MiniWoB pages."""
-        assets_dir = ensure_miniwob_assets(self._source_root)
+        assets_dir = ensure_miniwob_assets(self._source_root, Path(self._asset_work_dir.name))
         return {'base_url': f'{assets_dir.as_uri()}/'}
 
     def _validate_agent_config(self) -> None:

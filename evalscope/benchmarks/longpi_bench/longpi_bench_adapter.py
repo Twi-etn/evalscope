@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample
+from evalscope.api.dataset import DatasetDict, Sample, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageSystem, ChatMessageUser
 from evalscope.api.metric.scorer import Score
@@ -111,15 +111,7 @@ class LongPIBenchAdapter(DefaultDataAdapter):
 
     def load(self) -> Tuple[DatasetDict, Optional[DatasetDict]]:
         # The prompts are built from raw files that the manifest only references
-        self._data_root = Path(
-            DatasetHub(
-                data_id_or_path=self.dataset_id,
-                data_source=self.dataset_hub,
-                revision=self.dataset_revision,
-                force_redownload=self.force_redownload,
-                cache_dir=self.dataset_dir,
-            ).download_snapshot()
-        )
+        self._data_root = Path(resolve_local_dataset_path(self))
         return super().load()
 
     def record_to_sample(self, record: Dict[str, Any]) -> List[Sample]:

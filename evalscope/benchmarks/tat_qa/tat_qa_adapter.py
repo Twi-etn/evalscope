@@ -3,12 +3,11 @@
 # Paper: https://aclanthology.org/2021.acl-long.254/ (ACL 2021)
 # Dataset: https://modelscope.cn/datasets/evalscope/TAT-QA (mirror of the original release, CC BY 4.0)
 # Official evaluation: https://github.com/NExTplusplus/TAT-QA (tatqa_eval.py, MIT License)
-
 import json
 from typing import Any, Dict, List, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_file
 from evalscope.api.evaluator import TaskState
 from evalscope.api.metric import Score
 from evalscope.api.registry import register_benchmark
@@ -127,15 +126,7 @@ class TATQAAdapter(DefaultDataAdapter):
         return DatasetDict(subsets), None
 
     def _read_documents(self) -> List[Dict[str, Any]]:
-        # The repository holds one JSON file per split rather than a `datasets` config, so the test file is
-        # read directly; `download_file` also resolves local dataset directories.
-        path = DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-            cache_dir=self.dataset_dir,
-        ).download_file(TEST_FILE)
+        path = resolve_local_dataset_file(self.dataset_id, TEST_FILE)
         with open(path, encoding='utf-8') as f:
             return json.load(f)
 

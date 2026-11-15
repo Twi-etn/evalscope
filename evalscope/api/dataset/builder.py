@@ -102,6 +102,17 @@ def resolve_local_dataset_path(adapter: 'DataAdapter', *, allow_local_file: bool
     )
 
 
+def resolve_local_dataset_file(dataset_root: Union[str, Path], file_name: str) -> str:
+    """Find a required file within a local dataset directory."""
+    root = Path(dataset_root).expanduser().resolve()
+    path = (root / file_name).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError(f'Invalid dataset file path: {file_name}')
+    if not path.is_file():
+        raise FileNotFoundError(f'Dataset file {file_name} was not found in {root}.')
+    return str(path)
+
+
 def load_local_file_dataset(
     adapter: 'DataAdapter',
     dataset_path: str,

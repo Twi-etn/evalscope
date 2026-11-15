@@ -1,10 +1,9 @@
 from typing import Dict, Iterator, List
 
-from evalscope.api.dataset import DatasetSource
 from evalscope.perf.arguments import Arguments
 from evalscope.perf.plugin.datasets.base import DatasetPluginBase
 from evalscope.perf.plugin.registry import register_dataset
-from evalscope.utils.io_utils import PIL_to_base64
+from evalscope.utils.io_utils import local_image_to_base64
 
 
 @register_dataset('flickr8k')
@@ -13,21 +12,15 @@ class FlickrDatasetPlugin(DatasetPluginBase):
     Datasets: https://www.modelscope.cn/datasets/clip-benchmark/wds_flickr8k/files
     """
 
-    dataset_source = DatasetSource(
-        dataset_id='clip-benchmark/wds_flickr8k',
-        hf_dataset_id='clip-benchmark/wds_flickr8k',
-    )
-
     def __init__(self, query_parameters: Arguments):
         super().__init__(query_parameters)
 
     def build_messages(self) -> Iterator[List[Dict]]:
-        dataset = self.load_hub_dataset(split='test')
+        dataset = self.load_local_dataset(split='test')
 
         for item in dataset:
-            pil_image = item['jpg']
             text = item['txt']
-            base64_image = PIL_to_base64(pil_image, add_header=True)
+            base64_image = local_image_to_base64(item['jpg'])
 
             message = self.create_message(text=text, image_urls=base64_image)
             yield [message]

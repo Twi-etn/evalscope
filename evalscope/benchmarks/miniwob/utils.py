@@ -17,7 +17,6 @@ import numpy as np
 
 from evalscope.api.tool import ToolInfo
 from evalscope.api.tool.tool_info import ToolParams
-from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR
 from evalscope.utils.download_utils import file_sha256
 from evalscope.utils.json_schema import JSONSchema
 
@@ -89,14 +88,14 @@ _ASSET_LOCK = threading.Lock()
 
 
 def load_miniwob_records(
-    cache_root: Optional[str | Path] = None,
+    dataset_root: str | Path,
     repeats: int = 1,
 ) -> tuple[List[Dict[str, Any]], Path]:
-    """Download/cache official metadata and attach deterministic episode seeds."""
+    """Read local metadata and attach deterministic episode seeds."""
     if repeats < 1:
         raise ValueError('MiniWoB repeats must be at least 1.')
 
-    metadata_path = ensure_miniwob_metadata(cache_root)
+    metadata_path = ensure_miniwob_metadata(dataset_root)
     with metadata_path.open(encoding='utf-8', newline='') as metadata_file:
         reader = csv.DictReader(metadata_file)
         if reader.fieldnames != _EXPECTED_FIELDS:
@@ -128,9 +127,9 @@ def load_miniwob_records(
     return records, metadata_path
 
 
-def ensure_miniwob_metadata(cache_root: Optional[str | Path] = None) -> Path:
+def ensure_miniwob_metadata(dataset_root: str | Path) -> Path:
     """Return a verified cached copy of BrowserGym's MiniWoB metadata CSV."""
-    root = Path(cache_root or DEFAULT_EVALSCOPE_CACHE_DIR).expanduser()
+    root = Path(dataset_root).expanduser()
     destination = root / 'sources' / 'browsergym' / BROWSERGYM_COMMIT / 'miniwob.csv'
     if destination.is_file() and file_sha256(str(destination)) == BROWSERGYM_METADATA_SHA256:
         return destination
@@ -141,9 +140,9 @@ def ensure_miniwob_metadata(cache_root: Optional[str | Path] = None) -> Path:
     )
 
 
-def ensure_miniwob_assets(cache_root: Optional[str | Path] = None) -> Path:
+def ensure_miniwob_assets(dataset_root: str | Path, work_dir: Path) -> Path:
     """Return checksum-verified MiniWoB HTML assets for direct BrowserGym use."""
-    root = Path(cache_root or DEFAULT_EVALSCOPE_CACHE_DIR).expanduser()
+    root = Path(dataset_root).expanduser()
     source_parent = root / 'sources' / 'miniwob'
     source_dir = source_parent / MINIWOB_COMMIT
     html_dir = source_dir / 'miniwob' / 'html' / 'miniwob'
@@ -151,16 +150,18 @@ def ensure_miniwob_assets(cache_root: Optional[str | Path] = None) -> Path:
     if sentinel.is_file():
         return html_dir
 
+    target = work_dir / 'miniwob'
+    output = target / 'miniwob' / 'html' / 'miniwob'
     with _ASSET_LOCK:
-        if sentinel.is_file():
-            return html_dir
+        if (output / 'click-dialog.html').is_file():
+            return output
         archive_path = source_parent / f'{MINIWOB_COMMIT}.tar.gz'
         if not archive_path.is_file() or file_sha256(str(archive_path)) != MINIWOB_ARCHIVE_SHA256:
             raise FileNotFoundError(
                 f'Expected a checksum-verified MiniWoB archive at {archive_path}. '
                 f'Prepare the local archive from {MINIWOB_ARCHIVE_URL}.'
             )
-        with tempfile.TemporaryDirectory(prefix='extract-', dir=source_parent) as temp_dir:
+        with tempfile.TemporaryDirectory(prefix='extract-', dir=work_dir) as temp_dir:
             temp_path = Path(temp_dir)
             with tarfile.open(archive_path, 'r:gz') as archive:
                 base = temp_path.resolve()
@@ -179,10 +180,8 @@ def ensure_miniwob_assets(cache_root: Optional[str | Path] = None) -> Path:
             extracted_source = extracted_roots[0]
             if not (extracted_source / 'miniwob' / 'html' / 'miniwob' / 'click-dialog.html').is_file():
                 raise ValueError('MiniWoB archive does not contain the expected HTML assets.')
-            if source_dir.exists():
-                shutil.rmtree(source_dir)
-            os.replace(extracted_source, source_dir)
-    return html_dir
+            os.replace(extracted_source, target)
+    return output
 
 
 def validate_browser_action(action: str) -> str:

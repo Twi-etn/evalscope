@@ -5,7 +5,7 @@ from statistics import mean
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_dict_from_record_map
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_dict_from_record_map, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.metric import AggScore, SampleScore, Score
@@ -57,7 +57,7 @@ without supplying depth maps or visual markers.
   task scores. A full run makes 9,250 model requests but reports `Num=5,550`, because each complementary prompt pair
   is one official evaluation unit
 - Invalid or missing `<answer>` blocks score 0, matching the official benchmark denominator semantics
-- The dataset is evaluation-only and downloaded as a complete snapshot from ModelScope
+- Prepare the local dataset directory with metadata and media for the selected split
 - Resources: [Paper](https://arxiv.org/abs/2411.13112) |
   [GitHub](https://github.com/XiandaGuo/Drive-MLLM)
 """
@@ -92,14 +92,7 @@ class SURDSAdapter(VisionLanguageAdapter):
         if unknown:
             raise ValueError(f'Unknown SURDS subsets {unknown}. Valid subsets are: {SUBSET_LIST}')
 
-        hub = DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-            cache_dir=self.dataset_dir,
-        )
-        dataset_root = hub.download_snapshot()
+        dataset_root = resolve_local_dataset_path(self)
         self._split_root = os.path.join(dataset_root, self.eval_split)
         metadata_path = os.path.join(self._split_root, 'metadata.jsonl')
         with open(metadata_path, 'r', encoding='utf-8') as file:

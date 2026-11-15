@@ -40,11 +40,11 @@ class TestMMMUMultiImageDataset:
         ]
         load_args = {}
 
-        def fake_load_hub_dataset(split='train', subset='default'):
+        def fake_load_local_dataset(split='train', subset='default'):
             load_args.update(split=split, subset=subset)
             return rows
 
-        monkeypatch.setattr(plugin, 'load_hub_dataset', fake_load_hub_dataset)
+        monkeypatch.setattr(plugin, 'load_local_dataset', fake_load_local_dataset)
 
         requests = list(plugin.build_messages())
 
@@ -82,7 +82,7 @@ class TestMMMUMultiImageDataset:
         ]
         monkeypatch.setattr(
             plugin,
-            'load_hub_dataset',
+            'load_local_dataset',
             lambda **_: rows,
         )
 
@@ -121,7 +121,7 @@ class TestMMMUMultiImageDataset:
                 'image_5': Image.new('RGB', (4, 4), 'blue'),
             }
         ]
-        monkeypatch.setattr(plugin, 'load_hub_dataset', lambda **_: rows)
+        monkeypatch.setattr(plugin, 'load_local_dataset', lambda **_: rows)
 
         requests = list(plugin.build_messages())
 
@@ -143,7 +143,7 @@ class TestMMMUMultiImageDataset:
         monkeypatch.setattr(plugin, 'subsets', ('Music',))
         monkeypatch.setattr(
             plugin,
-            'load_hub_dataset',
+            'load_local_dataset',
             lambda **_: [
                 {
                     'question': 'Single image only',
@@ -191,11 +191,11 @@ class TestMMMUMultiImageDataset:
             ],
         }
 
-        def fake_load_hub_dataset(split='train', subset='default'):
+        def fake_load_local_dataset(split='train', subset='default'):
             loaded_subsets.append((split, subset))
             return rows_by_subset[subset]
 
-        monkeypatch.setattr(plugin, 'load_hub_dataset', fake_load_hub_dataset)
+        monkeypatch.setattr(plugin, 'load_local_dataset', fake_load_local_dataset)
 
         messages = list(plugin.build_messages())
 

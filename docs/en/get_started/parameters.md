@@ -86,7 +86,6 @@ The `--generation-config` parameter supports the following options (comma-separa
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `--datasets` | `list[str]` | Dataset name list, space-separated<br>Refer to [Dataset List](./supported_dataset/llm.md) | - |
-| `--dataset-dir` | `str` | Cache directory for media extracted by some benchmarks | `~/.cache/modelscope/datasets` |
 | `--limit` | `int`/`float` | Maximum samples to evaluate per dataset<br>• int: First N samples<br>• float: First N% of samples<br>Example: `100` or `0.1` | `None` (evaluate all) |
 | `--repeats` | `int` | Number of times to repeat inference on the same sample | `1` |
 | `--dataset-args` | `str` | Dataset configuration parameters (JSON string), see table below | `{}` |

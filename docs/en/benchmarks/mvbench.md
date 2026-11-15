@@ -5,8 +5,7 @@
 
 MVBench is a public multimodal video understanding benchmark covering temporal perception,
 attribute/state reasoning, symbolic ordering, and high-level cognition. This native adapter uses
-the ModelScope `PKU-Alignment/MVBench` mirror by default, which provides JSON annotations plus
-optimized video archives.
+local annotations and the official video archives.
 
 ## Task Description
 
@@ -19,7 +18,7 @@ optimized video archives.
 
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
-- The default `action_antonym` subset downloads a small public MP4 archive for quick validation
+- The default `action_antonym` subset uses the local `video/ssv2_video.zip` archive
 - Full benchmark evaluation can be requested by setting `subset_list` to additional MVBench subsets
 - Time-bounded records keep start/end metadata and add a short segment instruction to the prompt
 

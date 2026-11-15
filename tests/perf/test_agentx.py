@@ -20,12 +20,6 @@ from evalscope.perf.scenarios.agentx import (
 )
 
 
-def _materialize_from_worker(args: tuple[str, str, str]) -> str:
-    source, digest, cache_root = args
-    agentx_module.DEFAULT_EVALSCOPE_CACHE_DIR = cache_root
-    return _materialize_weka_traces(Path(source), digest)
-
-
 def _args(**kwargs) -> Arguments:
     kwargs.setdefault('tokenizer_path', 'test-tokenizer')
     return Arguments(
@@ -167,7 +161,7 @@ class TestAgentXCommand:
     def test_local_mirror_command_uses_native_weka_loader_and_redacts_secrets(self, tmp_path):
         args = _args(scenario='agentx', api_key='secret-token', headers={'X-API-Key': 'other-secret'})
         dataset = AgentXDatasetProvenance(
-            source=HubType.MODELSCOPE,
+            source=HubType.LOCAL,
             dataset_id='evalscope/cc-traces-weka-062126-256k',
             revision='revision',
             trace_file=str(tmp_path / 'traces.jsonl'),
@@ -192,36 +186,7 @@ class TestAgentXCommand:
         assert 'secret-token' not in ' '.join(_redact_command(command))
         assert 'other-secret' not in ' '.join(_redact_command(command))
 
-    def test_huggingface_command_uses_official_alias(self, tmp_path):
-        args = _args(scenario='agentx', data_source='huggingface')
-        dataset = AgentXDatasetProvenance(
-            source=HubType.HUGGINGFACE,
-            dataset_id='semianalysisai/cc-traces-weka-062126-256k',
-            revision='revision',
-            trace_file='',
-            sha256='digest',
-            verified=True,
-        )
-
-        command, _ = _build_command(
-            args, args.scenario, dataset, concurrency=1, duration=1800, seed=20260707, artifacts_path=tmp_path
-        )
-
-        assert 'semianalysis_cc_traces_weka_062126_256k' in command
-        assert '--hf-weka-dataset' not in command
-
-
 class TestWekaTraceMaterialization:
-
-    @pytest.fixture(autouse=True)
-    def cache_root(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
-        root = tmp_path / 'evalscope-cache'
-        monkeypatch.setattr(agentx_module, 'DEFAULT_EVALSCOPE_CACHE_DIR', str(root))
-        return root
-
-    @staticmethod
-    def _target(cache_root: Path, digest: str) -> Path:
-        return cache_root / 'agentx' / 'weka' / f'weka-json-{digest}'
 
     @staticmethod
     def _trace(trace_id: str) -> str:
@@ -239,28 +204,17 @@ class TestWekaTraceMaterialization:
         source.write_text('\n'.join(lines) + '\n', encoding='utf-8')
         return source
 
-    def test_splits_jsonl_into_one_file_per_trace(self, tmp_path: Path, cache_root: Path) -> None:
+    def test_splits_jsonl_into_one_file_per_trace(self, tmp_path: Path) -> None:
         source = self._write(tmp_path, [self._trace('trace-a'), self._trace('trace/b')])
 
-        directory = Path(_materialize_weka_traces(source, 'f' * 64))
+        directory = Path(_materialize_weka_traces(source, tmp_path / 'staged'))
 
-        assert directory == self._target(cache_root, 'f' * 64)
+        assert directory == (tmp_path / 'staged')
         assert sorted(path.name for path in directory.glob('*.json')) == [
             '00000001-trace-a.json',
             '00000002-trace_b.json',
         ]
         assert json.loads((directory / '00000001-trace-a.json').read_text(encoding='utf-8'))['id'] == 'trace-a'
-
-    def test_reuses_the_cached_directory(self, tmp_path: Path) -> None:
-        source = self._write(tmp_path, [self._trace('trace-a')])
-
-        first = _materialize_weka_traces(source, 'a' * 64)
-        cached_file = Path(first) / '00000001-trace-a.json'
-        cached_mtime = cached_file.stat().st_mtime_ns
-        second = _materialize_weka_traces(source, 'a' * 64)
-
-        assert second == first
-        assert cached_file.stat().st_mtime_ns == cached_mtime
 
     @pytest.mark.parametrize(
         'lines, message',
@@ -272,70 +226,42 @@ class TestWekaTraceMaterialization:
         ],
     )
     def test_rejects_a_corpus_it_cannot_replay(
-        self, tmp_path: Path, cache_root: Path, lines: list[str], message: str
+        self, tmp_path: Path, lines: list[str], message: str
     ) -> None:
         source = self._write(tmp_path, lines)
 
         with pytest.raises(ValueError, match=message):
-            _materialize_weka_traces(source, 'b' * 64)
-        assert list(cache_root.glob('agentx/weka/*.incomplete')) == []
-
-    def test_concurrent_runs_publish_one_complete_cache(self, tmp_path: Path, cache_root: Path) -> None:
-        source = self._write(tmp_path, [self._trace(f'trace-{index:03d}') for index in range(200)])
-        worker_args = [(str(source), 'e' * 64, str(cache_root))] * 8
-
-        with mp.get_context('spawn').Pool(8) as pool:
-            results = pool.map(_materialize_from_worker, worker_args)
-
-        assert results == [str(self._target(cache_root, 'e' * 64))] * 8
-        files = sorted(self._target(cache_root, 'e' * 64).glob('*.json'))
-        assert len(files) == 200
-        assert {json.loads(path.read_text(encoding='utf-8'))['id'] for path in files} == {
-            f'trace-{index:03d}' for index in range(200)
-        }
+            _materialize_weka_traces(source, tmp_path / 'staged')
 
     def test_case_insensitive_and_sanitized_ids_do_not_collide(self, tmp_path: Path) -> None:
         ids = ['Trace', 'trace', 'a/b', 'a?b']
         source = self._write(tmp_path, [self._trace(trace_id) for trace_id in ids])
 
-        directory = Path(_materialize_weka_traces(source, 'c' * 64))
+        directory = Path(_materialize_weka_traces(source, tmp_path / 'staged'))
 
         files = sorted(directory.glob('*.json'))
         assert len(files) == 4
         assert [json.loads(path.read_text(encoding='utf-8'))['id'] for path in files] == ids
 
     @pytest.mark.skipif(hasattr(os, 'geteuid') and os.geteuid() == 0, reason='root ignores directory permissions')
-    def test_read_only_source_directory(self, tmp_path: Path, cache_root: Path) -> None:
+    def test_read_only_source_directory(self, tmp_path: Path) -> None:
         source_dir = tmp_path / 'mirror'
         source_dir.mkdir()
         source = self._write(source_dir, [self._trace('trace-a')])
         source_dir.chmod(0o555)
         try:
-            directory = Path(_materialize_weka_traces(source, 'd' * 64))
+            directory = Path(_materialize_weka_traces(source, tmp_path / 'staged'))
         finally:
             source_dir.chmod(0o755)
 
-        assert directory == self._target(cache_root, 'd' * 64)
+        assert directory == (tmp_path / 'staged')
         assert len(list(directory.glob('*.json'))) == 1
-
-    def test_rebuilds_an_interrupted_staging_directory(self, tmp_path: Path, cache_root: Path) -> None:
-        source = self._write(tmp_path, [self._trace('trace-a')])
-        target = self._target(cache_root, 'a' * 64)
-        staging = target.with_name(f'{target.name}.incomplete')
-        staging.mkdir(parents=True)
-        (staging / 'stale.json').write_text('{}', encoding='utf-8')
-
-        directory = Path(_materialize_weka_traces(source, 'a' * 64))
-
-        assert not (directory / 'stale.json').exists()
-        assert len(list(directory.glob('*.json'))) == 1
-
 
 class TestAgentXNormalization:
 
     def _dataset(self) -> AgentXDatasetProvenance:
         return AgentXDatasetProvenance(
-            source=HubType.MODELSCOPE,
+            source=HubType.LOCAL,
             dataset_id='mirror',
             revision='revision',
             trace_file='traces.jsonl',
@@ -412,7 +338,7 @@ class TestAgentXProcessLifecycle:
         process = FailedProcess()
         monkeypatch.setattr(agentx_module.subprocess, 'Popen', lambda *args, **kwargs: process)
         dataset = AgentXDatasetProvenance(
-            source=HubType.MODELSCOPE,
+            source=HubType.LOCAL,
             dataset_id='mirror',
             revision='revision',
             trace_file='traces.jsonl',
@@ -460,7 +386,7 @@ class TestAgentXProcessLifecycle:
         process = InterruptedProcess()
         monkeypatch.setattr(agentx_module.subprocess, 'Popen', lambda *args, **kwargs: process)
         dataset = AgentXDatasetProvenance(
-            source=HubType.MODELSCOPE,
+            source=HubType.LOCAL,
             dataset_id='mirror',
             revision='revision',
             trace_file='traces.jsonl',
@@ -488,13 +414,12 @@ class TestAgentXProcessLifecycle:
 class TestAgentXDatasetValidation:
 
     def test_unverified_local_data_is_allowed_only_for_smoke(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(agentx_module, 'DEFAULT_EVALSCOPE_CACHE_DIR', str(tmp_path / 'evalscope-cache'))
         trace = {'id': 'unverified', 'models': ['m'], 'block_size': 64, 'hash_id_scope': 'local', 'requests': []}
         (tmp_path / 'traces.jsonl').write_text(json.dumps(trace) + '\n', encoding='utf-8')
         smoke_args = _args(scenario='{"name":"agentx","mode":"smoke"}', dataset_path=str(tmp_path))
-        result = _resolve_dataset(smoke_args, smoke_args.scenario)
+        result = _resolve_dataset(smoke_args, smoke_args.scenario, tmp_path)
 
         assert result.verified is False
         benchmark_args = _args(scenario='agentx', dataset_path=str(tmp_path))
         with pytest.raises(ValueError, match='hash mismatch'):
-            _resolve_dataset(benchmark_args, benchmark_args.scenario)
+            _resolve_dataset(benchmark_args, benchmark_args.scenario, tmp_path)

@@ -240,7 +240,6 @@ judge={'strategy': 'llm_recall', 'models': {
   evalscope perf --dataset openqa --dataset-path /path/to/open_qa.jsonl ...
   ```
 
-还可以通过 `--data-source` 指定数据源（默认为 `modelscope`，可切换为 `huggingface`）。
 
 **Q: 如何压测多模态模型？**
 

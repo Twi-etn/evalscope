@@ -7,8 +7,8 @@ This plugin supports two data-source modes:
    ``examples/perf/build_swe_smith_dataset.py``.  Each conversation is a list
    of turns, where each turn stores only the DELTA messages for that turn.
 
-2. **Live construction** (``args.dataset_path`` is ``None``):
-   Pull the raw SWE-smith-trajectories dataset from ModelScope and construct
+2. **On-demand construction** (local Parquet or Lance at ``args.dataset_path``):
+   Read the raw SWE-smith-trajectories dataset from disk and construct
    conversations in parallel using ``multiprocessing.Pool``.  Requires
    ``args.tokenizer_path`` for accurate token counting.
 
@@ -28,7 +28,6 @@ from typing import Dict, Iterator, List, Optional, Tuple
 import numpy as np
 from tqdm import tqdm
 
-from evalscope.api.dataset import DatasetSource
 from evalscope.perf.arguments import Arguments
 from evalscope.perf.multi_turn_args import _get_range_upper
 from evalscope.perf.plugin.datasets.base import Conversation, DatasetPluginBase, Messages, Turn
@@ -276,10 +275,6 @@ class SweSmithDatasetPlugin(DatasetPluginBase):
     """
 
     args_schema = MultiTurnDatasetArgs
-    dataset_source = DatasetSource(
-        dataset_id='SWE-bench/SWE-smith-trajectories',
-        hf_dataset_id='SWE-bench/SWE-smith-trajectories',
-    )
 
     def __init__(self, query_parameters: Arguments):
         super().__init__(query_parameters)
@@ -294,7 +289,8 @@ class SweSmithDatasetPlugin(DatasetPluginBase):
         ``max_tokens`` and ``tool_call_latency`` are left ``None``; swe_smith
         does not specify per-turn output caps or simulated tool waits.
         """
-        if self.query_parameters.dataset_path:
+        path = self.local_dataset_path()
+        if path.is_file() and path.suffix == '.json':
             yield from self._load_from_json()
         else:
             yield from self._load_live()
@@ -305,7 +301,7 @@ class SweSmithDatasetPlugin(DatasetPluginBase):
 
     def _load_from_json(self) -> Iterator[Conversation]:
         """Load pre-built ``agentic_dataset.json`` and yield conversations."""
-        dataset_path = self.query_parameters.dataset_path
+        dataset_path = self.local_dataset_path()
         logger.info(f'Loading pre-built dataset from {dataset_path}')
 
         with open(dataset_path, 'r', encoding='utf-8') as f:
@@ -334,7 +330,7 @@ class SweSmithDatasetPlugin(DatasetPluginBase):
     # ------------------------------------------------------------------
 
     def _load_live(self) -> Iterator[Conversation]:
-        """Pull SWE-smith-trajectories from ModelScope and construct conversations."""
+        """Read local SWE-smith trajectories and construct conversations."""
         if self.tokenizer is None:
             raise ValueError(
                 'Live construction mode requires --tokenizer-path for accurate '
@@ -366,7 +362,7 @@ class SweSmithDatasetPlugin(DatasetPluginBase):
             f'target_count={target_count}, min_chars={min_chars}'
         )
 
-        dataset = self.load_hub_dataset(split=_DEFAULT_SPLIT)
+        dataset = self.load_local_dataset(split=_DEFAULT_SPLIT)
 
         candidates = []
         skipped_short = 0

@@ -34,12 +34,10 @@ path and is not a bug.
 """
 
 import json
-import os
 from typing import Any, Dict, Iterator
 
 import numpy as np
 
-from evalscope.api.dataset import DatasetSource
 from evalscope.perf.arguments import Arguments
 from evalscope.perf.plugin.datasets.base import Conversation, Turn
 from evalscope.perf.plugin.datasets.random_dataset import RandomDatasetPlugin
@@ -65,7 +63,6 @@ class TrieReplayBase(RandomDatasetPlugin):
     """
 
     FILE_NAME: str = ''  # subclasses must override
-    dataset_source = DatasetSource(dataset_id='evalscope/trie-workloads')
 
     def __init__(self, query_parameters: Arguments):
         super().__init__(query_parameters)
@@ -74,13 +71,6 @@ class TrieReplayBase(RandomDatasetPlugin):
                 'trie trace-replay is a multi-turn dataset; pass --multi-turn so each trace '
                 'is replayed as one multi-turn conversation against the server.'
             )
-
-    def _resolve_dataset_path(self) -> str:
-        if self.query_parameters.dataset_path and os.path.isfile(self.query_parameters.dataset_path):
-            return self.query_parameters.dataset_path
-        path = self.download_hub_file(file_name=self.FILE_NAME)
-        self.query_parameters.dataset_path = path
-        return path
 
     def _synth_prompt(self, target_len: int) -> str:
         """Return a synthetic prompt that re-encodes to ``target_len`` tokens.
@@ -161,7 +151,7 @@ class TrieReplayBase(RandomDatasetPlugin):
 
     def build_messages(self) -> Iterator[Conversation]:
         """Yield each trace as a ``Conversation`` of pre-synthesized turns."""
-        path = self._resolve_dataset_path()
+        path = self.local_dataset_file(self.FILE_NAME)
         for line in self.dataset_line_by_line(path):
             line = line.strip()
             if not line:

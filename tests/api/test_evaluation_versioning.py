@@ -186,7 +186,7 @@ def test_identity_still_tracks_output_shaping_generation_settings() -> None:
         assert first.fingerprint != build_benchmark_identity(spec, 'v1.0', _task_config(generation_config=override)).fingerprint
 
 
-def test_resolved_spec_and_fingerprint_use_effective_hub_source() -> None:
+def test_resolved_spec_and_fingerprint_ignore_legacy_hub_source() -> None:
     meta = _meta(
         dataset_revision='ms-revision',
         hf_dataset_id='hf/demo-data',
@@ -197,15 +197,15 @@ def test_resolved_spec_and_fingerprint_use_effective_hub_source() -> None:
     hf_spec = ResolvedBenchmarkSpec.from_meta(meta, hf_config)
     first = build_benchmark_identity(hf_spec, 'v1.0', hf_config)
 
-    assert hf_spec.dataset_id == 'hf/demo-data'
-    assert hf_spec.dataset_revision == 'hf-revision-1'
+    assert hf_spec.dataset_id == 'demo/data'
+    assert hf_spec.dataset_revision == 'ms-revision'
 
     meta.hf_dataset_revision = 'hf-revision-2'
     changed_spec = ResolvedBenchmarkSpec.from_meta(meta, hf_config)
     changed = build_benchmark_identity(changed_spec, 'v1.0', hf_config)
 
-    assert changed_spec.dataset_revision == 'hf-revision-2'
-    assert first.fingerprint != changed.fingerprint
+    assert changed_spec == hf_spec
+    assert first.fingerprint == changed.fingerprint
 
 
 def test_modelscope_identity_ignores_alternate_hf_declaration() -> None:

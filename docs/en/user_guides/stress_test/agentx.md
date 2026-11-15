@@ -21,6 +21,7 @@ Run a short smoke test first. It uses one active session and is not comparable w
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","mode":"smoke"}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \
@@ -34,6 +35,7 @@ Set `request_timeout_seconds` in the scenario JSON to override AIPerf's per-requ
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","mode":"smoke","request_timeout_seconds":300}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \
@@ -42,11 +44,12 @@ evalscope perf \
 
 ## Standard run
 
-The default run uses the verified ModelScope 256K mirror, a fixed seed, and a 30-minute duration:
+Prepare the verified 256K `traces.jsonl` file locally and pass its path to AgentX. The default run uses a fixed seed and a 30-minute duration.
 
 ```bash
 evalscope perf \
   --scenario agentx \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \
@@ -54,14 +57,6 @@ evalscope perf \
 ```
 
 `parallel` is the number of active AgentX sessions. A session can issue more than one request, so actual request concurrency may be higher.
-
-Use `--data-source huggingface` only when you need an upstream-compatible result:
-
-```bash
-evalscope perf --scenario agentx --data-source huggingface \
-  --model YOUR_MODEL --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
-  --url http://localhost:8000/v1/chat/completions --parallel 8
-```
 
 ## Waiting for in-flight requests
 
@@ -80,6 +75,7 @@ Use JSON to select a different workload variant, configure request timing, or re
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","variant":"full","num_gpus":8,"engine":"vllm"}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions --parallel 8
 ```
@@ -101,6 +97,7 @@ For tokenizers that require custom Python code, explicitly set `tokenizer_trust_
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","mode":"smoke","tokenizer_trust_remote_code":true,"tokenizer_revision":"<commit-or-tag>"}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \

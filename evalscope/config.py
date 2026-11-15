@@ -14,7 +14,6 @@ from evalscope.api.agent import NativeAgentConfig
 from evalscope.api.dataset.dataset import validate_dataset_limit, validate_dataset_repeats
 from evalscope.api.model import GenerateConfig, Model, ModelAPI
 from evalscope.constants import (
-    DEFAULT_DATASET_CACHE_DIR,
     DEFAULT_WORK_DIR,
     EvalBackend,
     EvalType,
@@ -249,8 +248,8 @@ class TaskConfig(BaseArgument):
     dataset_args: Dict = Field(default_factory=dict)
     """Additional arguments to pass to datasets during loading."""
 
-    dataset_dir: str = DEFAULT_DATASET_CACHE_DIR
-    """Directory where datasets are cached locally."""
+    dataset_dir: Optional[str] = None
+    """Legacy field accepted when loading previous task configurations."""
 
     dataset_hub: str = HubType.LOCAL
     """Legacy field accepted when loading previous task configurations."""

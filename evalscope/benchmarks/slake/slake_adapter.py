@@ -3,7 +3,7 @@ import zipfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, Sample, download_dataset_file
+from evalscope.api.dataset import DatasetDict, Sample, resolve_local_dataset_file
 from evalscope.api.evaluator import TaskState
 from evalscope.api.messages import ChatMessageUser, Content, ContentImage, ContentText
 from evalscope.api.metric.scorer import Score
@@ -119,14 +119,7 @@ class SLAKEAdapter(VisionLanguageAdapter):
         if unknown:
             raise ValueError(f'Unknown SLAKE subsets {unknown}. Valid subsets are: {list(SUBSET_TO_LANGUAGE)}')
 
-        archive_path = download_dataset_file(
-            data_id_or_path=self.dataset_id,
-            file_path=IMAGE_ARCHIVE,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-            cache_dir=self.dataset_dir,
-        )
+        archive_path = resolve_local_dataset_file(self.dataset_id, IMAGE_ARCHIVE)
         with zipfile.ZipFile(archive_path) as archive:
             self._image_archive = archive
             datasets = super().load()

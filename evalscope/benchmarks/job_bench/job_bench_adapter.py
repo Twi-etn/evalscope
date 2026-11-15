@@ -11,7 +11,7 @@ from evalscope.agent.tools.python_exec import PYTHON_EXEC_TOOL_INFO, run_python_
 from evalscope.api.agent import AgentEnvironment
 from evalscope.api.benchmark import BenchmarkMeta
 from evalscope.api.benchmark.adapters import AgentLoopAdapter
-from evalscope.api.dataset import DatasetHub, Sample
+from evalscope.api.dataset import Sample, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import (
     CaseVerdict,
@@ -145,15 +145,7 @@ class JobBenchAdapter(AgentLoopAdapter):
 
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
         if self._snapshot_dir is None and not is_build_doc():
-            self._snapshot_dir = Path(
-                DatasetHub(
-                    data_id_or_path=self.dataset_id,
-                    data_source=self.dataset_hub,
-                    revision=self.dataset_revision,
-                    force_redownload=self.force_redownload,
-                    cache_dir=self.dataset_dir,
-                ).download_snapshot()
-            ).resolve()
+            self._snapshot_dir = Path(resolve_local_dataset_path(self))
 
         reference_files = [str(path) for path in record.get('reference_files') or []]
         reference_hint = ''

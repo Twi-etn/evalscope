@@ -6,7 +6,13 @@ from typing import Any, Dict, List, Literal, Tuple, Union
 from pydantic import BaseModel
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, MemoryDataset, Sample, build_dataset_from_records
+from evalscope.api.dataset import (
+    DatasetDict,
+    MemoryDataset,
+    Sample,
+    build_dataset_from_records,
+    resolve_local_dataset_file,
+)
 from evalscope.api.evaluator import TaskState
 from evalscope.api.judge import (
     CaseVerdict,
@@ -190,18 +196,7 @@ class LongMemEvalAdapter(DefaultDataAdapter):
         return records
 
     def _resolve_dataset_file(self, file_name: str) -> str:
-        if Path(self.dataset_id).exists():
-            file_path = Path(self.dataset_id) / file_name
-            if not file_path.exists():
-                raise FileNotFoundError(f'LongMemEval data file not found: {file_path}')
-            return str(file_path)
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-            cache_dir=self.dataset_dir,
-        ).download_file(file_name)
+        return resolve_local_dataset_file(self.dataset_id, file_name)
 
     def _load_retrieval_log(self) -> MemoryDataset:
         records = self._read_json_or_jsonl(self.retrieval_log_path)

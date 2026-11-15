@@ -21,6 +21,7 @@ pip install 'evalscope[agentx]'
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","mode":"smoke"}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \
@@ -29,11 +30,11 @@ evalscope perf \
 
 ## 正式运行
 
-默认运行使用已校验的 ModelScope 256K 镜像、固定 seed 和 30 分钟时长：
-
+提前准备本地 256K `traces.jsonl`，通过 `--dataset-path` 指定文件路径。
 ```bash
 evalscope perf \
   --scenario agentx \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL \
   --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions \
@@ -41,14 +42,6 @@ evalscope perf \
 ```
 
 `parallel` 是同时运行的 AgentX 会话数。一个会话可能发出多个请求，因此实际请求并发可能更高。
-
-仅在需要与 AIPerf 上游结果兼容时使用 `--data-source huggingface`：
-
-```bash
-evalscope perf --scenario agentx --data-source huggingface \
-  --model YOUR_MODEL --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
-  --url http://localhost:8000/v1/chat/completions --parallel 8
-```
 
 ## 等待在途请求完成
 
@@ -67,6 +60,7 @@ JSON 形式可用于选择其他 workload 变体、配置请求时间参数或�
 ```bash
 evalscope perf \
   --scenario '{"name":"agentx","variant":"full","num_gpus":8,"engine":"vllm"}' \
+  --dataset-path ./traces.jsonl \
   --model YOUR_MODEL --tokenizer-path YOUR_TOKENIZER_PATH_OR_ID \
   --url http://localhost:8000/v1/chat/completions --parallel 8
 ```

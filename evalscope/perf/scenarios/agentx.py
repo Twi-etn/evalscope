@@ -10,20 +10,18 @@ import importlib.metadata
 import json
 import os
 import re
-import shutil
 import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 from urllib.parse import urlsplit, urlunsplit
 
-from filelock import FileLock
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from evalscope.api.dataset import download_dataset_snapshot
-from evalscope.constants import DEFAULT_EVALSCOPE_CACHE_DIR, HubType
+from evalscope.constants import HubType
 from evalscope.utils import get_secret_value
 from evalscope.utils.logger import get_logger
 
@@ -41,19 +39,9 @@ _AIPERF_SUMMARY = 'profile_export_aiperf.json'
 
 _DATASETS = {
     '256k': {
-        'modelscope_id': 'evalscope/cc-traces-weka-062126-256k',
-        'modelscope_revision': 'a97a07a0474f9287023827b89a1478e52f1917da',
-        'huggingface_id': 'semianalysisai/cc-traces-weka-062126-256k',
-        'huggingface_revision': '8fecd2fc56694469f758f0afbbb6335ad3043740',
-        'public_dataset': 'semianalysis_cc_traces_weka_062126_256k',
         'sha256': 'e39cd2ff3eba21d4a3664be51da743ac3d2149a1933898cafc7bfeac8147eeef',
     },
     'full': {
-        'modelscope_id': 'evalscope/cc-traces-weka-062126',
-        'modelscope_revision': 'c73c455b0ef068dc2cdf7e85b6cf24696925eea4',
-        'huggingface_id': 'semianalysisai/cc-traces-weka-062126',
-        'huggingface_revision': '23f152f6f0f9399a85901b89a6458def0ef16729',
-        'public_dataset': 'semianalysis_cc_traces_weka_062126',
         'sha256': '29b6a19e751ff5230771519aab755f80a0f43a4ba9cf96b72d3a6a437ec99276',
     },
 }
@@ -132,7 +120,7 @@ class AgentXDatasetProvenance(BaseModel):
     sha256: str
     verified: bool
     trace_dir: str = ''
-    """Directory of per-trace ``.json`` files for AIPerf's native Weka loader; empty for the HuggingFace source."""
+    """Run-local directory of per-trace JSON files for AIPerf."""
 
 
 class AgentXRunSummary(BaseModel):
@@ -209,7 +197,14 @@ def run_agentx_benchmark(args: 'Arguments', output_path: str) -> Dict[str, Dict[
     _require_aiperf()
     scenario = args.scenario
     assert scenario is not None
-    dataset = _resolve_dataset(args, scenario)
+    with TemporaryDirectory(prefix='evalscope-agentx-') as staging_dir:
+        dataset = _resolve_dataset(args, scenario, Path(staging_dir))
+        return _run_agentx_sweep(args, scenario, dataset, Path(output_path))
+
+
+def _run_agentx_sweep(
+    args: 'Arguments', scenario: AgentXScenario, dataset: AgentXDatasetProvenance, output_path: Path
+) -> dict[str, dict[str, Any]]:
     seed = args.seed if args.seed is not None else _DEFAULT_SEED
     duration = _resolve_duration(args, scenario)
     base_path = Path(output_path) / f'agentx_{scenario.variant}'
@@ -259,74 +254,25 @@ def _require_aiperf() -> None:
         raise RuntimeError(f'AgentX requires aiperf=={_AIPERF_VERSION}, found {version}.')
 
 
-def _resolve_dataset(args: 'Arguments', scenario: AgentXScenario) -> AgentXDatasetProvenance:
-    spec = _DATASETS[scenario.variant]
-    source = HubType.LOCAL if args.dataset_path else (args.data_source or HubType.MODELSCOPE)
-    if source not in {HubType.MODELSCOPE, HubType.HUGGINGFACE, HubType.LOCAL}:
-        raise ValueError(f'Unsupported AgentX data source: {source}')
-
-    if source == HubType.HUGGINGFACE:
-        _verify_huggingface_revision(spec)
-        return AgentXDatasetProvenance(
-            source=source,
-            dataset_id=spec['huggingface_id'],
-            revision=spec['huggingface_revision'],
-            trace_file='',
-            sha256=spec['sha256'],
-            verified=True,
-        )
-
-    if source == HubType.MODELSCOPE:
-        root = download_dataset_snapshot(
-            spec['modelscope_id'],
-            data_source=HubType.MODELSCOPE,
-            revision=spec['modelscope_revision'],
-            allow_file_pattern='traces.jsonl',
-        )
-        dataset_id = spec['modelscope_id']
-        revision = spec['modelscope_revision']
-    else:
-        root = download_dataset_snapshot(args.dataset_path, data_source=HubType.LOCAL)
-        dataset_id = os.path.realpath(args.dataset_path)
-        revision = None
-
-    trace_file = Path(root) / 'traces.jsonl'
+def _resolve_dataset(args: 'Arguments', scenario: AgentXScenario, staging_dir: Path) -> AgentXDatasetProvenance:
+    if not args.dataset_path:
+        raise ValueError('AgentX requires --dataset-path pointing to local traces.jsonl or its directory.')
+    path = Path(args.dataset_path).expanduser().resolve()
+    trace_file = path / 'traces.jsonl' if path.is_dir() else path
     if not trace_file.is_file():
-        raise FileNotFoundError(f'AgentX dataset must contain traces.jsonl: {root}')
+        raise FileNotFoundError(f'AgentX traces file was not found: {trace_file}')
     digest = _sha256(trace_file)
-    verified = digest == spec['sha256']
+    verified = digest == _DATASETS[scenario.variant]['sha256']
     if scenario.mode == 'benchmark' and not verified:
         raise ValueError(f'AgentX benchmark dataset hash mismatch for {trace_file}: {digest}')
-    trace_dir = '' if source == HubType.HUGGINGFACE else _materialize_weka_traces(trace_file, digest)
     return AgentXDatasetProvenance(
-        source=source,
-        dataset_id=dataset_id,
-        revision=revision,
+        source=HubType.LOCAL,
+        dataset_id=str(path),
         trace_file=str(trace_file),
         sha256=digest,
         verified=verified,
-        trace_dir=trace_dir,
+        trace_dir=_materialize_weka_traces(trace_file, staging_dir / 'traces'),
     )
-
-
-def _verify_huggingface_revision(spec: Dict[str, str]) -> None:
-    """Fail closed if the date-pinned public dataset head has moved."""
-    try:
-        from huggingface_hub import HfApi
-
-        info = HfApi().dataset_info(spec['huggingface_id'], revision=spec['huggingface_revision'], files_metadata=True)
-    except Exception as e:
-        raise RuntimeError('Unable to verify the AgentX Hugging Face dataset revision.') from e
-    if info.sha != spec['huggingface_revision']:
-        raise RuntimeError(
-            f'AgentX Hugging Face revision changed: expected {spec["huggingface_revision"]}, got {info.sha}.'
-        )
-    trace = next((file for file in info.siblings if file.rfilename == 'traces.jsonl'), None)
-    lfs_sha256 = trace.lfs.sha256 if trace is not None and trace.lfs is not None else None
-    if lfs_sha256 != spec['sha256']:
-        raise RuntimeError(
-            f'AgentX Hugging Face traces.jsonl hash changed: expected {spec["sha256"]}, got {lfs_sha256}.'
-        )
 
 
 def _resolve_duration(args: 'Arguments', scenario: AgentXScenario) -> float:
@@ -384,21 +330,15 @@ def _build_command(
         command.extend(['--max-context-length', str(scenario.max_context_length)])
     if scenario.mode == 'smoke':
         command.extend(['--num-dataset-entries', str(scenario.effective_trace_limit)])
-    if dataset.source == HubType.HUGGINGFACE:
-        command.extend(['--public-dataset', _DATASETS[scenario.variant]['public_dataset']])
-    else:
-        # ``--hf-weka-dataset`` expects a HuggingFace repo id; the local mirror is a directory,
-        # so replay it through the native file loader, which takes a directory of per-trace JSON files.
-        command.extend(
-            [
-                '--custom-dataset-type',
-                'weka_trace',
-                '--input-file',
-                dataset.trace_dir or str(Path(dataset.trace_file).parent),
-            ]
-        )
-    if scenario.mode == 'smoke' or dataset.source != HubType.HUGGINGFACE:
-        command.append('--unsafe-override')
+    command.extend(
+        [
+            '--custom-dataset-type',
+            'weka_trace',
+            '--input-file',
+            dataset.trace_dir or str(Path(dataset.trace_file).parent),
+            '--unsafe-override',
+        ]
+    )
 
     env = os.environ.copy()
     api_key = get_secret_value(args.api_key)
@@ -514,7 +454,7 @@ def _normalize_summary(
     mirror_revalidated = (
         status == 'completed'
         and scenario.mode == 'benchmark'
-        and dataset.source in {HubType.MODELSCOPE, HubType.LOCAL}
+        and dataset.source == HubType.LOCAL
         and dataset.verified
         and raw_valid is False
         and reasons == ['unsafe_override']
@@ -576,47 +516,30 @@ def _split_chat_url(url: str) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, base_path, '', ''))
 
 
-def _materialize_weka_traces(trace_file: Path, digest: str) -> str:
-    """Split ``traces.jsonl`` into an immutable, atomically published directory for AIPerf."""
-    cache_root = Path(DEFAULT_EVALSCOPE_CACHE_DIR) / 'agentx' / 'weka'
-    target = cache_root / f'weka-json-{digest}'
-    if target.is_dir():
-        return str(target)
+def _materialize_weka_traces(trace_file: Path, target: Path) -> str:
+    """Convert local JSONL into AIPerf input files for the current run."""
+    target.mkdir()
+    seen_ids: set[str] = set()
+    with trace_file.open('r', encoding='utf-8') as handle:
+        for number, line in enumerate(handle, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as e:
+                raise ValueError(f'{trace_file}:{number} is not a JSON object: {e}') from e
+            trace_id = row.get('id') if isinstance(row, dict) else None
+            if not isinstance(trace_id, str) or not trace_id:
+                raise ValueError(f'{trace_file}:{number} has no string "id"')
+            if trace_id in seen_ids:
+                raise ValueError(f'{trace_file}:{number} repeats trace id {trace_id!r}')
+            seen_ids.add(trace_id)
+            name = re.sub(r'[^A-Za-z0-9._-]', '_', trace_id)
+            (target / f'{number:08d}-{name}.json').write_text(line, encoding='utf-8')
 
-    cache_root.mkdir(parents=True, exist_ok=True)
-    with FileLock(str(cache_root / f'{target.name}.lock')):
-        if target.is_dir():
-            return str(target)
-
-        staging = cache_root / f'{target.name}.incomplete'
-        shutil.rmtree(staging, ignore_errors=True)
-        staging.mkdir()
-        try:
-            seen_ids: set[str] = set()
-            with trace_file.open('r', encoding='utf-8') as handle:
-                for number, line in enumerate(handle, start=1):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        row = json.loads(line)
-                    except json.JSONDecodeError as e:
-                        raise ValueError(f'{trace_file}:{number} is not a JSON object: {e}') from e
-                    trace_id = row.get('id') if isinstance(row, dict) else None
-                    if not isinstance(trace_id, str) or not trace_id:
-                        raise ValueError(f'{trace_file}:{number} has no string "id"')
-                    if trace_id in seen_ids:
-                        raise ValueError(f'{trace_file}:{number} repeats trace id {trace_id!r}')
-                    seen_ids.add(trace_id)
-                    name = re.sub(r'[^A-Za-z0-9._-]', '_', trace_id)
-                    (staging / f'{number:08d}-{name}.json').write_text(line, encoding='utf-8')
-
-            if not seen_ids:
-                raise ValueError(f'{trace_file} contains no Weka traces')
-            staging.rename(target)
-        finally:
-            shutil.rmtree(staging, ignore_errors=True)
-
+    if not seen_ids:
+        raise ValueError(f'{trace_file} contains no Weka traces')
     return str(target)
 
 

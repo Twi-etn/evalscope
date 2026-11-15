@@ -77,7 +77,6 @@ SLA自动调优功能使用详见[自动调优指南](./sla_auto_tune.md)。
 |------|------|------|--------|
 | `--dataset` | `str` | 数据集模式，详见下方[数据集模式](#数据集模式) | - |
 | `--dataset-path` | `str` | 数据集文件或目录路径<br>指向文件时直接读取；指向目录时在目录内查找对应数据文件（适用于离线环境使用已下载的数据集缓存） | - |
-| `--data-source` | `str` | 数据集加载源，可选值：`modelscope`、`huggingface`、`local`<br>未指定时默认使用 `modelscope`；当 `--dataset-path` 为本地目录时自动视为 `local` | `modelscope` |
 | `--dataset-args` | `str` | 数据集专属参数（JSON 字符串），按 `--dataset` 所选数据集的 schema 校验（传入未知键会直接报错） | - |
 
 `--dataset-args` 承载的键按用途分布在下列小节：
@@ -87,6 +86,9 @@ SLA自动调优功能使用详见[自动调优指南](./sla_auto_tune.md)。
 | `target_input_len` / `input_len_mode` | 把真实数据的输入截断到固定长度 | [长度控制](#长度控制) |
 | `prefix_file` / `prefix_role` | 长上下文前缀注入，构造超长定长输入 | [长上下文前缀注入](#长上下文前缀注入) |
 | `speed` / `model_override` / `model_mapping` / `match_output_length` | 生产流量回放的回放行为 | [生产流量回放](#生产流量回放) |
+
+文件型数据集通过 `--dataset-path` 指定本地文件或目录。采用通用表格加载器的数据集接受 Parquet 和 Lance。OpenQA、ShareGPT 等保留各自的本地 JSONL 输入。合成数据集可直接生成请求。
+
 | 各类 token 长度参数 | 多轮对话数据集 | [多轮对话](#多轮对话) |
 
 ```{note}
@@ -99,10 +101,10 @@ SLA自动调优功能使用详见[自动调优指南](./sla_auto_tune.md)。
 
 | 模式 | 说明 | 支持dataset-path |
 |------|------|------------------|
-| `openqa` | 从ModelScope自动下载[OpenQA](https://www.modelscope.cn/datasets/AI-ModelScope/HC3-Chinese/summary)<br>prompt长度较短（一般<100 token）<br>指定`dataset_path`时使用jsonl文件的`question`字段 | ✓ |
-| `longalpaca` | 从ModelScope自动下载[LongAlpaca-12k](https://www.modelscope.cn/datasets/AI-ModelScope/LongAlpaca-12k/dataPeview)<br>prompt长度较长（一般>6000 token）<br>指定`dataset_path`时使用jsonl文件的`instruction`字段 | ✓ |
+| `openqa` | 读取本地 [OpenQA](https://www.modelscope.cn/datasets/AI-ModelScope/HC3-Chinese/summary)<br>prompt长度较短（一般<100 token）<br>指定`dataset_path`时使用jsonl文件的`question`字段 | ✓（必需） |
+| `longalpaca` | 读取本地 [LongAlpaca-12k](https://www.modelscope.cn/datasets/AI-ModelScope/LongAlpaca-12k/dataPeview)<br>prompt长度较长（一般>6000 token）<br>指定`dataset_path`时使用jsonl文件的`instruction`字段 | ✓（必需） |
 | `line_by_line` | 每行可为纯文本 prompt、OpenAI messages JSON 数组或完整请求体 JSON 对象；JSON 按原样转发<br>**必需提供`dataset_path`** | ✓（必需） |
-| `open_decisions` | 从ModelScope自动下载[OpenDecisions](https://modelscope.cn/datasets/evalscope/OpenDecisions)<br>把题目转成 System One 决策请求体，仅配合 `--api systemone` 使用 | ✓（目录） |
+| `open_decisions` | 读取本地 [OpenDecisions](https://modelscope.cn/datasets/evalscope/OpenDecisions)<br>把题目转成 System One 决策请求体，仅配合 `--api systemone` 使用 | ✓（必需） |
 | `random` | 根据`prefix-length`、`max-prompt-length`和`min-prompt-length`随机生成prompt<br>**必需指定`tokenizer-path`**<br>[使用示例](./examples.md#随机数据集) | ✗ |
 | `custom` | 自定义数据集解析器<br>参考[自定义数据集指南](custom.md/#自定义数据集) | ✓ |
 
@@ -110,10 +112,10 @@ SLA自动调优功能使用详见[自动调优指南](./sla_auto_tune.md)。
 
 | 模式 | 说明 | 支持dataset-path |
 |------|------|------------------|
-| `flickr8k` | 从ModelScope自动下载[Flick8k](https://www.modelscope.cn/datasets/clip-benchmark/wds_flickr8k/dataPeview)<br>构建图文输入，数据集较大，适合评测多模态模型<br>支持`--dataset-path`指向本地数据集目录（离线环境） | ✓（目录） |
-| `kontext_bench` | 从ModelScope自动下载[Kontext-Bench](https://modelscope.cn/datasets/black-forest-labs/kontext-bench/dataPeview)<br>构建图文输入，约1000条数据，适合快速评测多模态模型<br>支持`--dataset-path`指向本地数据集目录（离线环境） | ✓（目录） |
+| `flickr8k` | 读取本地 [Flick8k](https://www.modelscope.cn/datasets/clip-benchmark/wds_flickr8k/dataPeview)<br>构建图文输入，数据集较大，适合评测多模态模型<br>支持`--dataset-path`指向本地数据集目录（离线环境） | ✓（必需） |
+| `kontext_bench` | 读取本地 [Kontext-Bench](https://modelscope.cn/datasets/black-forest-labs/kontext-bench/dataPeview)<br>构建图文输入，约1000条数据，适合快速评测多模态模型<br>支持`--dataset-path`指向本地数据集目录（离线环境） | ✓（必需） |
 | `random_vl` | 随机生成图像和文本输入<br>在`random`基础上增加图像相关参数<br>[使用示例](./examples.md#随机图文数据集) | ✗ |
-| `mmmu_multi_image` | 轮转加载全部 30 个 MMMU validation subject，构造真实多图请求<br>仅用于性能压测；不接受 `--dataset-args`；服务端需支持多图 data URL | ✓（兼容 MMMU schema 的 `datasets` 目录） |
+| `mmmu_multi_image` | 轮转加载全部 30 个 MMMU validation subject，构造真实多图请求<br>仅用于性能压测；不接受 `--dataset-args`；服务端需支持多图 data URL | ✓（必需） |
 
 **Embedding 类**
 
@@ -138,8 +140,8 @@ SLA自动调优功能使用详见[自动调优指南](./sla_auto_tune.md)。
 | 模式 | 说明 | 支持dataset-path |
 |------|------|------------------|
 | `random_multi_turn` | 合成多轮对话，每轮随机生成 token 序列<br>**必需 `--tokenizer-path`、`--max-turns`**<br>[使用示例](./multi_turn.md#random_multi_turn) | ✗ |
-| `share_gpt_zh_multi_turn` | 从 ModelScope 自动下载中文 [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) 数据集（约 70k 条），保留完整多轮对话<br>[使用示例](./multi_turn.md#share_gpt_multi_turn) | ✓ |
-| `share_gpt_en_multi_turn` | 从 ModelScope 自动下载英文 [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) 数据集（约 70k 条），保留完整多轮对话 | ✓ |
+| `share_gpt_zh_multi_turn` | 读取本地 中文 [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) 数据集（约 70k 条），保留完整多轮对话<br>[使用示例](./multi_turn.md#share_gpt_multi_turn) | ✓（必需） |
+| `share_gpt_en_multi_turn` | 读取本地 英文 [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) 数据集（约 70k 条），保留完整多轮对话 | ✓（必需） |
 | `custom_multi_turn` | 使用本地 JSONL 文件作为自定义多轮对话数据集<br>每行为 OpenAI messages 格式的 JSON 数组，适合已有对话数据直接压测<br>**必需提供`dataset_path`**<br>[使用示例](./multi_turn.md#custom_multi_turn) | ✓（必需） |
 
 **生产流量回放类**

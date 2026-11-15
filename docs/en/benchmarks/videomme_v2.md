@@ -5,13 +5,12 @@
 
 Video-MME-v2 is a public comprehensive video understanding benchmark. It contains 800 videos,
 3,200 multiple-choice QA instances, and word-level subtitles with timestamps. The native adapter
-uses the shared `DatasetHub` abstraction for both annotation loading and optional media archive
-downloads, so it exercises the same reusable video benchmark path as MVBench.
+reads local annotations and video archives.
 
 ## Task Description
 
 - **Task Type**: Video multiple-choice question answering
-- **Input**: Video URL or archived MP4 + question + answer choices
+- **Input**: Local archived MP4 + question + answer choices
 - **Output**: Single correct answer letter
 - **Subsets**: `all`, `level_1`, `level_2`, `level_3`, `logic`, `relevance`
 
@@ -20,7 +19,7 @@ downloads, so it exercises the same reusable video benchmark path as MVBench.
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
 - The default video source is the public `url` field for lightweight smoke tests
-- Set `extra_params.video_source` to `archive` to download and use the official MP4 archives
+- Prepare the official MP4 archives in the local `videos/` directory
 - Set `extra_params.use_subtitles` to `true` to include word-level subtitles in the prompt
 
 
@@ -73,7 +72,7 @@ Answer the following multiple choice question. The last line of your response sh
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `video_source` | `str` | `url` | Use public URL fields for lightweight tests or official archived MP4 files. Choices: ['url', 'archive'] |
+| `video_source` | `str` | `archive` | Read MP4 files from the local video archives. Choices: ['archive'] |
 | `use_subtitles` | `bool` | `False` | Include Video-MME-v2 subtitle text in the prompt. |
 | `subtitle_word_limit` | `int` | `512` | Maximum number of subtitle words included per sample when subtitles are enabled. |
 

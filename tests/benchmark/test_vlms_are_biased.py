@@ -157,9 +157,7 @@ def test_data_versions_have_distinct_pinned_cache_identities(hub: str) -> None:
         meta = adapter.benchmark_meta
         spec = ResolvedBenchmarkSpec.from_meta(meta, config)
         assert spec.dataset_revision is not None and len(spec.dataset_revision) == 40
-        assert spec.dataset_id == (
-            'anvo25/vlms-are-biased' if hub == 'huggingface' else 'evalscope/vlms-are-biased'
-        )
+        assert spec.dataset_id == 'evalscope/vlms-are-biased'
         identities.append(build_benchmark_identity(spec, meta.evaluation_version, config))
 
     assert identities[0].fingerprint != identities[1].fingerprint
@@ -179,19 +177,14 @@ def test_loader_selects_v2_splits_and_rejects_legacy_run_cache(tmp_path: Path) -
 
     data = tmp_path / 'data'
     (data / 'v2').mkdir(parents=True)
-    configs = []
     for version, prefix in [('default', 'v2/'), ('v1-legacy', '')]:
-        files = []
         for subset in SUBSET_LIST:
             record = _record(ID=f'{subset}-new-id', legacy_ID=f'{subset}-old-id')
             if version == 'v1-legacy':
                 record['ID'] = record.pop('legacy_ID')
-            pq.write_table(pa.Table.from_pylist([record]), data / f'{prefix}{subset}.parquet')
-            files.append({'split': subset, 'path': f'{prefix}{subset}.parquet'})
-        configs.append({'config_name': version, 'data_files': files})
-    (data / 'README.md').write_text(f'---\n{yaml.safe_dump({"configs": configs})}---\n', encoding='utf-8')
+            pq.write_table(pa.Table.from_pylist([record]), data / f'{prefix}{version}_{subset}.parquet')
 
-    adapter = _adapter(local_path=str(data))
+    adapter = _adapter(local_path=str(data / 'v2'))
     loaded = adapter.load_dataset()
     assert list(loaded.keys()) == SUBSET_LIST
     assert [loaded[subset][0].metadata['id'] for subset in SUBSET_LIST] == [
@@ -213,7 +206,7 @@ def test_loader_selects_v2_splits_and_rejects_legacy_run_cache(tmp_path: Path) -
     with pytest.raises(ValueError, match='identity does not match'):
         run_task(TaskConfig(
             **options, use_cache=str(work),
-            dataset_args={'vlms_are_biased': {'local_path': str(data), 'subset_list': ['main']}},
+            dataset_args={'vlms_are_biased': {'local_path': str(data / 'v2'), 'subset_list': ['main']}},
         ))
 
 

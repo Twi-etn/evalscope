@@ -77,7 +77,6 @@ For details on using the SLA auto-tuning feature, see the [Auto-tuning Guide](./
 |-----------|------|-------------|--------|
 | `--dataset` | `str` | Dataset mode, see [Dataset Modes](#dataset-modes) below | - |
 | `--dataset-path` | `str` | Dataset file or directory path<br>Points to a file: read directly; points to a directory: looks for the corresponding data file inside (for offline use with pre-downloaded dataset cache) | - |
-| `--data-source` | `str` | Data source for dataset loading: `modelscope`, `huggingface`, or `local`<br>Defaults to `modelscope` when not specified; automatically treated as `local` when `--dataset-path` is a local directory | `modelscope` |
 | `--dataset-args` | `str` | Per-dataset arguments (JSON string), validated against the schema of the selected `--dataset` (unknown keys raise an error) | - |
 
 The keys carried by `--dataset-args` are documented in the sections where they apply:
@@ -87,6 +86,9 @@ The keys carried by `--dataset-args` are documented in the sections where they a
 | `target_input_len` / `input_len_mode` | Truncate real data to a fixed input length | [Length Control](#length-control) |
 | `prefix_file` / `prefix_role` | Long-context prefix injection for very long fixed-length inputs | [Long-context Prefix Injection](#long-context-prefix-injection) |
 | `speed` / `model_override` / `model_mapping` / `match_output_length` | Replay behaviour for production traffic | [Production Traffic Replay](#production-traffic-replay) |
+
+Pass a local file or directory with `--dataset-path` for file-based datasets. The shared table reader accepts Parquet and Lance. OpenQA and ShareGPT read their own local JSONL layouts. Synthetic datasets generate requests directly.
+
 | Token-length arguments | Multi-turn datasets | [Multi-turn Conversation](#multi-turn-conversation) |
 
 ```{note}
@@ -99,10 +101,10 @@ The keys carried by `--dataset-args` are documented in the sections where they a
 
 | Mode | Description | Supports dataset-path |
 |------|-------------|----------------------|
-| `openqa` | Automatically downloads [OpenQA](https://www.modelscope.cn/datasets/AI-ModelScope/HC3-Chinese/summary) from ModelScope<br>Prompts are relatively short (usually <100 tokens)<br>Uses `question` field from jsonl file when `dataset_path` is specified | ✓ |
-| `longalpaca` | Automatically downloads [LongAlpaca-12k](https://www.modelscope.cn/datasets/AI-ModelScope/LongAlpaca-12k/dataPeview) from ModelScope<br>Prompts are much longer (generally >6000 tokens)<br>Uses `instruction` field from jsonl file when `dataset_path` is specified | ✓ |
+| `openqa` | Read local [OpenQA](https://www.modelscope.cn/datasets/AI-ModelScope/HC3-Chinese/summary)<br>Prompts are relatively short (usually <100 tokens)<br>Uses `question` field from jsonl file when `dataset_path` is specified | ✓ (required) |
+| `longalpaca` | Read local [LongAlpaca-12k](https://www.modelscope.cn/datasets/AI-ModelScope/LongAlpaca-12k/dataPeview)<br>Prompts are much longer (generally >6000 tokens)<br>Reads `instruction` from local JSON, Parquet or Lance | ✓ (required) |
 | `line_by_line` | Each line is a plain prompt, an OpenAI messages JSON array, or a complete request-body JSON object; JSON is forwarded unchanged<br>**Requires `dataset_path`** | ✓ (Required) |
-| `open_decisions` | Automatically downloads [OpenDecisions](https://modelscope.cn/datasets/evalscope/OpenDecisions) from ModelScope<br>Converts items into System One decision request bodies; use with `--api systemone` only | ✓ (directory) |
+| `open_decisions` | Read local [OpenDecisions](https://modelscope.cn/datasets/evalscope/OpenDecisions)<br>Converts items into System One decision request bodies; use with `--api systemone` only | ✓ (required) |
 | `random` | Randomly generates prompts based on `prefix-length`, `max-prompt-length`, and `min-prompt-length`<br>**Requires `tokenizer-path`**<br>[Usage example](./examples.md#random-dataset) | ✗ |
 | `custom` | Custom dataset parser<br>See [Custom Dataset Guide](custom.md#custom-dataset) | ✓ |
 
@@ -110,10 +112,10 @@ The keys carried by `--dataset-args` are documented in the sections where they a
 
 | Mode | Description | Supports dataset-path |
 |------|-------------|----------------------|
-| `flickr8k` | Automatically downloads [Flick8k](https://www.modelscope.cn/datasets/clip-benchmark/wds_flickr8k/dataPeview) from ModelScope<br>Builds image-text inputs; large dataset suitable for evaluating multimodal models<br>Supports `--dataset-path` pointing to a local dataset directory (offline) | ✓ (directory) |
-| `kontext_bench` | Automatically downloads [Kontext-Bench](https://modelscope.cn/datasets/black-forest-labs/kontext-bench/dataPeview) from ModelScope<br>Builds image-text inputs; approximately 1,000 samples, suitable for quick evaluation of multimodal models<br>Supports `--dataset-path` pointing to a local dataset directory (offline) | ✓ (directory) |
+| `flickr8k` | Read local [Flick8k](https://www.modelscope.cn/datasets/clip-benchmark/wds_flickr8k/dataPeview)<br>Builds image-text inputs; large dataset suitable for evaluating multimodal models<br>Supports `--dataset-path` pointing to a local dataset directory (offline) | ✓ (required) |
+| `kontext_bench` | Read local [Kontext-Bench](https://modelscope.cn/datasets/black-forest-labs/kontext-bench/dataPeview)<br>Builds image-text inputs; approximately 1,000 samples, suitable for quick evaluation of multimodal models<br>Supports `--dataset-path` pointing to a local dataset directory (offline) | ✓ (required) |
 | `random_vl` | Randomly generates both image and text inputs<br>Based on `random`, with additional image-related parameters<br>[Usage example](./examples.md#random-multimodal-dataset) | ✗ |
-| `mmmu_multi_image` | Round-robins all 30 MMMU validation subjects to build real multi-image requests<br>For performance traffic only; does not accept `--dataset-args`; requires multi-image data URL support | ✓ (MMMU-compatible `datasets` directory) |
+| `mmmu_multi_image` | Round-robins all 30 MMMU validation subjects to build real multi-image requests<br>For performance traffic only; does not accept `--dataset-args`; requires multi-image data URL support | ✓ (required) |
 
 **Embedding**
 
@@ -138,8 +140,8 @@ Must be used with `--multi-turn`; see [Multi-turn Conversation](#multi-turn-conv
 | Mode | Description | Supports dataset-path |
 |------|-------------|----------------------|
 | `random_multi_turn` | Synthetic multi-turn conversations; each turn randomly generates a token sequence<br>**Requires `--tokenizer-path` and `--max-turns`**<br>[Usage example](./multi_turn.md#random_multi_turn) | ✗ |
-| `share_gpt_zh_multi_turn` | Automatically downloads the Chinese [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) dataset (~70k conversations) from ModelScope, preserving full multi-turn conversations<br>[Usage example](./multi_turn.md#share_gpt_multi_turn) | ✓ |
-| `share_gpt_en_multi_turn` | Automatically downloads the English [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) dataset (~70k conversations) from ModelScope, preserving full multi-turn conversations | ✓ |
+| `share_gpt_zh_multi_turn` | Read the local Chinese [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) dataset (~70k conversations), preserving full multi-turn conversations<br>[Usage example](./multi_turn.md#share_gpt_multi_turn) | ✓ (required) |
+| `share_gpt_en_multi_turn` | Read the local English [ShareGPT](https://www.modelscope.cn/datasets/swift/sharegpt) dataset (~70k conversations), preserving full multi-turn conversations | ✓ (required) |
 | `custom_multi_turn` | Uses a local JSONL file as a custom multi-turn dataset<br>Each line must be a JSON array of OpenAI message dicts; ideal for benchmarking with your own conversation data<br>**Requires `--dataset-path`**<br>[Usage example](./multi_turn.md#custom_multi_turn) | ✓ (Required) |
 
 **Production Traffic Replay**

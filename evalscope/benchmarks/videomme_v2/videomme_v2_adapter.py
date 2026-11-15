@@ -1,16 +1,16 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import os
 import zipfile
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
 from evalscope.api.dataset import (
     DatasetDict,
-    DatasetHub,
     Sample,
     build_dataset_from_records,
     read_local_dataset_records,
+    resolve_local_dataset_file,
 )
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.registry import register_benchmark
@@ -34,9 +34,7 @@ logger = get_logger()
 DATASET_ID = 'MME-Benchmarks/Video-MME-v2'
 SUBSET_LIST = ['all', 'level_1', 'level_2', 'level_3', 'logic', 'relevance']
 DEFAULT_SUBSET_LIST = ['all']
-VIDEO_SOURCE_URL = 'url'
 VIDEO_SOURCE_ARCHIVE = 'archive'
-VIDEO_SOURCE_LIST = [VIDEO_SOURCE_URL, VIDEO_SOURCE_ARCHIVE]
 
 
 @register_benchmark(
@@ -48,13 +46,12 @@ VIDEO_SOURCE_LIST = [VIDEO_SOURCE_URL, VIDEO_SOURCE_ARCHIVE]
 
 Video-MME-v2 is a public comprehensive video understanding benchmark. It contains 800 videos,
 3,200 multiple-choice QA instances, and word-level subtitles with timestamps. The native adapter
-uses the shared `DatasetHub` abstraction for both annotation loading and optional media archive
-downloads, so it exercises the same reusable video benchmark path as MVBench.
+reads local annotations and video archives.
 
 ## Task Description
 
 - **Task Type**: Video multiple-choice question answering
-- **Input**: Video URL or archived MP4 + question + answer choices
+- **Input**: Local archived MP4 + question + answer choices
 - **Output**: Single correct answer letter
 - **Subsets**: `all`, `level_1`, `level_2`, `level_3`, `logic`, `relevance`
 
@@ -63,7 +60,7 @@ downloads, so it exercises the same reusable video benchmark path as MVBench.
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
 - The default video source is the public `url` field for lightweight smoke tests
-- Set `extra_params.video_source` to `archive` to download and use the official MP4 archives
+- Prepare the official MP4 archives in the local `videos/` directory
 - Set `extra_params.use_subtitles` to `true` to include word-level subtitles in the prompt
 """,
         tags=[Tags.MULTI_MODAL, Tags.VIDEO, Tags.MULTIPLE_CHOICE],
@@ -77,9 +74,9 @@ downloads, so it exercises the same reusable video benchmark path as MVBench.
         extra_params={
             'video_source': {
                 'type': 'str',
-                'description': 'Use public URL fields for lightweight tests or official archived MP4 files.',
-                'value': VIDEO_SOURCE_URL,
-                'choices': VIDEO_SOURCE_LIST,
+                'description': 'Read MP4 files from the local video archives.',
+                'value': VIDEO_SOURCE_ARCHIVE,
+                'choices': [VIDEO_SOURCE_ARCHIVE],
             },
             'use_subtitles': {
                 'type': 'bool',
@@ -99,28 +96,19 @@ class VideoMMEv2Adapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._video_cache_dir: Optional[str] = None
+        self._extracted_videos: Optional[TemporaryDirectory[str]] = None
         self._record_cache: Optional[List[Dict[str, Any]]] = None
         self._subtitle_cache: Dict[str, str] = {}
 
     @property
-    def video_cache_dir(self) -> str:
-        if self._video_cache_dir is None:
-            self._video_cache_dir = os.path.join(self.dataset_dir, 'videomme_v2', 'videos')
-        return self._video_cache_dir
-
-    @property
-    def source_dataset(self) -> DatasetHub:
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-        )
+    def _video_work_dir(self) -> str:
+        if self._extracted_videos is None:
+            self._extracted_videos = TemporaryDirectory(prefix=f'evalscope-{self.name}-')
+        return self._extracted_videos.name
 
     @property
     def video_source(self) -> str:
-        return self.extra_params.get('video_source') or VIDEO_SOURCE_URL
+        return self.extra_params.get('video_source') or VIDEO_SOURCE_ARCHIVE
 
     @property
     def use_subtitles(self) -> bool:
@@ -208,18 +196,16 @@ class VideoMMEv2Adapter(VisionLanguageAdapter, MultiChoiceAdapter):
         )
 
     def _resolve_video(self, record: Dict[str, Any]) -> str:
-        if self.video_source == VIDEO_SOURCE_URL:
-            return str(record['url'])
         if self.video_source == VIDEO_SOURCE_ARCHIVE:
             return self._ensure_video_file(str(record['video_id']))
         raise ValueError(f'Unsupported Video-MME-v2 video source: {self.video_source}')
 
     def _ensure_video_file(self, video_id: str) -> str:
-        output_path = self._cache_output_path(video_id)
-        if os.path.exists(output_path) and not self.force_redownload:
+        output_path = self._extracted_video_path(video_id)
+        if os.path.isfile(output_path):
             return output_path
 
-        archive_file = self.source_dataset.download_file(f'videos/{archive_name(video_id)}')
+        archive_file = resolve_local_dataset_file(self.dataset_id, f'videos/{archive_name(video_id)}')
         member_name = find_archive_member(archive_file, video_id)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with zipfile.ZipFile(archive_file) as zip_file:
@@ -227,10 +213,10 @@ class VideoMMEv2Adapter(VisionLanguageAdapter, MultiChoiceAdapter):
                 target.write(source.read())
         return output_path
 
-    def _cache_output_path(self, video_id: str) -> str:
+    def _extracted_video_path(self, video_id: str) -> str:
         video_id = normalize_video_id(video_id)
-        output_path = os.path.abspath(os.path.join(self.video_cache_dir, f'{video_id}.mp4'))
-        cache_dir = os.path.abspath(self.video_cache_dir)
+        output_path = os.path.abspath(os.path.join(self._video_work_dir, f'{video_id}.mp4'))
+        cache_dir = os.path.abspath(self._video_work_dir)
         if os.path.commonpath([cache_dir, output_path]) != cache_dir:
             raise ValueError(f'Invalid Video-MME-v2 video id: {video_id}')
         return output_path
@@ -238,7 +224,7 @@ class VideoMMEv2Adapter(VisionLanguageAdapter, MultiChoiceAdapter):
     def _subtitle_for_record(self, video_id: str) -> str:
         video_id = normalize_video_id(video_id)
         if video_id not in self._subtitle_cache:
-            subtitle_path = self.source_dataset.download_file('subtitle.zip')
+            subtitle_path = resolve_local_dataset_file(self.dataset_id, 'subtitle.zip')
             member_name = f'subtitle/{video_id}.jsonl'
             with zipfile.ZipFile(subtitle_path) as zip_file:
                 try:

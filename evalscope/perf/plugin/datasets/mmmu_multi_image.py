@@ -4,7 +4,6 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from PIL import Image
 
-from evalscope.api.dataset import DatasetSource
 from evalscope.perf.arguments import Arguments
 from evalscope.perf.plugin.datasets.base import DatasetPluginBase
 from evalscope.perf.plugin.registry import register_dataset
@@ -15,11 +14,6 @@ from evalscope.utils.io_utils import PIL_to_base64
 class MMMUMultiImageDatasetPlugin(DatasetPluginBase):
     """Build real multi-image stress-test requests from the MMMU validation set."""
 
-    dataset_source = DatasetSource(
-        dataset_id='AI-ModelScope/MMMU',
-        hf_dataset_id='MMMU/MMMU',
-        hf_dataset_revision='21d1d90a93c7450d30bddb579d7b510c00b8a9ab',
-    )
     subsets = (
         'Accounting',
         'Agriculture',
@@ -144,7 +138,7 @@ class MMMUMultiImageDatasetPlugin(DatasetPluginBase):
         """Yield eligible samples from every MMMU subject in round-robin order."""
         dataset_iterators = [
             iter(
-                self.load_hub_dataset(
+                self.load_local_dataset(
                     split='validation',
                     subset=subset,
                 )

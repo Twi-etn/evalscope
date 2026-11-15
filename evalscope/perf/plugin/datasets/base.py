@@ -2,10 +2,10 @@ import json
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, ClassVar, Dict, Iterator, List, Optional, Tuple, Type, Union
 
-from evalscope.api.dataset.hub import DatasetSource, download_dataset_file, load_dataset_from_hub
-from evalscope.constants import HubType
+from evalscope.api.dataset import read_local_dataset_records, resolve_local_dataset_file
 from evalscope.perf.arguments import Arguments
 from evalscope.perf.plugin.datasets.dataset_args import BaseDatasetArgs, TextLengthArgs
 from evalscope.perf.plugin.datasets.utils import (
@@ -59,7 +59,6 @@ class DatasetPluginBase:
     requires_model: bool = True
     """False if the dataset carries model info in each request body, making ``--model`` optional."""
 
-    dataset_source: ClassVar[Optional[DatasetSource]] = None
     """Hub-aware source declaration for the plugin's built-in dataset."""
 
     def __init__(self, query_parameters: Arguments):
@@ -361,99 +360,19 @@ class DatasetPluginBase:
         is_valid = self.query_parameters.min_prompt_length <= prompt_length <= self.query_parameters.max_prompt_length
         return is_valid, prompt_length
 
-    def _get_dataset_source(self, dataset_id: Optional[str] = None) -> DatasetSource:
-        """Return the declared source, or wrap a caller-provided id for backward compatibility."""
-        if self.dataset_source and (dataset_id is None or dataset_id == self.dataset_source.dataset_id):
-            return self.dataset_source
-        if dataset_id:
-            return DatasetSource(dataset_id=dataset_id)
-        raise ValueError(f'{type(self).__name__} must declare dataset_source or pass dataset_id.')
+    def local_dataset_path(self) -> Path:
+        """Return the configured local dataset path."""
+        if not self.query_parameters.dataset_path:
+            raise ValueError(f'{type(self).__name__} requires --dataset-path pointing to local data.')
+        return Path(self.query_parameters.dataset_path).expanduser()
 
-    def load_hub_dataset(
-        self,
-        dataset_id: Optional[str] = None,
-        split: str = 'train',
-        subset: str = 'default',
-    ) -> Any:
-        """Load a dataset from the configured data source.
+    def load_local_dataset(self, split: str = 'train', subset: str = 'default') -> list[dict]:
+        """Read local Parquet or Lance records for the requested split."""
+        return read_local_dataset_records(str(self.local_dataset_path()), split, subset)
 
-        If dataset_path is a local directory, loads from there directly.
-        Otherwise loads from ModelScope/HuggingFace based on data_source.
-
-        Args:
-            dataset_id (str): Remote dataset identifier (e.g. 'AI-ModelScope/LongAlpaca-12k').
-            split (str): Dataset split to load (default: 'train').
-            subset (str): Dataset subset/config name (default: 'default').
-
-        Returns:
-            A datasets.Dataset object.
-        """
-        dataset_path = self.query_parameters.dataset_path
-        data_source = self.query_parameters.data_source or HubType.MODELSCOPE
-        revision = None
-
-        if dataset_path:
-            if not os.path.exists(dataset_path):
-                raise FileNotFoundError(f"The specified dataset_path '{dataset_path}' does not exist.")
-            data_id_or_path = dataset_path
-            data_source = HubType.LOCAL
-        else:
-            source = self._get_dataset_source(dataset_id)
-            data_id_or_path = source.resolve_dataset_id(data_source)
-            revision = source.resolve_revision(data_source)
-
-        return load_dataset_from_hub(
-            data_id_or_path=data_id_or_path,
-            split=split,
-            subset=subset,
-            data_source=data_source,
-            version=revision,
-        )
-
-    def download_hub_file(self, dataset_id: Optional[str] = None, file_name: Optional[str] = None) -> str:
-        """Download/resolve a single file from the configured data source.
-
-        If dataset_path is an existing file, returns it directly.
-        If dataset_path is a directory, looks for file_name inside it.
-        Otherwise downloads from ModelScope/HuggingFace.
-
-        Args:
-            dataset_id (str): Remote dataset identifier (e.g. 'AI-ModelScope/HC3-Chinese').
-            file_name (str): The file name to download or resolve.
-
-        Returns:
-            str: The resolved local file path.
-        """
-        if not file_name:
-            raise ValueError('file_name is required when downloading a dataset file.')
-        dataset_path = self.query_parameters.dataset_path
-        data_source = self.query_parameters.data_source or HubType.MODELSCOPE
-
-        # dataset_path points to an existing file -> use directly
-        if dataset_path and os.path.isfile(dataset_path):
-            return dataset_path
-
-        # dataset_path is a directory -> look for file inside
-        if dataset_path and os.path.isdir(dataset_path):
-            candidate = os.path.join(dataset_path, file_name)
-            if os.path.isfile(candidate):
-                return candidate
-            # Fallback: treat directory as a hub-local dataset root
-            return download_dataset_file(
-                data_id_or_path=dataset_path,
-                file_path=file_name,
-                data_source=HubType.LOCAL,
-            )
-
-        # dataset_path is set but does not exist -> error
-        if dataset_path:
-            raise FileNotFoundError(f"The specified dataset_path '{dataset_path}' does not exist.")
-
-        # Remote download
-        source = self._get_dataset_source(dataset_id)
-        return download_dataset_file(
-            data_id_or_path=source.resolve_dataset_id(data_source),
-            file_path=source.resolve_file_path(data_source, file_name),
-            data_source=data_source,
-            revision=source.resolve_revision(data_source),
-        )
+    def local_dataset_file(self, file_name: str) -> str:
+        """Accept a direct dataset file or the named file under a local dataset directory."""
+        path = self.local_dataset_path()
+        if path.is_file():
+            return str(path)
+        return resolve_local_dataset_file(path, file_name)

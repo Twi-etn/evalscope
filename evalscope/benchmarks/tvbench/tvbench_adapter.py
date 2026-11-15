@@ -3,10 +3,11 @@ import json
 import os
 import shutil
 import zipfile
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_file
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.registry import register_benchmark
 from evalscope.constants import Tags
@@ -53,7 +54,7 @@ The EvalScope native adapter reads the official per-task JSON annotations from t
 - Default evaluation uses 0-shot Chain-of-Thought multiple-choice prompting via `MultipleChoiceTemplate.SINGLE_ANSWER_COT`.
 - Primary metric: Accuracy (`accuracy`). The dataset answer is stored as candidate text and is converted to the corresponding option letter before scoring.
 - Some subsets provide `start`/`end` fields. The adapter passes these values to `ContentVideo` and also adds a concise segment instruction to the prompt.
-- Video files are downloaded lazily from subset-specific archives. `egocentric_sequence` uses segmented archives under `video/egocentric_sequence/<prefix>.zip`.
+- Video files are read from local subset-specific archives as needed. `egocentric_sequence` uses segmented archives under `video/egocentric_sequence/<prefix>.zip`.
 - The `action_antonym` annotations reference AVI files. If the repository media archive is unavailable, configure `extra_params.video_dir` to a local directory containing the AVI files.
 - The adapter supports local video layouts that are either flat (`video_dir/<video>`) or grouped by subset (`video_dir/<subset>/<video>`).
 """
@@ -85,22 +86,13 @@ class TVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._video_cache_dir: Optional[str] = None
+        self._extracted_videos: Optional[TemporaryDirectory[str]] = None
 
     @property
-    def video_cache_dir(self) -> str:
-        if self._video_cache_dir is None:
-            self._video_cache_dir = os.path.join(self.dataset_dir, 'tvbench', 'videos')
-        return self._video_cache_dir
-
-    @property
-    def source_dataset(self) -> DatasetHub:
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-        )
+    def _video_work_dir(self) -> str:
+        if self._extracted_videos is None:
+            self._extracted_videos = TemporaryDirectory(prefix=f'evalscope-{self.name}-')
+        return self._extracted_videos.name
 
     @property
     def local_video_dir(self) -> str:
@@ -129,7 +121,7 @@ class TVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def _load_subset_records(self, subset: str) -> List[Dict[str, Any]]:
         logger.info(f'Loading TVBench subset {subset} from {self.dataset_hub}: {self.dataset_id}.')
-        json_path = self.source_dataset.download_file(f'json/{subset}.json')
+        json_path = resolve_local_dataset_file(self.dataset_id, f'json/{subset}.json')
         with open(json_path, 'r', encoding='utf-8') as json_file:
             records = json.load(json_file)
         if not isinstance(records, list) or not records:
@@ -201,11 +193,11 @@ class TVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
         )
 
     def _ensure_video_file(self, subset: str, video_name: str) -> str:
-        output_path = self._cache_output_path(subset, video_name)
-        if os.path.exists(output_path) and not self.force_redownload:
+        output_path = self._extracted_video_path(subset, video_name)
+        if os.path.isfile(output_path):
             return output_path
 
-        archive_file = self.source_dataset.download_file(archive_path(subset, video_name))
+        archive_file = resolve_local_dataset_file(self.dataset_id, archive_path(subset, video_name))
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with zipfile.ZipFile(archive_file) as zip_file:
             member_name = find_archive_member(zip_file, video_name)
@@ -213,6 +205,6 @@ class TVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
                 shutil.copyfileobj(source, target)
         return output_path
 
-    def _cache_output_path(self, subset: str, video_name: str) -> str:
-        subset_dir = os.path.abspath(os.path.join(self.video_cache_dir, subset))
+    def _extracted_video_path(self, subset: str, video_name: str) -> str:
+        subset_dir = os.path.abspath(os.path.join(self._video_work_dir, subset))
         return safe_join(subset_dir, video_name)

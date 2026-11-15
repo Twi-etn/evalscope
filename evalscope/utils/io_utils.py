@@ -675,6 +675,18 @@ def PIL_to_base64(image: Image.Image, format: str = 'JPEG', add_header: bool = F
     return img_str
 
 
+def local_image_to_base64(image: Union[bytes, str, dict]) -> str:
+    """Encode a local image path, bytes, or an Arrow image struct as a data URI."""
+    if isinstance(image, dict):
+        image = image.get('bytes') or image.get('path')
+    if isinstance(image, str):
+        with open(image, 'rb') as file:
+            image = file.read()
+    if not isinstance(image, bytes):
+        raise ValueError('Expected local image bytes or a file path.')
+    return bytes_to_base64(image, add_header=True, guess_mimetype=True)
+
+
 def bytes_to_base64(
     bytes_data: bytes,
     *,

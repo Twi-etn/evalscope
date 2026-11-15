@@ -52,7 +52,6 @@ from typing import Dict, List, Optional, Tuple
 from evalscope.perf.plugin.datasets.utils import tokenize_chat_messages
 
 # Dataset constants (same as swe_smith.py plugin)
-_DEFAULT_DATASET_NAME = 'SWE-bench/SWE-smith-trajectories'
 _DEFAULT_SPLIT = 'tool'
 
 
@@ -67,10 +66,9 @@ def parse_args() -> argparse.Namespace:
         help='Model path for tokenizer (used for accurate token counting)',
     )
     parser.add_argument(
-        '--dataset-name',
-        type=str,
-        default=_DEFAULT_DATASET_NAME,
-        help='ModelScope dataset name',
+        '--dataset-path',
+        required=True,
+        help='Local Parquet or Lance dataset path',
     )
     parser.add_argument(
         '--split',
@@ -355,9 +353,10 @@ def main() -> None:
     from modelscope import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
 
-    print(f'Loading dataset {args.dataset_name} (split: {args.split})...')
-    from modelscope import MsDataset
-    dataset = MsDataset.load(args.dataset_name, split=args.split)
+    from evalscope.api.dataset import read_local_dataset_records
+
+    print(f'Loading dataset {args.dataset_path} (split: {args.split})...')
+    dataset = read_local_dataset_records(args.dataset_path, split=args.split)
 
     # Pre-filter: need enough chars to fill max_turns turns (upper bound)
     # total ≈ first_turn_length + subsequent_turn_length * (max_turns - 1)
@@ -496,7 +495,7 @@ def main() -> None:
     output = {
         'metadata': {
             'model_path': args.model_path,
-            'dataset_name': args.dataset_name,
+            'dataset_path': args.dataset_path,
             'split': args.split,
             'first_turn_length': args.first_turn_length,
             'subsequent_turn_length': args.subsequent_turn_length,

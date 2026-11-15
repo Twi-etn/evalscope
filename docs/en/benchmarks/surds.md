@@ -33,7 +33,7 @@ without supplying depth maps or visual markers.
   task scores. A full run makes 9,250 model requests but reports `Num=5,550`, because each complementary prompt pair
   is one official evaluation unit
 - Invalid or missing `<answer>` blocks score 0, matching the official benchmark denominator semantics
-- The dataset is evaluation-only and downloaded as a complete snapshot from ModelScope
+- Prepare the local dataset directory with metadata and media for the selected split
 - Resources: [Paper](https://arxiv.org/abs/2411.13112) |
   [GitHub](https://github.com/XiandaGuo/Drive-MLLM)
 

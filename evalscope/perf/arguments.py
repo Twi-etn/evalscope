@@ -329,9 +329,7 @@ class Arguments(BaseArgument):
     """Path to the dataset."""
 
     data_source: Optional[str] = None
-    """Data source for loading datasets. One of: 'modelscope', 'huggingface', 'local'.
-    Defaults to 'modelscope' when not specified. When --dataset-path points to a local
-    directory containing Arrow/Parquet files, this is automatically treated as 'local'."""
+    """Legacy field accepted for deserializing previous performance configurations."""
 
     dataset_offset: int = 0
     """Global token-sequence offset for random datasets.
@@ -950,13 +948,6 @@ def _add_output_arguments(parser: argparse.ArgumentParser) -> None:
 def _add_dataset_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument('--dataset', type=str, default='openqa', help='Specify the dataset')
     parser.add_argument('--dataset-path', type=str, required=False, help='Path to the dataset file or directory')
-    parser.add_argument(
-        '--data-source',
-        type=str,
-        default=None,
-        choices=['modelscope', 'huggingface', 'local'],
-        help='Data source for dataset loading: modelscope, huggingface, or local (default: modelscope)',
-    )
     parser.add_argument(
         '--dataset-offset',
         type=int,

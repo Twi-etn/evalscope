@@ -8,7 +8,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from evalscope.api.dataset import DatasetHub
 from evalscope.api.registry import get_benchmark
 from evalscope.collections import CollectionSchema, DatasetInfo, WeightedSampler
 from evalscope.config import TaskConfig
@@ -40,17 +39,13 @@ def collection_file(tmp_path: Path) -> Path:
 
 @pytest.mark.parametrize('relative', [False, True])
 @pytest.mark.parametrize('hub', ['modelscope', 'huggingface'])
-def test_collection_loads_explicit_jsonl_without_snapshot_download(
+def test_collection_loads_explicit_local_jsonl(
     collection_file: Path, monkeypatch: pytest.MonkeyPatch, relative: bool, hub: str,
 ) -> None:
     if relative:
         monkeypatch.chdir(collection_file.parent)
     path = collection_file.name if relative else str(collection_file)
 
-    def unexpected_snapshot(*args: object, **kwargs: object) -> str:
-        pytest.fail('An explicit local collection file must not be resolved as a snapshot')
-
-    monkeypatch.setattr(DatasetHub, 'download_snapshot', unexpected_snapshot)
     config = TaskConfig(datasets=['data_collection'], dataset_hub=hub,
                         dataset_args={'data_collection': {'local_path': path}})
     adapter = get_benchmark('data_collection', config)

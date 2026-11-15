@@ -61,8 +61,8 @@ def test_load_miniwob_records_builds_a_deterministic_repeat_schedule(tmp_path: P
             })
 
     with patch.object(miniwob_utils, 'ensure_miniwob_metadata', return_value=metadata_path):
-        first, first_path = miniwob_utils.load_miniwob_records(repeats=2)
-        second, second_path = miniwob_utils.load_miniwob_records(repeats=2)
+        first, first_path = miniwob_utils.load_miniwob_records(tmp_path, repeats=2)
+        second, second_path = miniwob_utils.load_miniwob_records(tmp_path, repeats=2)
 
     assert first_path == second_path == metadata_path
     assert first == second
@@ -84,9 +84,11 @@ def test_ensure_miniwob_assets_extracts_the_verified_archive(tmp_path: Path) -> 
     destination.parent.mkdir(parents=True)
     archive_source.rename(destination)
     checksum = miniwob_utils.file_sha256(str(destination))
+    work_dir = tmp_path / 'work'
+    work_dir.mkdir()
     with patch.object(miniwob_utils, 'MINIWOB_ARCHIVE_SHA256', checksum):
-        extracted = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path)
-        reused = miniwob_utils.ensure_miniwob_assets(cache_root=tmp_path)
+        extracted = miniwob_utils.ensure_miniwob_assets(dataset_root=tmp_path, work_dir=work_dir)
+        reused = miniwob_utils.ensure_miniwob_assets(dataset_root=tmp_path, work_dir=work_dir)
 
     assert extracted == reused
     assert (extracted / 'click-dialog.html').read_text(encoding='utf-8') == '<html></html>'

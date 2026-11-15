@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from evalscope.api.benchmark import BenchmarkMeta, VisionLanguageAdapter
 from evalscope.api.dataset import (
     DatasetDict,
-    DatasetHub,
     Sample,
     build_dataset_from_records,
     read_local_dataset_records,

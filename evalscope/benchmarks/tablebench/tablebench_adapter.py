@@ -3,13 +3,12 @@
 # Paper: https://arxiv.org/abs/2408.09174 (AAAI 2025)
 # Dataset: https://huggingface.co/datasets/Multilingual-Multimodal-NLP/TableBench (Apache-2.0)
 # Official evaluation: https://github.com/TableBench/TableBench
-
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, DefaultDataAdapter
-from evalscope.api.dataset import DatasetDict, DatasetHub, Sample, build_dataset_from_records
+from evalscope.api.dataset import DatasetDict, Sample, build_dataset_from_records, resolve_local_dataset_file
 from evalscope.api.evaluator import TaskState
 from evalscope.api.metric import Score
 from evalscope.api.registry import register_benchmark
@@ -118,16 +117,7 @@ class TableBenchAdapter(DefaultDataAdapter):
         return DatasetDict(subsets), None
 
     def _read_records(self, file_name: str) -> List[Dict[str, Any]]:
-        if Path(self.dataset_id).is_dir():
-            path = Path(self.dataset_id) / file_name
-        else:
-            path = DatasetHub(
-                data_id_or_path=self.dataset_id,
-                data_source=self.dataset_hub,
-                revision=self.dataset_revision,
-                force_redownload=self.force_redownload,
-                cache_dir=self.dataset_dir,
-            ).download_file(file_name)
+        path = resolve_local_dataset_file(self.dataset_id, file_name)
         with open(path, encoding='utf-8') as f:
             return [json.loads(line) for line in f if line.strip()]
 

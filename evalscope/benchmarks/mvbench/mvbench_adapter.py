@@ -1,17 +1,17 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-
 import os
 import zipfile
 from dataclasses import dataclass
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Optional, Tuple
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter, VisionLanguageAdapter
 from evalscope.api.dataset import (
     DatasetDict,
-    DatasetHub,
     Sample,
     build_dataset_from_records,
     read_local_dataset_records,
+    resolve_local_dataset_file,
 )
 from evalscope.api.messages import ChatMessageUser, Content, ContentText, ContentVideo
 from evalscope.api.registry import register_benchmark
@@ -66,8 +66,7 @@ DEFAULT_SUBSET_LIST = ['action_antonym']
 
 MVBench is a public multimodal video understanding benchmark covering temporal perception,
 attribute/state reasoning, symbolic ordering, and high-level cognition. This native adapter uses
-the ModelScope `PKU-Alignment/MVBench` mirror by default, which provides JSON annotations plus
-optimized video archives.
+local annotations and the official video archives.
 
 ## Task Description
 
@@ -80,7 +79,7 @@ optimized video archives.
 
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
-- The default `action_antonym` subset downloads a small public MP4 archive for quick validation
+- The default `action_antonym` subset uses the local `video/ssv2_video.zip` archive
 - Full benchmark evaluation can be requested by setting `subset_list` to additional MVBench subsets
 - Time-bounded records keep start/end metadata and add a short segment instruction to the prompt
 """,
@@ -99,22 +98,13 @@ class MVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._video_cache_dir: Optional[str] = None
+        self._extracted_videos: Optional[TemporaryDirectory[str]] = None
 
     @property
-    def video_cache_dir(self) -> str:
-        if self._video_cache_dir is None:
-            self._video_cache_dir = os.path.join(self.dataset_dir, 'mvbench', 'videos')
-        return self._video_cache_dir
-
-    @property
-    def source_dataset(self) -> DatasetHub:
-        return DatasetHub(
-            data_id_or_path=self.dataset_id,
-            data_source=self.dataset_hub,
-            revision=self.dataset_revision,
-            force_redownload=self.force_redownload,
-        )
+    def _video_work_dir(self) -> str:
+        if self._extracted_videos is None:
+            self._extracted_videos = TemporaryDirectory(prefix=f'evalscope-{self.name}-')
+        return self._extracted_videos.name
 
     def load(self) -> Tuple[DatasetDict, None]:
         dataset_dict = {}
@@ -183,11 +173,11 @@ class MVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
 
     def _ensure_video_file(self, subset: str, video_name: str) -> str:
         archive_name = SUBSET_SPECS[subset].archive
-        output_path = self._cache_output_path(subset, video_name)
-        if os.path.exists(output_path) and not self.force_redownload:
+        output_path = self._extracted_video_path(subset, video_name)
+        if os.path.isfile(output_path):
             return output_path
 
-        archive_path = self.source_dataset.download_file(f'video/{archive_name}')
+        archive_path = resolve_local_dataset_file(self.dataset_id, f'video/{archive_name}')
         member_name = find_archive_member(archive_path, subset, video_name)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with zipfile.ZipFile(archive_path) as zip_file:
@@ -195,8 +185,8 @@ class MVBenchAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
                 target.write(source.read())
         return output_path
 
-    def _cache_output_path(self, subset: str, video_name: str) -> str:
-        subset_dir = os.path.abspath(os.path.join(self.video_cache_dir, subset))
+    def _extracted_video_path(self, subset: str, video_name: str) -> str:
+        subset_dir = os.path.abspath(os.path.join(self._video_work_dir, subset))
         output_path = os.path.abspath(os.path.join(subset_dir, video_name))
         if os.path.commonpath([subset_dir, output_path]) != subset_dir:
             raise ValueError(f'Invalid MVBench video path: {video_name}')

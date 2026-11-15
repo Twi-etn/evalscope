@@ -239,7 +239,6 @@ Reference documentation: [Judge Model Parameters](https://evalscope.readthedocs.
   evalscope perf --dataset openqa --dataset-path /path/to/open_qa.jsonl ...
   ```
 
-You can also use `--data-source` to specify the data source (defaults to `modelscope`, can be switched to `huggingface`).
 
 **Q: How to stress test multimodal models?**
 
