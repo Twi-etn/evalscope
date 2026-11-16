@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Optional, Union
 
-from evalscope.utils.io_utils import parquet_to_list
-
 from .dataset import (
     Dataset,
     FieldSpec,
@@ -38,12 +36,10 @@ def _shuffle_in_place(data: list, seed: Optional[int]) -> None:
 
 
 def resolve_local_dataset_split(path: str, split: str, subset: str) -> Path:
-    """Find the local file or Lance directory for a split."""
+    """Find the local Lance directory for a split."""
     path = Path(path).expanduser()
     if path.is_file():
-        if path.suffix != '.parquet':
-            raise ValueError(f'Unsupported dataset format for {path}. Use Parquet or Lance.')
-        return path
+        raise ValueError(f'Unsupported dataset format for {path}. Use a Lance dataset directory.')
 
     if not path.is_dir():
         raise FileNotFoundError(f'Local dataset path does not exist: {path}')
@@ -51,16 +47,13 @@ def resolve_local_dataset_split(path: str, split: str, subset: str) -> Path:
     if path.suffix == '.lance' or (path / '_versions').is_dir():
         return path
     for stem in (f'{subset}_{split}', subset):
-        parquet_path = path / f'{stem}.parquet'
-        if parquet_path.is_file():
-            return parquet_path
         lance_path = path / f'{stem}.lance'
         if lance_path.is_dir():
             return lance_path
 
     raise FileNotFoundError(
-        f'No dataset in {path} for subset {subset!r}, split {split!r}. '
-        f'Expected {subset}_{split} or {subset} with a .parquet or .lance extension.'
+        f'No Lance dataset in {path} for subset {subset!r}, split {split!r}. '
+        f'Expected {subset}_{split}.lance or {subset}.lance.'
     )
 
 
@@ -71,7 +64,7 @@ def open_local_lance(path: Path, version: Optional[Union[int, str]]) -> 'LanceDa
     except ModuleNotFoundError as exc:
         if exc.name != 'lance':
             raise
-        raise ImportError("Lance datasets require pylance. Install it with `uv pip install -e '.[lance]'`.") from exc
+        raise ImportError('Lance datasets require pylance. Install it with `pip install pylance`.') from exc
 
     if isinstance(version, str) and version.isdecimal():
         version = int(version)
@@ -82,10 +75,8 @@ def open_local_lance(path: Path, version: Optional[Union[int, str]]) -> 'LanceDa
 def read_local_dataset_records(
     path: str, split: str, subset: str = 'default', version: Optional[Union[int, str]] = None
 ) -> list[dict]:
-    """Read Parquet records or a local Lance snapshot, using the latest Lance version by default."""
+    """Read a local Lance snapshot, using the latest version by default."""
     source = resolve_local_dataset_split(path, split, subset)
-    if source.is_file():
-        return parquet_to_list(str(source))
     return open_local_lance(source, version).to_table().to_pylist()
 
 
@@ -146,7 +137,7 @@ class DataLoader(ABC):
 
 
 class LocalDataLoader(DataLoader):
-    """Load a local Parquet file or Lance dataset."""
+    """Load a local Lance dataset."""
 
     def load(self) -> MemoryDataset:
         """Load and convert local records to samples."""

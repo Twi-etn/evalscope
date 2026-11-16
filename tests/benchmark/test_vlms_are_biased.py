@@ -168,8 +168,8 @@ def test_data_versions_have_distinct_pinned_cache_identities(hub: str) -> None:
 
 
 def test_loader_selects_v2_splits_and_rejects_legacy_run_cache(tmp_path: Path) -> None:
+    import lance
     import pyarrow as pa
-    import pyarrow.parquet as pq
     import yaml
 
     from evalscope import run_task
@@ -182,7 +182,7 @@ def test_loader_selects_v2_splits_and_rejects_legacy_run_cache(tmp_path: Path) -
             record = _record(ID=f'{subset}-new-id', legacy_ID=f'{subset}-old-id')
             if version == 'v1-legacy':
                 record['ID'] = record.pop('legacy_ID')
-            pq.write_table(pa.Table.from_pylist([record]), data / f'{prefix}{version}_{subset}.parquet')
+            lance.write_dataset(pa.Table.from_pylist([record]), data / f'{prefix}{version}_{subset}.lance')
 
     adapter = _adapter(local_path=str(data / 'v2'))
     loaded = adapter.load_dataset()

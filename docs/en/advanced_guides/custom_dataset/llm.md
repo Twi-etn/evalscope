@@ -1,20 +1,21 @@
 # Large Language Model
 
-The JSONL, CSV and TSV examples below show the source row structure for native benchmarks. Convert the files to Parquet in those directories before running the examples. Preserve the filename stem for each subset and split.
+The JSONL, CSV and TSV examples below show the source row structure for native benchmarks. Convert the files to Lance in those directories before running the examples. Preserve the filename stem for each subset and split.
 
 ```python
 from pathlib import Path
 
-from pyarrow import csv, json, parquet
+import lance
+from pyarrow import csv, json
 
 for root in (Path('custom_eval/text'), Path('custom_eval/multimodal')):
     for source in root.rglob('*.jsonl'):
         if source.parent.name in {'mcq', 'qa', 'fc', 'vqa'}:
-            parquet.write_table(json.read_json(source), source.with_suffix('.parquet'))
+            lance.write_dataset(json.read_json(source), source.with_suffix('.lance'))
 
 # For a CSV or TSV source, keep text columns as strings where the benchmark expects text.
 # table = csv.read_csv(source, parse_options=csv.ParseOptions(delimiter='\t'))  # TSV
-# parquet.write_table(table, source.with_suffix('.parquet'))
+# lance.write_dataset(table, source.with_suffix('.lance'))
 ```
 
 This framework supports multiple-choice questions, question-answering questions, and function calling, with three predefined dataset formats. The usage process is as follows:
@@ -392,7 +393,7 @@ run_task(task_cfg=task_cfg)
 
 Applicable to evaluation scenarios that require function call decision-making and parameter structure validation. Supports:
 - Preset dataset: evalscope/GeneralFunctionCall-Test
-- Custom dataset: Pass the converted Parquet dataset via the local path
+- Custom dataset: Pass the converted Lance dataset via the local path
 
 The data is synthesized from official MoonshotAI [public samples](https://github.com/MoonshotAI/K2-Vendor-Verifier), including labels for "whether tool should be triggered" (K2-Thinking model as label source), facilitating experiment reproduction and automated regression testing.
 

@@ -64,8 +64,8 @@ unit tests instead of a single reference answer.
   included
 - Pages are pre-rendered once to PNG images (longest side 2048 px, matching the official renderer
   `render_pdf_to_base64png` with `target_longest_image_dim=2048`) and packaged, together with the
-  unit tests, into a single parquet on ModelScope; the adapter loads it through the standard remote
-  flow (one download, native parsing) with no PDF rasterization at eval time
+  unit tests, into a single Parquet source file on ModelScope. Convert the source to Lance for local
+  evaluation. The adapter uses the pre-rendered images directly.
 
 ## Evaluation Notes
 
@@ -86,8 +86,8 @@ unit tests instead of a single reference answer.
 - A bare `null` reply is treated as an empty transcription, mirroring how the official harness
   stores `natural_text=null` as an empty file
 - Requires `pip install evalscope[olmocr_bench]` (rapidfuzz, fuzzysearch, beautifulsoup4); the
-  benchmark is a single parquet on ModelScope (`evalscope/olmOCR-Bench`, image bytes + unit tests),
-  a mirror of the Hugging Face release, loaded natively in one download
+  benchmark source on ModelScope (`evalscope/olmOCR-Bench`, image bytes + unit tests) mirrors the
+  Hugging Face release
 - [Paper](https://arxiv.org/abs/2502.18443) | [Code](https://github.com/allenai/olmocr) |
   [Dataset](https://modelscope.cn/datasets/evalscope/olmOCR-Bench)
 """
@@ -112,7 +112,7 @@ unit tests instead of a single reference answer.
 class OlmocrBenchAdapter(VisionLanguageAdapter):
     """Data adapter for evalscope/olmOCR-Bench.
 
-    The dataset is a single parquet loaded through the standard remote flow: one row per
+    The local Lance dataset contains one row per
     ``(pdf, page)`` carrying the pre-rendered page image, the ``subset`` key, and the page's unit
     tests (a JSON string). Rows are split into subsets by ``subset_key`` and the grouped rules are
     replayed against the transcription in ``match_score``.
@@ -123,7 +123,7 @@ class OlmocrBenchAdapter(VisionLanguageAdapter):
         self.reformat_subset = True
 
     def record_to_sample(self, record: Dict[str, Any]) -> Sample:
-        """Build a sample from a parquet row: pre-rendered image + this page's unit tests."""
+        """Build a sample from a dataset row: pre-rendered image + this page's unit tests."""
         content: List[Content] = [ContentText(text=self.prompt_template)]
         image = record.get('image')
         if image and image.get('bytes'):

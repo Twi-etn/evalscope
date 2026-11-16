@@ -11,7 +11,7 @@ PerspectiveGap 用于评估模型是否能够在为多智能体系统编写编�
 
 ## 数据
 
-该基准测试使用 ModelScope 数据集 [`evalscope/PerspectiveGap`](https://modelscope.cn/datasets/evalscope/PerspectiveGap/summary)，其中包含已发布的 `test` 划分。你也可以通过 `dataset_args.<task>.local_path` 参数传入具有相同字段结构的本地 JSONL 镜像文件。
+该基准测试使用 ModelScope 数据集 [`evalscope/PerspectiveGap`](https://modelscope.cn/datasets/evalscope/PerspectiveGap/summary)，其中包含已发布的 `test` 划分。你也可以通过 `dataset_args.<task>.local_path` 参数传入具有相同字段结构的本地 Lance 数据集。
 
 ## 评分
 

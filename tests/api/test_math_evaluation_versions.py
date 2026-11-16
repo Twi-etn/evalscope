@@ -3,8 +3,8 @@
 import json
 from typing import Any
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
@@ -48,9 +48,9 @@ def test_every_affected_benchmark_declares_the_next_minor_version(benchmark: str
 def test_gsm8k_old_review_is_blocked_and_predictions_can_be_rescored(tmp_path: Any, monkeypatch: Any) -> None:
     data = tmp_path / 'data'
     data.mkdir()
-    pq.write_table(
+    lance.write_dataset(
         pa.Table.from_pylist([{'question': 'A fixed actual-style word problem', 'answer': 'Reasoning. #### 18'}]),
-        data / 'default_test.parquet',
+        data / 'default_test.lance',
     )
     base = dict(model='offline',eval_type='mock_llm',datasets=['gsm8k'],no_timestamp=True,
                 work_dir=str(tmp_path/'run'),judge={'strategy':'rule'},
@@ -82,7 +82,7 @@ def test_math_extraction_failure_is_persisted_without_aborting_evaluation(
     data = tmp_path / 'data'
     data.mkdir()
     records = [{'question': f'Fixed question {i}', 'answer': 'Reasoning. #### 1'} for i in range(2)]
-    pq.write_table(pa.Table.from_pylist(records), data / 'default_test.parquet')
+    lance.write_dataset(pa.Table.from_pylist(records), data / 'default_test.lance')
     # Warm up before patching: isolated calls fork from the warmed process.
     extract_answer('1')
     original_parse = math_verify.parse
@@ -135,11 +135,11 @@ def test_instrument_old_review_is_blocked_and_predictions_can_be_rescored(
         subset, prediction, metric = 'real_world', r'\boxed{\frac{3}{4}} m', 'acc'
     data = tmp_path / 'data'
     data.mkdir()
-    pq.write_table(pa.Table.from_pylist([record]), data / 'table.parquet')
+    lance.write_dataset(pa.Table.from_pylist([record]), data / 'table.lance')
     work = tmp_path / 'run'
     base = dict(model='offline', eval_type='mock_llm', datasets=[benchmark], no_timestamp=True,
                 work_dir=str(work), judge={'strategy': 'rule'},
-                dataset_args={benchmark: {'local_path': str(data / 'table.parquet'), 'subset_list': [subset]}})
+                dataset_args={benchmark: {'local_path': str(data / 'table.lance'), 'subset_list': [subset]}})
     get_benchmark(benchmark)
     meta = BENCHMARK_REGISTRY[benchmark]
     monkeypatch.setattr(MockLLM, 'default_output', prediction)

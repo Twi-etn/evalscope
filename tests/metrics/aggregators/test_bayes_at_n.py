@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import lance
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
@@ -177,7 +178,7 @@ def local_data(tmp_path: Path) -> Path:
         {'question': 'First question', 'A': 'yes', 'B': 'no', 'answer': 'A'},
         {'question': 'Second question', 'A': 'yes', 'B': 'no', 'answer': 'B'},
     ]
-    pq.write_table(pa.Table.from_pylist(rows), data / 'tiny_val.parquet')
+    lance.write_dataset(pa.Table.from_pylist(rows), data / 'tiny_val.lance')
     return data
 
 

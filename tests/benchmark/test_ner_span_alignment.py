@@ -4,8 +4,9 @@ import json
 from pathlib import Path
 from typing import List
 
+import lance
+import pyarrow as pa
 import pytest
-from datasets import Dataset
 
 from evalscope import run_task
 from evalscope.api.evaluator import TaskState
@@ -106,7 +107,7 @@ def test_ner_reviews_require_rescoring_after_span_alignment_changes(
     tokens, tags = CASES[1]
     data = tmp_path / 'data'
     data.mkdir()
-    Dataset.from_list([{'tokens': tokens, 'ner_tags': tags}]).to_parquet(data / 'default_test.parquet')
+    lance.write_dataset(pa.Table.from_pylist([{'tokens': tokens, 'ner_tags': tags}]), data / 'default_test.lance')
     work = tmp_path / 'run'
     config = dict(
         model='offline', eval_type='mock_llm', datasets=['conll2003'], no_timestamp=True,

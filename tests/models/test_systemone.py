@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 
 import httpx
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
@@ -302,7 +302,7 @@ def test_failure_is_excluded_with_execution_coverage(tmp_path: Path, monkeypatch
     data = tmp_path / 'data'
     data.mkdir()
     rows = [{'question': str(i), 'A': 'correct', 'B': 'wrong', 'answer': 'A'} for i in range(2)]
-    pq.write_table(pa.Table.from_pylist(rows), data / 'default_val.parquet')
+    lance.write_dataset(pa.Table.from_pylist(rows), data / 'default_val.lance')
 
     def handle(req: httpx.Request) -> httpx.Response:
         payload = json.loads(req.content)

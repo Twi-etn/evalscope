@@ -5,8 +5,8 @@ from collections.abc import Iterator
 from dataclasses import replace
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.registry import get_benchmark
@@ -31,7 +31,7 @@ def qa_directory(tmp_path: Path) -> Path:
         }
         for index in range(20)
     ]
-    pq.write_table(pa.Table.from_pylist(rows), tmp_path / 'default_test.parquet')
+    lance.write_dataset(pa.Table.from_pylist(rows), tmp_path / 'default_test.lance')
     return tmp_path
 
 
@@ -78,7 +78,6 @@ def test_local_file_none_seed_preserves_global_random_behavior(qa_directory: Pat
 
 
 def test_native_loader_pins_and_records_lance_versions(tmp_path: Path) -> None:
-    lance = pytest.importorskip('lance')
     from evalscope.evaluation_versioning import ResolvedBenchmarkSpec
 
     path = tmp_path / 'default_test.lance'

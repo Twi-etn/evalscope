@@ -3,6 +3,7 @@ import json
 from io import BytesIO
 from pathlib import Path
 
+import lance
 import pytest
 from PIL import Image
 
@@ -125,7 +126,7 @@ def test_mock_pipeline_exports_submission(
     dataset = Dataset.from_list(records).cast_column('image', DatasetImage(decode=False))
     dataset_path = tmp_path / 'dataset'
     dataset_path.mkdir()
-    dataset.to_parquet(dataset_path / 'default_test.parquet')
+    lance.write_dataset(dataset.data.table, dataset_path / 'default_test.lance')
     config = TaskConfig(
         model='mock-model', eval_type='mock_llm', datasets=['visualoverload'],
         dataset_args={'visualoverload': {'local_path': str(dataset_path)}},

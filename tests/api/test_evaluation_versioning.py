@@ -288,11 +288,11 @@ def test_cache_mismatch_is_rejected_before_snapshot_is_overwritten(tmp_path) -> 
 
 @pytest.fixture
 def mcq_path(tmp_path):
+    import lance
     import pyarrow as pa
-    import pyarrow.parquet as pq
 
-    path = tmp_path / 'example_val.parquet'
-    pq.write_table(pa.Table.from_pylist([{'question': 'Pick A', 'A': 'yes', 'B': 'no', 'answer': 'A'}]), path)
+    path = tmp_path / 'example_val.lance'
+    lance.write_dataset(pa.Table.from_pylist([{'question': 'Pick A', 'A': 'yes', 'B': 'no', 'answer': 'A'}]), path)
     return path
 
 

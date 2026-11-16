@@ -16,7 +16,7 @@ The native adapter treats each video as one evaluation sample and uses all avail
 ## Evaluation Notes
 
 - Default data source: `evalscope/MSVD` on ModelScope, `test` split
-- Prepare local Parquet or Lance annotations and supply the video files locally.
+- Prepare local Lance annotations and supply the video files locally.
 - Primary metric: **CIDEr**
 - Additional metrics: BLEU-1/2/3/4, METEOR, ROUGE-L
 - Set `extra_params.video_dir` when the dataset only provides video file names and local media files are required

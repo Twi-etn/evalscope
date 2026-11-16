@@ -3,7 +3,7 @@
 
 ## Overview
 
-Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score question per record.
+Evaluate local Lance datasets containing one Choice, Noul or Score question per record.
 
 ## Task Description
 
@@ -14,7 +14,7 @@ Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score qu
 
 ## Key Features
 
-- Reads `default_test.parquet` from a directory passed through `dataset_args.general_decision.local_path`
+- Reads `default_test.lance` from a directory passed through `dataset_args.general_decision.local_path`
 - Fields: `id`, `state`, `question` (type/instructions/criteria), `expected`; one question per record
 - Preserves option order, source IDs and rubric descriptions
 - Supports System One and native AutoTrust APIs within their declared capabilities
@@ -85,7 +85,7 @@ task_cfg = TaskConfig(
     datasets=['general_decision'],
     dataset_args={
         'general_decision': {
-            'local_path': '/path/to/data',  # contains default_test.parquet
+            'local_path': '/path/to/data',  # contains default_test.lance
         }
     },
     limit=10,  # Remove this line for formal evaluation

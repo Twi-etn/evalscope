@@ -5,8 +5,8 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator.result_io import read_result_rows
@@ -23,8 +23,8 @@ from evalscope.utils.io_utils import dict_to_yaml, yaml_to_dict
 def collection_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict:
     source = tmp_path / 'source'
     source.mkdir()
-    pq.write_table(
-        pa.Table.from_pylist([{'question': 'Pick A', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}]), source / 'example.parquet'
+    lance.write_dataset(
+        pa.Table.from_pylist([{'question': 'Pick A', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}]), source / 'example.lance'
     )
     schema = CollectionSchema(name='suite', datasets=[DatasetInfo(
         name='general_mcq', task_type='reasoning', tags=['en'],

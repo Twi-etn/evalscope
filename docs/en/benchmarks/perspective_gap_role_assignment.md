@@ -11,7 +11,7 @@ PerspectiveGap evaluates whether a model can compose orchestration prompts for m
 
 ## Data
 
-The benchmark uses the ModelScope dataset `evalscope/PerspectiveGap`, which contains the released `test` split. You can also pass `dataset_args.<task>.local_path` to a local JSONL mirror with the same fields.
+Prepare the released `test` split as local Lance with the original fields, and set `dataset_args.<task>.local_path`.
 
 ## Scoring
 

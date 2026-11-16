@@ -24,7 +24,7 @@ from evalscope.constants import Tags
         description="""
 ## Overview
 
-Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score question per record.
+Evaluate local Lance datasets containing one Choice, Noul or Score question per record.
 
 ## Task Description
 
@@ -35,7 +35,7 @@ Evaluate local Parquet or Lance datasets containing one Choice, Noul or Score qu
 
 ## Key Features
 
-- Reads `default_test.parquet` from a directory passed through `dataset_args.general_decision.local_path`
+- Reads `default_test.lance` from a directory passed through `dataset_args.general_decision.local_path`
 - Fields: `id`, `state`, `question` (type/instructions/criteria), `expected`; one question per record
 - Preserves option order, source IDs and rubric descriptions
 - Supports System One and native AutoTrust APIs within their declared capabilities

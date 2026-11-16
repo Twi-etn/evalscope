@@ -4,7 +4,7 @@ EvalScope is an evaluation framework designed for large models, aiming to provid
 
 ## Start Your First Evaluation
 
-Prepare the GSM8K evaluation split at `./data/gsm8k/main_test.parquet` and its training split for few-shot examples at `./data/gsm8k/main_train.parquet`. You can then run the evaluation through the command line or Python.
+Prepare the GSM8K evaluation split at `./data/gsm8k/main_test.lance` and its training split for few-shot examples at `./data/gsm8k/main_train.lance`. You can then run the evaluation through the command line or Python.
 
 ### Method 1: Using Command Line
 
@@ -244,13 +244,7 @@ For detailed configuration of judge models, please refer to: [Judge Model Parame
 
 Native evaluation reads local datasets. Pass a filesystem path through `dataset_args.<benchmark>.local_path`.
 
-The standard loader accepts a Parquet file, a Lance dataset directory, or a parent directory containing named splits. In a parent directory it looks for `<subset>_<split>.parquet` or `<subset>_<split>.lance`, then `<subset>.parquet` or `<subset>.lance`. Specialized benchmarks may require their own directory layout and associated media.
-
-Install the optional Lance dependency from the repository:
-
-```bash
-uv pip install -e '.[lance]'
-```
+The standard loader accepts a Lance dataset directory or a parent directory containing named splits. It looks for `<subset>_<split>.lance`, then `<subset>.lance`. For different evaluation and few-shot splits, pass the parent directory with one Lance dataset per split. Specialized benchmarks may require their own directory layout and associated media.
 
 ```bash
 evalscope eval \
@@ -262,10 +256,10 @@ evalscope eval \
 
 Omit `dataset_revision` to read the latest Lance version. You can also pass a version number or a tag. Standard Lance loaders record the concrete versions used by the run. To resume after a new version is published, use the same pinned version and configuration as the original run.
 
-For CSV, TSV, or JSONL inputs, convert each split to Parquet or Lance before evaluation. For example, this converts the repository's JSONL validation fixture:
+Convert source files such as Parquet, CSV, TSV or JSONL to Lance before evaluation. For example, this converts the repository's JSONL validation fixture:
 
 ```bash
-python -c "from pyarrow import json, parquet; parquet.write_table(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.parquet')"
+python -c "import lance; from pyarrow import json; lance.write_dataset(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.lance')"
 ```
 
 

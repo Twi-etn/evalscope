@@ -17,7 +17,7 @@ olmOCR-Bench 评估端到端的文档转录能力：模型读取一页渲染后�
 - 发布的基准数据包含 1,403 页 PDF 和 7,019 个单元测试；每个测试定义了正确转录必须满足的一项属性（如文本存在性、文本缺失性、阅读顺序、表格结构或基础合理性检查）
 - 评分规则与官方 `olmocr` 基准实现完全一致（1:1 移植），因此各子集得分可直接与官方报告对比
 - 本适配器覆盖五个非数学来源（`headers_footers`、`long_tiny_text`、`multi_column`、`old_scans`、`table_tests`），共 845 页和 3,634 个单元测试；两个纯数学来源（`arxiv_math`、`old_scans_math`）需进行 KaTeX 渲染公式比对，未包含在内
-- 所有页面已预先渲染为 PNG 图像（长边为 2048 像素，与官方渲染器 `render_pdf_to_base64png` 使用 `target_longest_image_dim=2048` 的设置一致），并与单元测试一同打包为单个 parquet 文件托管于 ModelScope；适配器通过标准远程加载流程（一次下载，原生解析）加载数据，评估时无需进行 PDF 光栅化
+- 所有页面已预先渲染为 PNG 图像（长边为 2048 像素，与官方渲染器 `render_pdf_to_base64png` 使用 `target_longest_image_dim=2048` 的设置一致），并与单元测试一同打包为单个 parquet 文件托管于 ModelScope。将源数据转换为本地 Lance 后，评估直接使用预渲染的页面图像
 
 ## 评估说明
 
@@ -27,7 +27,7 @@ olmOCR-Bench 评估端到端的文档转录能力：模型读取一页渲染后�
 - `num` 表示每个子集的 PDF 页面数（样本数），因此总样本数与预测记录一致，而非单元测试总数
 - 模糊匹配阈值（`max_diffs`）、位置约束（`first_n`/`last_n`）、大小写敏感性及表格关系检查均严格遵循官方实现
 - 空的 `null` 回复被视为空转录，与官方评测框架将 `natural_text=null` 存储为空文件的行为一致
-- 需安装依赖：`pip install evalscope[olmocr_bench]`（包含 rapidfuzz、fuzzysearch、beautifulsoup4）；基准数据为 ModelScope 上的单个 parquet 文件（`evalscope/olmOCR-Bench`，含图像字节与单元测试），是 Hugging Face 版本的镜像，支持单次下载原生加载
+- 需安装依赖：`pip install evalscope[olmocr_bench]`（包含 rapidfuzz、fuzzysearch、beautifulsoup4）；基准数据为 ModelScope 上的单个 parquet 文件（`evalscope/olmOCR-Bench`，含图像字节与单元测试），是 Hugging Face 版本的镜像
 - [论文](https://arxiv.org/abs/2502.18443) | [代码](https://github.com/allenai/olmocr) | [数据集](https://modelscope.cn/datasets/evalscope/olmOCR-Bench)
 
 

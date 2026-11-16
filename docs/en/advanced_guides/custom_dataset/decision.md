@@ -1,6 +1,6 @@
 # Decision Models
 
-Use `general_decision` to evaluate choices, yes/no judgments and ratings from your own application. Records stay in local Parquet or Lance datasets; no dataset upload is needed.
+Use `general_decision` to evaluate choices, yes/no judgments and ratings from your own application. Records stay in local Lance datasets; no dataset upload is needed.
 
 This format requires `systemone_api` or `autotrust_api`. For deployment and connection settings, see the [decision evaluation best practice](../../best_practice/decision_evaluation.md). For ordinary chat-model questions, use the [LLM dataset formats](llm.md).
 
@@ -10,10 +10,10 @@ Create this directory where you will run evaluation:
 
 ```text
 decision-data/
-└── default_test.parquet
+└── default_test.lance
 ```
 
-Use these three records as source data for `decision-data/default_test.parquet`. Save them first in `decision-data/default_test.jsonl`, one complete JSON object per line, using UTF-8. They cover Choice, Noul and a four-level Score:
+Use these three records as source data for `decision-data/default_test.lance`. Save them first in `decision-data/default_test.jsonl`, one complete JSON object per line, using UTF-8. They cover Choice, Noul and a four-level Score:
 
 ```json
 {"id":"route","state":"The user asks for today's weather. No online search result is available yet.","question":{"type":"choice","instructions":"Which capability should be used next?","criteria":{"search":"Look up external information","calculate":"Perform a numerical calculation","answer":"Answer using existing information"}},"expected":"search"}
@@ -60,7 +60,7 @@ EvalScope accepts 2–255 Choice options and 2–10 Score levels; the service ma
 
 ### File naming and subsets
 
-`local_path` points to the directory. The default subset is `default`, and the evaluation split is `test`, hence `default_test.parquet`. To use `routing_test.parquet` and `quality_test.parquet`, set `subset_list=['routing', 'quality']` in the benchmark's dataset arguments. Each file may contain all three types.
+`local_path` points to the directory. The default subset is `default`, and the evaluation split is `test`, hence `default_test.lance`. To use `routing_test.lance` and `quality_test.lance`, set `subset_list=['routing', 'quality']` in the benchmark's dataset arguments. Each file may contain all three types.
 
 ### Continuous reference scores (optional)
 
@@ -70,14 +70,14 @@ For a real-valued reference, set `continuous=true`. Save this record separately 
 {"id":"similarity","state":{"sentence1":"A girl is styling her hair.","sentence2":"A girl is brushing her hair."},"question":{"type":"score","instructions":"Rate the semantic similarity of the two sentences.","criteria":["Unrelated","Some shared meaning","Mostly similar","Equivalent"]},"expected":1.5,"continuous":true}
 ```
 
-Convert the JSONL source files into Parquet before running the evaluation. Encode `state` and `question` as JSON strings so different question types can share one table.
+Convert the JSONL source files into Lance before running the evaluation. Encode `state` and `question` as JSON strings so different question types can share one table.
 
 ```python
 import json
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 
 for source in Path('decision-data').glob('*_test.jsonl'):
     rows = [json.loads(line) for line in source.read_text(encoding='utf-8').splitlines() if line.strip()]
@@ -85,7 +85,7 @@ for source in Path('decision-data').glob('*_test.jsonl'):
         row['state'] = json.dumps(row['state'], ensure_ascii=False)
         row['question'] = json.dumps(row['question'], ensure_ascii=False)
         row['expected'] = str(row['expected'])
-    pq.write_table(pa.Table.from_pylist(rows), source.with_suffix('.parquet'))
+    lance.write_dataset(pa.Table.from_pylist(rows), source.with_suffix('.lance'))
 ```
 
 ## Configuration Task

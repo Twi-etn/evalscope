@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import lance
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
@@ -23,8 +24,8 @@ def _make_direct_loader(
 ) -> LocalDataLoader | DictDataLoader:
     records = [{'text': f'row-{index}'} for index in range(4)]
     if loader_kind == 'local':
-        local_path = tmp_path / 'records.parquet'
-        pq.write_table(pa.Table.from_pylist(records), local_path)
+        local_path = tmp_path / 'records.lance'
+        lance.write_dataset(pa.Table.from_pylist(records), local_path)
         return LocalDataLoader(
             data_id_or_path=str(local_path),
             split='train',
@@ -89,8 +90,8 @@ def test_dict_loader_defaults_to_independent_empty_metadata(metadata_fields: Opt
 
 def test_local_loader_defaults_to_empty_metadata(tmp_path: Path) -> None:
     record = {'input': 'Which city is the capital of France?', 'target': 'Paris'}
-    path = tmp_path / 'questions.parquet'
-    pq.write_table(pa.Table.from_pylist([record]), path)
+    path = tmp_path / 'questions.lance'
+    lance.write_dataset(pa.Table.from_pylist([record]), path)
 
     dataset = LocalDataLoader(data_id_or_path=str(path), split='test').load()
 
@@ -180,21 +181,24 @@ def test_dict_loader_shuffle_preserves_input_records(seed: Optional[int]) -> Non
     assert records == original_records
 
 
-@pytest.mark.parametrize('extension', ['csv', 'tsv', 'jsonl'])
-def test_local_loader_rejects_text_formats(tmp_path: Path, extension: str) -> None:
+@pytest.mark.parametrize('extension', ['csv', 'tsv', 'jsonl', 'parquet'])
+def test_local_loader_rejects_non_lance_formats(tmp_path: Path, extension: str) -> None:
     path = tmp_path / f'default_test.{extension}'
-    path.touch()
+    if extension == 'parquet':
+        pq.write_table(pa.table({'input': ['old']}), path)
+    else:
+        path.touch()
     with pytest.raises(ValueError, match='Unsupported dataset format'):
         LocalDataLoader(data_id_or_path=str(path), split='test').load()
-    with pytest.raises(FileNotFoundError, match='No dataset'):
+    with pytest.raises(FileNotFoundError, match='No Lance dataset'):
         LocalDataLoader(data_id_or_path=str(tmp_path), split='test').load()
 
 
 @pytest.mark.parametrize('direct_path', [False, True])
 @pytest.mark.parametrize('version, expected', [(None, 'new'), (1, 'old'), ('1', 'old'), ('baseline', 'old')])
 def test_load_lance_snapshot(tmp_path: Path, direct_path: bool, version: int | str | None, expected: str) -> None:
-    lance = pytest.importorskip('lance')
     path = tmp_path / 'default_test.lance'
+    pq.write_table(pa.table({'input': ['ignored']}), path.with_suffix('.parquet'))
     table = lance.write_dataset(pa.table({'input': ['old']}), path)
     table.tags.create('baseline', 1)
     lance.write_dataset(pa.table({'input': ['new']}), path, mode='overwrite')

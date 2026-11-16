@@ -3,8 +3,8 @@ import wave
 from io import BytesIO
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 from datasets import Audio, Dataset, Features, Image, Sequence, Value
 from PIL import Image as PILImage
@@ -122,10 +122,10 @@ def test_create_content_and_answers_list_supports_images_array(
     assert any('What color is the square?' in content.text for content in text_content)
 
 
-def test_local_loader_supports_parquet_with_hf_image_column(
+def test_local_loader_supports_lance_with_hf_image_column(
     adapter: GeneralVMCQAdapter, tmp_path: Path, png_bytes: bytes
 ) -> None:
-    parquet_path = tmp_path / 'general_vmcq.parquet'
+    lance_path = tmp_path / 'general_vmcq.lance'
     dataset = Dataset.from_dict(
         {
             'question': ['<image 1> What color is the square?'],
@@ -142,10 +142,10 @@ def test_local_loader_supports_parquet_with_hf_image_column(
             }
         ),
     )
-    dataset.to_parquet(str(parquet_path))
+    lance.write_dataset(dataset.data.table, lance_path)
 
     loaded_dataset = LocalDataLoader(
-        data_id_or_path=str(parquet_path),
+        data_id_or_path=str(lance_path),
         split='test',
         subset='default',
         sample_fields=adapter.record_to_sample,
@@ -159,10 +159,10 @@ def test_local_loader_supports_parquet_with_hf_image_column(
     )
 
 
-def test_local_loader_supports_parquet_with_hf_audio_column(
+def test_local_loader_supports_lance_with_hf_audio_column(
     adapter: GeneralVMCQAdapter, tmp_path: Path, wav_bytes: bytes
 ) -> None:
-    parquet_path = tmp_path / 'general_vmcq_audio.parquet'
+    lance_path = tmp_path / 'general_vmcq_audio.lance'
     features = Features(
         {
             'question': Value('string'),
@@ -181,10 +181,10 @@ def test_local_loader_supports_parquet_with_hf_audio_column(
         },
         schema=features.arrow_schema,
     )
-    pq.write_table(table, str(parquet_path))
+    lance.write_dataset(table, str(lance_path))
 
     loaded_dataset = LocalDataLoader(
-        data_id_or_path=str(parquet_path),
+        data_id_or_path=str(lance_path),
         split='test',
         subset='default',
         sample_fields=adapter.record_to_sample,

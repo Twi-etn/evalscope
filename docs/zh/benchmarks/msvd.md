@@ -15,8 +15,7 @@ MSVD 是一个经典的视频描述（video captioning）基准测试，包含�
 
 ## 评估说明
 
-- 默认数据源：ModelScope 上的 `evalscope/MSVD`，使用 `test` 划分
-- 通过在 TaskConfig 中设置 `dataset_hub="huggingface"`，仍可使用 Hugging Face 的 `VLM2Vec/MSVD`
+- 将上游 `evalscope/MSVD` 的 `test` 标注转换为本地 Lance，并准备关联的视频文件
 - 主要指标：**CIDEr**
 - 其他指标：BLEU-1/2/3/4、METEOR、ROUGE-L
 - 当数据集仅提供视频文件名且需要本地媒体文件时，请设置 `extra_params.video_dir`

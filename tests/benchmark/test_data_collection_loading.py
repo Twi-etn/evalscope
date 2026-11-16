@@ -4,8 +4,8 @@ import json
 import random
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator.result_io import read_result_rows
@@ -25,7 +25,7 @@ def collection_file(tmp_path: Path) -> Path:
         {'id': index, 'question': f'Pick A: {index}', 'A': 'alpha', 'B': 'beta', 'answer': 'A'}
         for index in range(6)
     ]
-    pq.write_table(pa.Table.from_pylist(rows), source / 'example.parquet')
+    lance.write_dataset(pa.Table.from_pylist(rows), source / 'example.lance')
     schema = CollectionSchema(name='suite', datasets=[DatasetInfo(
         name='general_mcq', task_type='reasoning', tags=['en'],
         args={'local_path': str(source), 'subset_list': ['example']},

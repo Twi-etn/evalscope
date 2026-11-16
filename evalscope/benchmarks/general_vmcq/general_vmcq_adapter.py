@@ -45,7 +45,7 @@ It uses MMMU-style format with image/video/audio placeholders in text, supportin
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
 - Train split: **dev**, Eval split: **val**
-- Raw media bytes require parquet; plaintext files carry paths, URLs, or base64 data URLs
+- Lance media columns can contain raw bytes, paths, URLs, or base64 data URLs
 - See [User Guide](https://evalscope.readthedocs.io/en/latest/advanced_guides/custom_dataset/vlm.html) for dataset format
 """,  # noqa: E501
         tags=[Tags.MULTIPLE_CHOICE, Tags.CUSTOM, Tags.MULTI_MODAL],
@@ -81,7 +81,7 @@ class GeneralVMCQAdapter(VisionLanguageAdapter, MultiChoiceAdapter):
     }
     - JSONL/CSV/TSV inputs typically use plain image/video strings: base64 data
         URLs or local/remote paths.
-    - Parquet inputs may also provide undecoded dict values such as
+    - Lance inputs may also provide undecoded dict values such as
         ``{"bytes": ...}`` or ``{"path": ...}``, which are later converted to data URLs.
     - 'options' is a list (JSON array) of strings; do NOT include "A.", "B." prefixes.
     - 'answer' is the correct letter (e.g., 'A').

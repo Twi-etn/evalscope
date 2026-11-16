@@ -41,7 +41,7 @@ PerspectiveGap evaluates whether a model can compose orchestration prompts for m
 
 ## Data
 
-Prepare the released `test` split as local Parquet or Lance with the original fields, and set `dataset_args.<task>.local_path`.
+Prepare the released `test` split as local Lance with the original fields, and set `dataset_args.<task>.local_path`.
 
 ## Scoring
 

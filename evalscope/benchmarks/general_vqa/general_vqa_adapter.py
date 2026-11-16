@@ -31,7 +31,7 @@ It supports OpenAI-compatible message format with flexible image/video/audio inp
 - **Task Type**: Visual Question Answering
 - **Input**: Images/videos/audio + questions in OpenAI chat format
 - **Output**: Free-form text answer
-- **Flexibility**: Supports custom datasets in Parquet or Lance
+- **Flexibility**: Supports custom datasets in Lance
 
 ## Key Features
 
@@ -67,7 +67,7 @@ class GeneralVQAAdapter(VisionLanguageAdapter):
     General VQA Adapter for custom multimodal evaluation.
 
     This adapter supports OpenAI-compatible message format for multimodal inputs:
-    - Parquet or Lance containing 'messages' and 'answer' columns
+    - Lance containing 'messages' and 'answer' columns
 
     The 'messages' field should be a JSON string or structured value
     following OpenAI chat completion format with support for:

@@ -1,8 +1,7 @@
 """Evaluate one model on three local benchmarks in the same run.
 
-Place math_500.parquet, gpqa_diamond.parquet, and aime24.lance in ./datasets
-or point EVALSCOPE_DATA_DIR to the directory holding them. Install the Lance
-extra for the aime24.lance dataset.
+Place math_500.lance, gpqa_diamond.lance, and aime24.lance in ./datasets
+or point EVALSCOPE_DATA_DIR to the directory holding them.
 """
 
 import os
@@ -23,16 +22,15 @@ def main() -> None:
         datasets=['math_500', 'gpqa_diamond', 'aime24'],
         dataset_args={
             'math_500': {
-                'local_path': str(data_dir / 'math_500.parquet'),
+                'local_path': str(data_dir / 'math_500.lance'),
                 'few_shot_num': 0,
                 # 'subset_list': ['Level 1', 'Level 2'],  # Evaluate only these difficulty levels.
             },
             'gpqa_diamond': {
-                'local_path': str(data_dir / 'gpqa_diamond.parquet'),
+                'local_path': str(data_dir / 'gpqa_diamond.lance'),
                 'few_shot_num': 0,
             },
             'aime24': {
-                # For Parquet, use aime24.parquet and omit dataset_revision.
                 'local_path': str(data_dir / 'aime24.lance'),
                 'dataset_revision': 1,  # Use a version ID from your dataset, or omit it for the latest version.
                 'few_shot_num': 0,

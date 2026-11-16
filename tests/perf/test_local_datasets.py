@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import lance
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
@@ -21,9 +22,12 @@ def test_openqa_reads_local_jsonl(tmp_path: Path, direct: bool) -> None:
     assert plugin.query_parameters.dataset_path == path
 
 
-def test_perf_reads_named_local_parquet(tmp_path: Path) -> None:
-    pq.write_table(pa.table({'instruction': ['A local row']}), tmp_path / 'default_train.parquet')
-    plugin = LongAlpacaDatasetPlugin(Arguments(model='local', dataset_path=str(tmp_path)))
+@pytest.mark.parametrize('direct', [False, True])
+def test_perf_reads_local_parquet(tmp_path: Path, direct: bool) -> None:
+    path = tmp_path / 'default_train.parquet'
+    pq.write_table(pa.table({'instruction': ['A local row']}), path)
+    lance.write_dataset(pa.table({'instruction': ['A Lance row']}), path.with_suffix('.lance'))
+    plugin = LongAlpacaDatasetPlugin(Arguments(model='local', dataset_path=str(path if direct else tmp_path)))
 
     assert 'A local row' in str(next(plugin.build_messages()))
 

@@ -118,7 +118,7 @@ class DefaultDataAdapter(DataAdapter):
                 except (FileNotFoundError, ValueError):
                     # Custom load() implementations can use a different layout.
                     continue
-                if source.is_dir() and source not in self._lance_versions:
+                if source not in self._lance_versions:
                     self._lance_versions[source] = open_local_lance(source, self.dataset_revision).version
         return {str(path): version for path, version in self._lance_versions.items()}
 

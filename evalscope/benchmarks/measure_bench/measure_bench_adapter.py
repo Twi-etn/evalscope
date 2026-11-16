@@ -89,7 +89,7 @@ class MeasureBenchAdapter(VisionLanguageAdapter):
     def record_to_sample(self, record: Dict[str, Any]) -> Optional[Sample]:
         """Convert a raw MeasureBench record to a multimodal Sample.
 
-        The ``image`` field may be a PIL Image (from parquet) or a bytes dict.
+        The ``image`` field may be a PIL image or a bytes dict.
         ``evaluator_kwargs`` is a JSON string containing the scoring parameters.
         """
         image_field = record.get('image')
@@ -97,7 +97,7 @@ class MeasureBenchAdapter(VisionLanguageAdapter):
             logger.warning(f'Record {record.get("question_id")} has no image; skipping.')
             return None
 
-        # Local Parquet and Lance may contain raw image bytes.
+        # Lance may contain raw image bytes.
         if isinstance(image_field, dict) and image_field.get('bytes'):
             image_b64 = self._image_bytes_to_base64(image_field['bytes'], default_format='jpeg')
         elif hasattr(image_field, 'save'):  # PIL Image fallback

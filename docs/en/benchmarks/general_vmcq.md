@@ -26,7 +26,7 @@ It uses MMMU-style format with image/video/audio placeholders in text, supportin
 - Default configuration uses **0-shot** evaluation
 - Primary metric: **Accuracy**
 - Train split: **dev**, Eval split: **val**
-- Raw media bytes require parquet; plaintext files carry paths, URLs, or base64 data URLs
+- Lance media columns can contain raw bytes, paths, URLs, or base64 data URLs
 - See [User Guide](https://evalscope.readthedocs.io/en/latest/advanced_guides/custom_dataset/vlm.html) for dataset format
 
 

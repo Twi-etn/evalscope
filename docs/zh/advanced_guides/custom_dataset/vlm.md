@@ -1,20 +1,21 @@
 # 多模态大模型
 
-下文的 JSONL、CSV 和 TSV 示例用于说明原生基准的输入字段。运行示例前，请在对应目录内转换成 Parquet，并保留原文件的子集和划分命名。
+下文的 JSONL、CSV 和 TSV 示例用于说明原生基准的输入字段。运行示例前，请在对应目录内转换成 Lance，并保留原文件的子集和划分命名。
 
 ```python
 from pathlib import Path
 
-from pyarrow import csv, json, parquet
+import lance
+from pyarrow import csv, json
 
 for root in (Path('custom_eval/text'), Path('custom_eval/multimodal')):
     for source in root.rglob('*.jsonl'):
         if source.parent.name in {'mcq', 'qa', 'fc', 'vqa'}:
-            parquet.write_table(json.read_json(source), source.with_suffix('.parquet'))
+            lance.write_dataset(json.read_json(source), source.with_suffix('.lance'))
 
 # For a CSV or TSV source, keep text columns as strings where the benchmark expects text.
 # table = csv.read_csv(source, parse_options=csv.ParseOptions(delimiter='\t'))  # TSV
-# parquet.write_table(table, source.with_suffix('.parquet'))
+# lance.write_dataset(table, source.with_suffix('.lance'))
 ```
 
 本框架支持两种自定义多模态评测方式：
@@ -29,7 +30,7 @@ General-VQA 支持**两种输入风格**：
 1. **OpenAI 消息数据** — 完整的结构化内容，在 OpenAI 消息模式中显式包含媒体部分（图片、音频、视频）。支持多轮对话、系统提示以及对每个内容部分的精细控制。
 2. **MMMU 风格媒体占位符数据** — 一种更简单的方式，用户消息为包含 `<image N>`、`<video N>` 或 `<audio N>` 占位符的纯文本字符串，媒体文件通过单独的索引列提供（参见[媒体占位符机制][mp-feature]）。
 
-两种记录结构都可存为 Parquet 或 Lance。
+两种记录结构都可存为 Lance。
 
 ### OpenAI 消息数据
 
@@ -493,8 +494,8 @@ General-VQA 和 General-VMCQ 共享媒体规范化工具，但验证媒体列的
 - **本地路径**：`"custom_eval/multimodal/audio/sample.wav"`
 - **HTTP/HTTPS URL**：`"https://.../sample.wav"`
 - **Base64 Data URL**：`"data:audio/wav;base64,UklGRiQ..."`
-- **未解码字典**（用于 Parquet 加载的数据集）：`{"path": "..."}` 或 `{"bytes": b"..."}`
-- **Hugging Face 数据集特征**（用于 Parquet 加载的数据集）：[Image][HFImage]、[Video][HFVideo] 或 [Audio][HFAudio] 特征对象
+- **未解码字典**（用于 Lance 加载的数据集）：`{"path": "..."}` 或 `{"bytes": b"..."}`
+- **Hugging Face 数据集特征**（用于 Lance 加载的数据集）：[Image][HFImage]、[Video][HFVideo] 或 [Audio][HFAudio] 特征对象
 
 [HFImage]: https://huggingface.co/docs/datasets/about_dataset_features#image-feature
 [HFVideo]: https://huggingface.co/docs/datasets/package_reference/main_classes#datasets.Video

@@ -1,20 +1,21 @@
 # 大语言模型
 
-下文的 JSONL、CSV 和 TSV 示例用于说明原生基准的输入字段。运行示例前，请在对应目录内转换成 Parquet，并保留原文件的子集和划分命名。
+下文的 JSONL、CSV 和 TSV 示例用于说明原生基准的输入字段。运行示例前，请在对应目录内转换成 Lance，并保留原文件的子集和划分命名。
 
 ```python
 from pathlib import Path
 
-from pyarrow import csv, json, parquet
+import lance
+from pyarrow import csv, json
 
 for root in (Path('custom_eval/text'), Path('custom_eval/multimodal')):
     for source in root.rglob('*.jsonl'):
         if source.parent.name in {'mcq', 'qa', 'fc', 'vqa'}:
-            parquet.write_table(json.read_json(source), source.with_suffix('.parquet'))
+            lance.write_dataset(json.read_json(source), source.with_suffix('.lance'))
 
 # For a CSV or TSV source, keep text columns as strings where the benchmark expects text.
 # table = csv.read_csv(source, parse_options=csv.ParseOptions(delimiter='\t'))  # TSV
-# parquet.write_table(table, source.with_suffix('.parquet'))
+# lance.write_dataset(table, source.with_suffix('.lance'))
 ```
 
 本框架支持选择题、问答题、工具调用三种预定义的数据集格式，使用流程如下：

@@ -5,7 +5,7 @@ from collections import Counter
 from typing import Any
 
 from evalscope.api.benchmark import BenchmarkMeta, MultiChoiceAdapter
-from evalscope.api.dataset import DataLoader, Dataset, Sample, resolve_local_dataset_path
+from evalscope.api.dataset import DataLoader, Dataset, DictDataLoader, Sample, resolve_local_dataset_path
 from evalscope.api.evaluator import TaskState
 from evalscope.api.metric import AggScore, SampleScore
 from evalscope.api.metric.semantics import MetricIdentity
@@ -13,6 +13,7 @@ from evalscope.api.registry import register_benchmark
 from evalscope.constants import HubType, Tags
 from evalscope.report import Report
 from evalscope.report.report import Category, Metric, Subset
+from evalscope.utils.io_utils import parquet_to_list
 
 from .utils import extract_choice
 
@@ -86,10 +87,9 @@ class SafetyBenchAdapter(MultiChoiceAdapter):
             raise ValueError(f'Unsupported SafetyBench subset: {subset}')
         relative_path = f'data/{subset}/{self.eval_split}.parquet'
         root = resolve_local_dataset_path(self)
-        return data_loader(
-            data_id_or_path=os.path.join(root, relative_path),
-            split=self.eval_split,
-            subset='default',
+        path = os.path.join(root, relative_path)
+        return DictDataLoader(
+            dict_list=parquet_to_list(path),
             sample_fields=self.record_to_sample,
             filter_func=self.sample_filter,
             limit=self.limit,
@@ -97,7 +97,7 @@ class SafetyBenchAdapter(MultiChoiceAdapter):
             shuffle=self.shuffle,
             shuffle_choices=self.shuffle_choices,
             seed=self.seed,
-        ).load()
+        ).load(location=path)
 
     def record_to_sample(self, record: dict[str, Any]) -> Sample:
         """Preserve the official ID and category while mapping the answer to a letter."""

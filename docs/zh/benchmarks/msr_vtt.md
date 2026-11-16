@@ -15,8 +15,7 @@ MSR-VTT 是一个大规模开放域视频描述（video captioning）基准测�
 
 ## 评估说明
 
-- 默认数据源：ModelScope 上的 `AI-ModelScope/msr-vtt`，使用 `validation` 划分
-- 通过在 TaskConfig 中设置 `dataset_hub="huggingface"`，仍可使用 Hugging Face 上的 `VLM2Vec/MSR-VTT`
+- 将上游 `AI-ModelScope/msr-vtt` 的 `validation` 标注转换为本地 Lance，并准备关联的视频文件
 - 主要指标：**CIDEr**
 - 其他指标：BLEU-1/2/3/4、METEOR、ROUGE-L
 - 设置 `extra_params.video_dir` 可优先使用本地媒体文件而非 URL 元数据

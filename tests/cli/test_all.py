@@ -192,8 +192,8 @@ class TestRun(unittest.TestCase):
         run_task(task_cfg=task_cfg)
 
     def test_ci_lite(self) -> None:
+        import lance
         import pyarrow as pa
-        import pyarrow.parquet as pq
 
         from evalscope.config import TaskConfig
         from evalscope.utils.io_utils import jsonl_to_list
@@ -205,8 +205,8 @@ class TestRun(unittest.TestCase):
                 'general_mcq': 'custom_eval/text/mcq/example_val.jsonl',
                 'general_qa': 'custom_eval/text/qa/example.jsonl',
             }.items():
-                path = tmp_path / f'{name}.parquet'
-                pq.write_table(pa.Table.from_pylist(jsonl_to_list(source)[:1]), path)
+                path = tmp_path / f'{name}.lance'
+                lance.write_dataset(pa.Table.from_pylist(jsonl_to_list(source)[:1]), path)
                 dataset_args[name] = {'local_path': str(path), 'few_shot_num': 0}
 
             results = run_task(TaskConfig(

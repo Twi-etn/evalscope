@@ -116,8 +116,7 @@ class CountQAAdapter(VisionLanguageAdapter):
 
     def record_to_sample(self, record: Dict[str, Any]) -> List[Sample]:
         """Expand one image record into one sample per counting question."""
-        # Both the remote loader and the local parquet loader set decode=False on Image columns,
-        # so the field always arrives as a {'bytes': ..., 'path': ...} dict.  The dataset mixes
+        # The loader returns the image column as a {'bytes': ..., 'path': ...} dict. The dataset mixes
         # JPEG and PNG images, hence the sniffed MIME type rather than a fixed one.
         image_base64 = self._image_bytes_to_base64(record['image']['bytes'], guess_mimetype=True)
 

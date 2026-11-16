@@ -39,7 +39,7 @@ exclude = ["evalscope.web.node_modules*", "evalscope.web.src*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "evalscope.version.__version__"}
-dependencies = {file = ["requirements/framework.txt"]}
+dependencies = {file = ["requirements/framework.txt", "requirements/lance.txt"]}
 
 [tool.setuptools.dynamic.optional-dependencies]
 rag              = {file = ["requirements/rag.txt"]}

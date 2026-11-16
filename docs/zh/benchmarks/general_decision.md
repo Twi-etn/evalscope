@@ -2,7 +2,7 @@
 
 ## 概述
 
-评估包含每个记录一个选择、Noul 或评分问题的本地 JSONL 数据集。
+评估包含每个记录一个选择、Noul 或评分问题的本地 Lance 数据集。
 
 ## 任务描述
 
@@ -13,7 +13,7 @@
 
 ## 主要特点
 
-- 从通过 `dataset_args.general_decision.local_path` 传递的目录中读取 `default_test.jsonl`
+- 从通过 `dataset_args.general_decision.local_path` 传递的目录中读取 `default_test.lance`
 - 字段：`id`，`state`，`question`（类型/说明/标准），`expected`；每个记录一个问题
 - 保持选项顺序、源 ID 和评分描述
 - 在其声明的能力范围内支持 System One 和原生 AutoTrust API
@@ -25,7 +25,7 @@
 - 按类型分离概率指标；评分保留其期望值和归一化 RPS
 - 无效响应被排除在普通指标之外，并反映在执行覆盖率中
 - 这是一个本地数据入口点；无需上传
-- 请参阅 [自定义决策数据集](../advanced_guides/custom_dataset/decision.md) 以获取可运行的 JSONL 示例、必需和可选字段、问题类型、指标、连续评分和配置
+- 请参阅 [自定义决策数据集](../advanced_guides/custom_dataset/decision.md) 以获取可运行的 Lance 数据准备示例、必需和可选字段、问题类型、指标、连续评分和配置
 - 请参阅 [决策评估最佳实践](../best_practice/decision_evaluation.md) 以了解部署和 Web UI
 
 ## 属性
@@ -81,7 +81,7 @@ task_cfg = TaskConfig(
     datasets=['general_decision'],
     dataset_args={
         'general_decision': {
-            'local_path': '/path/to/data',  # contains default_test.jsonl
+            'local_path': '/path/to/data',  # contains default_test.lance
         }
     },
     limit=10,  # Remove this line for formal evaluation

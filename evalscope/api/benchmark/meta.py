@@ -25,7 +25,7 @@ class BenchmarkMeta:
     """ Unique name of the benchmark."""
 
     dataset_id: str
-    """Default data source. Set a local Parquet file, Lance dataset, or split directory for local evaluation."""
+    """Default data source. Set a local Lance dataset or split directory for standard local evaluation."""
 
     data_adapter: Optional[Type['DataAdapter']] = None
     """ Data adapter class for the benchmark."""
@@ -55,7 +55,7 @@ class BenchmarkMeta:
     """ Training split to use for the benchmark."""
 
     eval_split: Optional[str] = None
-    """Evaluation split name for a split directory. Optional for a single Parquet or Lance dataset."""
+    """Evaluation split name for a split directory. Optional for a single Lance dataset."""
 
     prompt_template: Optional[str] = None
     """ Prompt template to use for the benchmark."""

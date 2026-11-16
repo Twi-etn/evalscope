@@ -6,7 +6,7 @@ EvalScope 是一个为大模型设计的评测框架，旨在提供简单易用�
 
 您可以通过命令行或 Python 代码两种方式，在指定数据集上使用默认配置评测一个模型。
 
-先将 GSM8K 测试集放在 `./data/gsm8k/main_test.parquet`，few-shot 所需的训练集放在 `./data/gsm8k/main_train.parquet`。
+先将 GSM8K 测试集放在 `./data/gsm8k/main_test.lance`，few-shot 所需的训练集放在 `./data/gsm8k/main_train.lance`。
 
 ### 方式1：使用命令行
 
@@ -264,13 +264,7 @@ run_task(task_cfg=task_cfg)
 
 原生评测从本地读取数据集，通过 `dataset_args.<benchmark>.local_path` 指定路径。
 
-通用加载器接受 Parquet 文件、Lance 数据集目录，或包含多个划分的父目录。在父目录下，优先查找 `<subset>_<split>.parquet` 或 `<subset>_<split>.lance`，再查找 `<subset>.parquet` 或 `<subset>.lance`。有的基准需要保留专用目录结构和关联的媒体文件。
-
-在项目目录安装 Lance 可选依赖：
-
-```bash
-uv pip install -e '.[lance]'
-```
+通用加载器接受 Lance 数据集目录，或包含多个划分的父目录。在父目录下，优先查找 `<subset>_<split>.lance`，再查找 `<subset>.lance`。如果评测和 few-shot 使用不同的划分，请为每个划分准备一个 Lance 数据集，并将 `local_path` 指向父目录。有的基准需要保留专用目录结构和关联的媒体文件。
 
 ```bash
 evalscope eval \
@@ -282,10 +276,10 @@ evalscope eval \
 
 省略 `dataset_revision` 时读取 Lance 最新版本，也可指定版本号或标签。通用加载器会记录本次使用的实际版本。如果数据发布了新版本，恢复旧任务时请沿用原任务固定的版本及配置。
 
-已有的 CSV、TSV 和 JSONL 可按划分转换成 Parquet 或 Lance 再评测。例如，以下命令转换仓库中的 JSONL 验证集示例：
+已有的 Parquet、CSV、TSV 和 JSONL 文件需要按划分转换成 Lance 再评测。例如，以下命令转换仓库中的 JSONL 验证集示例：
 
 ```bash
-python -c "from pyarrow import json, parquet; parquet.write_table(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.parquet')"
+python -c "import lance; from pyarrow import json; lance.write_dataset(json.read_json('custom_eval/text/mcq/example_val.jsonl'), 'example_val.lance')"
 ```
 
 

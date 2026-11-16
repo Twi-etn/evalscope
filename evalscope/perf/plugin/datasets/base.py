@@ -14,6 +14,7 @@ from evalscope.perf.plugin.datasets.utils import (
     load_tokenizer,
     tokenize_chat_messages,
 )
+from evalscope.utils.io_utils import parquet_to_list
 from evalscope.utils.logger import get_logger
 
 logger = get_logger()
@@ -368,7 +369,17 @@ class DatasetPluginBase:
 
     def load_local_dataset(self, split: str = 'train', subset: str = 'default') -> list[dict]:
         """Read local Parquet or Lance records for the requested split."""
-        return read_local_dataset_records(str(self.local_dataset_path()), split, subset)
+        path = self.local_dataset_path()
+        if path.is_file() and path.suffix == '.parquet':
+            return parquet_to_list(str(path))
+        if path.is_dir() and path.suffix != '.lance' and not (path / '_versions').is_dir():
+            for stem in (f'{subset}_{split}', subset):
+                parquet_path = path / f'{stem}.parquet'
+                if parquet_path.is_file():
+                    return parquet_to_list(str(parquet_path))
+                if (path / f'{stem}.lance').is_dir():
+                    break
+        return read_local_dataset_records(str(path), split, subset)
 
     def local_dataset_file(self, file_name: str) -> str:
         """Accept a direct dataset file or the named file under a local dataset directory."""

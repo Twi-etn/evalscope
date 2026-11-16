@@ -7,6 +7,8 @@ from pathlib import Path
 from threading import Barrier
 from types import SimpleNamespace
 
+import lance
+import pyarrow as pa
 import pytest
 
 from evalscope.api.dataset import MemoryDataset, Sample
@@ -148,7 +150,7 @@ def test_native_run_and_legacy_cache_rereview(
         {'prompt': json.dumps([{'role': 'user', 'content': f'tokens:{n - 1}'}]), 'answer': answer}
         for n, answer in [(5001, 'X'), (100, 'Y'), (2097152, 'Y')]
     ]
-    datasets.Dataset.from_list(records).to_parquet(data_path / 'default_train.parquet')
+    lance.write_dataset(pa.Table.from_pylist(records), data_path / 'default_train.lance')
     output_path = tmp_path / 'output'
     base = {
         'model': 'mock', 'eval_type': 'mock_llm', 'datasets': ['openai_mrcr'],

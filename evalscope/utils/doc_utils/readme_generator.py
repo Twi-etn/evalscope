@@ -229,7 +229,7 @@ def _format_usage_section(
     if extra_params:
         dataset_args_comments.append('            # extra_params: {}  # uses default extra parameters')
     if requires_local_dataset:
-        dataset_args_comments.append("            'local_path': '/path/to/data',  # contains default_test.parquet")
+        dataset_args_comments.append("            'local_path': '/path/to/data',  # contains default_test.lance")
 
     # Build CLI command
     cli_lines = [

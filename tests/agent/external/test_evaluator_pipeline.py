@@ -12,8 +12,8 @@ That pins both the score path and the agent → model wiring.
 
 from pathlib import Path
 
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope.api.evaluator.result_io import read_result_rows
@@ -45,8 +45,8 @@ def test_external_agent_through_evaluator(tmp_path: Path) -> None:
     """``general_mcq`` + mock LLM + mock external agent, scored end-to-end."""
     from evalscope.config import TaskConfig
 
-    dataset_path = tmp_path / 'example_val.parquet'
-    pq.write_table(
+    dataset_path = tmp_path / 'example_val.lance'
+    lance.write_dataset(
         pa.Table.from_pylist([{'question': 'Choose the second option.', 'A': 'first', 'B': 'second', 'answer': 'B'}]),
         dataset_path,
     )

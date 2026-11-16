@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 
 import httpx
+import lance
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pytest
 
 from evalscope import TaskConfig, run_task
@@ -270,12 +270,12 @@ def test_generated_usage_declares_protocol_and_local_path() -> None:
     readme = generate_readme_from_dict('general_decision', metadata)
     assert '--eval-type systemone_api' in readme
     assert "eval_type='systemone_api'" in readme
-    assert 'default_test.parquet' in readme
+    assert 'default_test.lance' in readme
     assert 'local_path' in readme
 
 
 @pytest.mark.parametrize('subsets', [None, ['routing', 'quality'], ['continuous']])
-def test_general_decision_reads_named_parquet_files(
+def test_general_decision_reads_named_lance_datasets(
     subsets: list[str] | None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Exercise local loading and grading with mixed schemas and unrelated neighboring files."""
@@ -300,7 +300,7 @@ def test_general_decision_reads_named_parquet_files(
              'expected': str(row['expected'])}
             for row in rows
         ]
-        pq.write_table(pa.Table.from_pylist(records_for_table), data / f'{subset}_test.parquet')
+        lance.write_dataset(pa.Table.from_pylist(records_for_table), data / f'{subset}_test.lance')
     calls = []
 
     def handle(req: httpx.Request) -> httpx.Response:

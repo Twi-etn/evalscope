@@ -53,7 +53,7 @@ with multiple reference captions.
 ## Evaluation Notes
 
 - Default data source: `AI-ModelScope/msr-vtt` on ModelScope, `validation` split
-- Prepare local Parquet or Lance annotations and supply the video files locally.
+- Prepare local Lance annotations and supply the video files locally.
 - Primary metric: **CIDEr**
 - Additional metrics: BLEU-1/2/3/4, METEOR, ROUGE-L
 - Set `extra_params.video_dir` to prefer local media files over URL metadata

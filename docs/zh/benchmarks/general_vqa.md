@@ -11,7 +11,7 @@ General-VQA 是一个可自定义的视觉问答（Visual Question Answering）�
 - **任务类型**：视觉问答（Visual Question Answering）
 - **输入**：图像/视频/音频 + 以 OpenAI 聊天格式组织的问题
 - **输出**：自由格式的文本答案
-- **灵活性**：通过 TSV/JSONL 文件支持自定义数据集
+- **灵活性**：支持本地 Lance 自定义数据集
 
 ## 核心特性
 
@@ -19,7 +19,7 @@ General-VQA 是一个可自定义的视觉问答（Visual Question Answering）�
 - 支持多种图像/视频/音频输入方式（本地路径、URL、base64）
 - **媒体占位符**：在纯文本用户消息中使用 ``<image N>`` / ``<video N>`` / ``<audio N>``，并配合带索引的媒体列（如 ``image_1``、``video_1``、``audio_1`` 等），以简化数据格式
 - 支持 BLEU 和 Rouge 指标的灵活评估
-- 通过本地文件加载支持自定义数据集
+- 支持从本地 Lance 读取自定义数据集
 - 可扩展以适用于各种 VQA 应用场景
 
 ## 评估说明

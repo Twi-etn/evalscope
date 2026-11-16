@@ -26,7 +26,7 @@ General-VMCQ 是一个可自定义的视觉多项选择题问答基准测试，�
 - 默认配置使用 **0-shot** 评估
 - 主要指标：**准确率（Accuracy）**
 - 训练集划分：**dev**，评估集划分：**val**
-- 原始媒体字节数据需使用 parquet 格式；纯文本文件应包含路径、URL 或 base64 数据 URL
+- Lance 媒体列可以保存原始字节、路径、URL 或 base64 数据 URL
 - 数据集格式详情请参阅 [用户指南](https://evalscope.readthedocs.io/zh-cn/latest/advanced_guides/custom_dataset/vlm.html)
 
 ## 属性
