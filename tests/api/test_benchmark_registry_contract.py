@@ -27,6 +27,7 @@ SIMPLE_NAME = 'gsm8k'
 MULTI_NAME_SIBLINGS = ('aime24', 'aime25')
 # A benchmark whose name is a suffixed variant of its module leaf.
 SUFFIXED_NAME = 'gpqa_diamond'
+MINIMUM_CATALOG_SIZE = 183
 
 
 def test_get_benchmark_resolves_a_simple_name() -> None:
@@ -107,8 +108,14 @@ def test_enumeration_exposes_the_whole_shipped_catalog() -> None:
     """Guards against a discovery change silently shrinking the registry."""
     names = set(BENCHMARK_REGISTRY.keys())
 
-    assert len(names) >= 190, f'registry unexpectedly small: {len(names)} benchmarks'
-    assert {SIMPLE_NAME, SUFFIXED_NAME, *MULTI_NAME_SIBLINGS} <= names
+    assert len(names) >= MINIMUM_CATALOG_SIZE, f'registry unexpectedly small: {len(names)} benchmarks'
+    assert {
+        SIMPLE_NAME, SUFFIXED_NAME, *MULTI_NAME_SIBLINGS,
+        'general_decision', 'jevbench', 'open_decisions', 'stsb', 'ifbench', 'ifeval', 'multi_if',
+    } <= names
+    assert names.isdisjoint({
+        'k2_verifier', 'kimi_verifier', 'minimax_verifier', 'mbpp', 'mbpp_plus', 'multiple_humaneval', 'multiple_mbpp',
+    })
 
 
 def test_every_registered_entry_carries_a_usable_adapter() -> None:
@@ -230,7 +237,7 @@ def test_resolving_one_benchmark_loads_only_a_few_modules(fresh_interpreter: Dic
 
 
 def test_full_enumeration_still_loads_the_whole_catalog(fresh_interpreter: Dict[str, Any]) -> None:
-    assert fresh_interpreter['registered_after_enumeration'] >= 190
+    assert fresh_interpreter['registered_after_enumeration'] >= MINIMUM_CATALOG_SIZE
 
 
 def test_subpackage_attributes_are_not_shadowed_by_star_imports(fresh_interpreter: Dict[str, Any]) -> None:
@@ -273,7 +280,7 @@ def test_an_unindexed_name_falls_back_to_loading_everything() -> None:
     )
 
     assert measured['resolved'] is True
-    assert measured['registered'] >= 190, 'fallback should have loaded the whole catalog'
+    assert measured['registered'] >= MINIMUM_CATALOG_SIZE, 'fallback should have loaded the whole catalog'
 
 
 def test_invalid_index_shape_falls_back_to_an_empty_mapping(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -304,7 +311,7 @@ def test_a_mismatched_index_entry_falls_back_to_loading_everything() -> None:
     )
 
     assert measured['resolved'] is True
-    assert measured['registered'] >= 190, 'mismatched index should have triggered a full load'
+    assert measured['registered'] >= MINIMUM_CATALOG_SIZE, 'mismatched index should have triggered a full load'
 
 
 def test_lazy_registry_serializes_concurrent_first_resolution() -> None:

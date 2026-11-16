@@ -43,7 +43,7 @@ The architecture includes the following modules:
 - **Visualization Platforms**: Supports Web Dashboard/Wandb/SwanLab
 
 ## Framework Features
-- **Benchmark Datasets**: Preloaded with several commonly used test benchmarks, including MMLU, CMMLU, C-Eval, GSM8K, HellaSwag, TruthfulQA, MATH, MBPP, etc.
+- **Benchmark Datasets**: Preloaded with several commonly used test benchmarks, including MMLU, CMMLU, C-Eval, GSM8K, HellaSwag, TruthfulQA, and MATH.
 - **Evaluation Metrics**: Implements various commonly used evaluation metrics.
 - **Model Access**: A unified model access mechanism that is compatible with the Generate and Chat interfaces of multiple model families.
 - **Automated Evaluation**: Includes automatic evaluation of objective questions and complex task evaluation using expert models.

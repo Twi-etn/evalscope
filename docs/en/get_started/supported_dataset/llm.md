@@ -57,8 +57,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `mask` | [MASK](../../benchmarks/mask.md) | `Knowledge`, `MultiTurn`, `QA`, `Safety` |
 | `math_500` | [MATH-500](../../benchmarks/math_500.md) | `Math`, `Reasoning` |
 | `math_qa` | [MathQA](../../benchmarks/math_qa.md) | `MCQ`, `Math`, `Reasoning` |
-| `mbpp` | [MBPP](../../benchmarks/mbpp.md) | `Coding` |
-| `mbpp_plus` | [MBPP-Plus](../../benchmarks/mbpp_plus.md) | `Coding` |
 | `mgsm` | [MGSM](../../benchmarks/mgsm.md) | `Math`, `MultiLingual`, `Reasoning` |
 | `milu` | [MILU](../../benchmarks/milu.md) | `Knowledge`, `MCQ`, `MultiLingual` |
 | `minerva_math` | [Minerva-Math](../../benchmarks/minerva_math.md) | `Math`, `Reasoning` |
@@ -72,8 +70,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 | `mt_bench` | [MT-Bench](../../benchmarks/mt_bench.md) | `Coding`, `InstructionFollowing`, `Math`, `MultiTurn`, `QA`, `Reasoning` |
 | `multi_if` | [Multi-IF](../../benchmarks/multi_if.md) | `InstructionFollowing`, `MultiLingual`, `MultiTurn` |
 | `multi_nerd` | [MultiNERD](../../benchmarks/multi_nerd.md) | `Knowledge`, `NER` |
-| `multiple_humaneval` | [MultiPL-E HumanEval](../../benchmarks/multiple_humaneval.md) | `Coding` |
-| `multiple_mbpp` | [MultiPL-E MBPP](../../benchmarks/multiple_mbpp.md) | `Coding` |
 | `ncbi` | [NCBI](../../benchmarks/ncbi.md) | `Knowledge`, `NER` |
 | `needle_haystack` | [Needle-in-a-Haystack](../../benchmarks/needle_haystack.md) | `LongContext`, `Retrieval` |
 | `ontonotes5` | [OntoNotes5](../../benchmarks/ontonotes5.md) | `Knowledge`, `NER` |
@@ -173,8 +169,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/mask.md
 ../../benchmarks/math_500.md
 ../../benchmarks/math_qa.md
-../../benchmarks/mbpp.md
-../../benchmarks/mbpp_plus.md
 ../../benchmarks/mgsm.md
 ../../benchmarks/milu.md
 ../../benchmarks/minerva_math.md
@@ -188,8 +182,6 @@ Below is the list of supported LLM benchmarks. Click on a benchmark name for det
 ../../benchmarks/mt_bench.md
 ../../benchmarks/multi_if.md
 ../../benchmarks/multi_nerd.md
-../../benchmarks/multiple_humaneval.md
-../../benchmarks/multiple_mbpp.md
 ../../benchmarks/ncbi.md
 ../../benchmarks/needle_haystack.md
 ../../benchmarks/ontonotes5.md

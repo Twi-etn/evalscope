@@ -1,8 +1,8 @@
 import pytest
 
 from evalscope.api.registry import BENCHMARK_REGISTRY
-from evalscope.benchmarks.ifbench.ifbench_adapter import IFBenchAdapter
-from evalscope.benchmarks.ifbench.instructions import (
+from evalscope.benchmarks.instruction_following.ifbench.ifbench_adapter import IFBenchAdapter
+from evalscope.benchmarks.instruction_following.ifbench.instructions import (
     AlphabetLoopChecker,
     CharacterCountUniqueWordsChecker,
     KeywordsMultipleChecker,

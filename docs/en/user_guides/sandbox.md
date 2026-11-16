@@ -11,7 +11,7 @@ Code evaluations run model-generated programs, while agent evaluations may execu
 | [E2B remote sandboxes](#e2b) | Use cloud environments without local Docker or your own server | An official E2B or Aliyun account and a sandbox API key |
 | [VolcEngine SandboxFusion](#sandboxfusion) | Connect to an existing SandboxFusion service | An accessible service endpoint |
 
-The examples below require Python 3.11 or later. Code evaluation benchmarks such as [MBPP](../benchmarks/mbpp.md) typically provide a default image. For [agent evaluations](agent/index.md), check the benchmark documentation for environment requirements.
+The examples below require Python 3.11 or later. [OmniDocBench v1.6](../benchmarks/omni_doc_bench_v1_6.md) supplies a default scoring image and requires Docker with amd64 support. For [agent evaluations](agent/index.md), check the benchmark documentation for environment requirements.
 
 (local-docker)=
 ## Quick Start: Local Docker
@@ -23,7 +23,7 @@ pip install 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 ```
 
-The following example evaluates five MBPP samples using Docker:
+The following example scores five OmniDocBench v1.6 pages using Docker.
 
 ```python
 import os
@@ -35,7 +35,8 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['mbpp'],
+    datasets=['omni_doc_bench_v1_6'],
+    dataset_args={'omni_doc_bench_v1_6': {'local_path': '/path/to/OmniDocBench'}},
     limit=5,
     eval_batch_size=4,
     generation_config={'max_tokens': 4096, 'temperature': 0},
@@ -77,7 +78,7 @@ To run without deploying Docker, choose [official E2B](https://e2b.dev/) or [Ali
 ### Install Dependencies and Set API Keys
 
 ```bash
-pip install -U 'evalscope[sandbox]'
+pip install -U 'evalscope[sandbox,wide_search]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 export E2B_API_KEY='<your-sandbox-api-key>'
 ```
@@ -87,7 +88,7 @@ The example uses DashScope and reads its model API key from `DASHSCOPE_API_KEY`.
 
 ### Run an Evaluation
 
-The following example evaluates one MBPP sample on E2B.
+The following example evaluates one WideSearch task on E2B.
 
 ```python
 import os
@@ -101,7 +102,16 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['mbpp'],
+    datasets=['wide_search'],
+    dataset_args={'wide_search': {'local_path': '/path/to/WideSearch'}},
+    judge={
+        'strategy': 'llm',
+        'models': {
+            'model_id': 'qwen3.8-flash',
+            'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            'api_key': os.environ['DASHSCOPE_API_KEY'],
+        },
+    },
     limit=1,
     eval_batch_size=1,
     sandbox={
@@ -146,8 +156,6 @@ For custom images without a mapping, prepare a template with the benchmark's dep
 | Benchmark | Official E2B | Aliyun Agent Sandbox |
 | --- | --- | --- |
 | [WideSearch](../benchmarks/wide_search.md) | Supported | Supported; selects the `base` template automatically (Python 3.13) |
-| [MBPP](../benchmarks/mbpp.md) | Supported | Supported; selects the `base` template automatically (Python 3.13) |
-| [MBPPPlus](../benchmarks/mbpp_plus.md) | Requires an image or template with NumPy | Requires a template with NumPy |
 
 For custom environments, prepare dependencies, test data and working directories as described in each benchmark's documentation. WideSearch also needs network access to search services and target websites. Use [native agent mode](agent/native.md) for agent evaluations.
 
@@ -155,7 +163,7 @@ For custom environments, prepare dependencies, test data and working directories
 
 ### Set Concurrency and Sandbox Lifetime
 
-`eval_batch_size` controls how many samples run concurrently, while `sandbox.manager_config.max_sandboxes` limits the number of live sandboxes. Check your provider quota before increasing concurrency. For benchmarks that use a code execution pool, such as MBPP, `sandbox.pool_size` must not exceed `max_sandboxes`. If omitted, `pool_size` follows `eval_batch_size`.
+`eval_batch_size` controls how many samples run concurrently, while `sandbox.manager_config.max_sandboxes` limits the number of live sandboxes. Check your provider quota before increasing concurrency. For benchmarks that use a code execution pool, `sandbox.pool_size` must not exceed `max_sandboxes`. If omitted, `pool_size` follows `eval_batch_size`.
 
 `sandbox.default_config.sandbox_timeout` sets the maximum time from sandbox creation to removal, defaulting to 3600 seconds. This differs from the agent's per-command `command_timeout` and the benchmark test script timeout. Allow enough time for the whole task.
 

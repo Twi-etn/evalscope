@@ -124,7 +124,7 @@ task_config = TaskConfig(
 1.  在 `generation_config` 中设置 `temperature=0`。
 2.  设置固定的 `seed` 参数。
 
-**Q: 评测 `mbpp` 等代码生成任务时，分数远低于预期？**
+**Q: 评测代码生成任务时，分数远低于预期？**
 
 **A:**
 1.  **检查模型类型**：请使用 Instruct 或 Chat 模型，Base 模型可能因不遵循指令而产生复读等问题。

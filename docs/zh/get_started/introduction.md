@@ -43,7 +43,7 @@ EvalScope 不仅仅是一个评测工具，它是您模型优化之旅的得力�
 - **可视化平台**：支持 Web Dashboard/Wandb/SwanLab
 
 ## 框架特点
-- **基准数据集**：预置了多个常用测试基准，包括：MMLU、CMMLU、C-Eval、GSM8K、HellaSwag、TruthfulQA、MATH、MBPP等。
+- **基准数据集**：预置了多个常用测试基准，包括：MMLU、CMMLU、C-Eval、GSM8K、HellaSwag、TruthfulQA、MATH 等。
 - **评测指标**：实现了多种常用评测指标。
 - **模型接入**：统一的模型接入机制，兼容多个系列模型的Generate、Chat接口。
 - **自动评测**：包括客观题自动评测和使用专家模型进行的复杂任务评测。

@@ -98,7 +98,7 @@ class IFEvalAdapter(DefaultDataAdapter):
         """
         Calculate evaluation scores by comparing prediction with reference.
         """
-        from evalscope.benchmarks.ifeval.utils import process_results
+        from .utils import process_results
 
         # Initialize the score object with prediction details
         score = Score(

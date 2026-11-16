@@ -13,9 +13,6 @@ def generate_collection():
             DatasetInfo(name='ceval', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
             DatasetInfo(name='iquiz', weight=1, task_type='exam', tags=['zh'], args={'few_shot_num': 0}),
         ]),
-        CollectionSchema(name='Code', datasets=[
-            DatasetInfo(name='mbpp', weight=1, task_type='code', tags=['en']),
-        ]),
         CollectionSchema(name='Math&Science', datasets=[
             DatasetInfo(name='math_500', weight=1, task_type='math', tags=['en'], args={'few_shot_num': 0}),
             DatasetInfo(name='aime24', weight=1, task_type='math', tags=['en'], args={'few_shot_num': 0}),

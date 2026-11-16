@@ -1,7 +1,6 @@
 """Tool payload errors must survive parsing, caching and schema-score aggregation."""
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
 import pytest
 from openai.types.chat import ChatCompletionMessage
@@ -15,7 +14,6 @@ from evalscope.api.registry import get_benchmark
 from evalscope.config import TaskConfig
 from evalscope.models.utils.openai import chat_tool_calls_from_openai
 
-BENCHMARKS = ['general_fc', 'k2_verifier', 'minimax_verifier']
 CASES = [
     pytest.param(['{}'], 1, id='valid-optional-empty'),
     pytest.param(['{"query": "weather"}'], 1, id='valid-argument'),
@@ -28,10 +26,9 @@ CASES = [
 ]
 
 
-@pytest.fixture(params=BENCHMARKS)
-def adapter(request: pytest.FixtureRequest) -> FunctionCallAdapter:
-    name = request.param
-    return get_benchmark(name, TaskConfig(model='mock', datasets=[name]))
+@pytest.fixture
+def adapter() -> FunctionCallAdapter:
+    return get_benchmark('general_fc', TaskConfig(model='mock', datasets=['general_fc']))
 
 
 def make_state(
@@ -43,9 +40,8 @@ def make_state(
     expected_call: bool = True,
     cached_output: bool = False,
     sample_id: int = 0,
-    tools: list[dict[str, Any]] | None = None,
 ) -> TaskState:
-    tools = tools if tools is not None else [{
+    tools = [{
         'type': 'function', 'function': {
             'name': 'search', 'description': 'Search with an optional query.',
             'parameters': {'type': 'object', 'properties': {'query': {'type': 'string'}},
@@ -54,7 +50,7 @@ def make_state(
     }]
     sample = adapter.record_to_sample({
         'messages': [{'role': 'user', 'content': 'Search for something.'}],
-        'tools': tools, 'should_call_tool': expected_call, 'expected_tool_call': expected_call,
+        'tools': tools, 'should_call_tool': expected_call,
     })
     sample.id = sample_id
     raw_message = ChatCompletionMessage.model_validate({
@@ -85,16 +81,11 @@ def test_tool_payload_validity(
     state = make_state(adapter, arguments, cached_output=cached_output)
     score = adapter.calculate_metrics(state)
     assert schema_score(adapter, [score]) == expected
-    if adapter.name != 'minimax_verifier':
-        assert score.score.value['successful_tool_call'] == expected
-        assert score.score.value['finish_reason_tool_call'] == 1
-        if not expected:
-            assert score.score.metadata['error_reason']
-    else:
-        assert score.score.value['tool_calls_schema_valid'] == expected
-        assert score.score.value['tool_calls_match'] == 1
-    if adapter.name == 'general_fc':
-        assert score.score.value['passed'] == bool(expected)
+    assert score.score.value['successful_tool_call'] == expected
+    assert score.score.value['finish_reason_tool_call'] == 1
+    if not expected:
+        assert score.score.metadata['error_reason']
+    assert score.score.value['passed'] == bool(expected)
     calls = state.output.message.tool_calls or []
     if arguments and any(value.endswith((':', ',}')) for value in arguments):
         assert any(call.parse_error for call in calls)
@@ -112,12 +103,7 @@ def test_normal_no_call_is_not_a_validation_error(adapter: FunctionCallAdapter) 
     score = adapter.calculate_metrics(make_state(adapter, None, stop_reason='stop', expected_call=False))
     assert not (score.score.metadata or {}).get('error_reason')
     assert schema_score(adapter, [score]) == 0
-    if adapter.name == 'general_fc':
-        assert score.score.value['passed'] is True
-    elif adapter.name == 'minimax_verifier':
-        assert score.score.value['tool_calls_match'] == 1
-    else:
-        assert score.score.value['finish_reason_tool_call'] == 0
+    assert score.score.value['passed'] is True
 
 
 def test_inference_error_cannot_become_a_valid_call(adapter: FunctionCallAdapter) -> None:
@@ -152,18 +138,3 @@ def test_mixed_run_scores_and_reports_only_valid_calls(adapter: FunctionCallAdap
 
 def test_evaluation_version_changes_with_scoring(adapter: FunctionCallAdapter) -> None:
     assert adapter.benchmark_meta.evaluation_version == 'v1.1'
-
-
-@pytest.mark.parametrize(('arguments', 'expected'), [
-    (['{"command": ["ls", "-l"]}'], 1),
-    (['{"command": ["ls -l"]}'], 0),
-])
-def test_minimax_command_array_check_is_preserved(arguments: list[str], expected: int) -> None:
-    adapter = get_benchmark('minimax_verifier', TaskConfig(model='mock', datasets=['minimax_verifier']))
-    tools = [{'type': 'function', 'function': {
-        'name': 'execute', 'description': 'Execute an array command.', 'parameters': {
-            'type': 'object', 'properties': {'command': {'type': 'array', 'items': {'type': 'string'}}},
-            'required': ['command'],
-        },
-    }}]
-    assert schema_score(adapter, [adapter.calculate_metrics(make_state(adapter, arguments, tools=tools))]) == expected

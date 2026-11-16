@@ -118,18 +118,3 @@ schema = CollectionSchema(name='rag_index', datasets=[
     DatasetInfo(name='ifeval', weight=0.4, task_type='instruction_following', tags=['rag']),
 ])
 ```
-
-
-### 案例 B：代码补全与分析指数
-- 痛点：通用榜单无法全面反映代码理解与生成能力。
-- 思路：代码生成 + 真实issue。
-- 配置示例：
-```python
-from evalscope.collections import CollectionSchema, DatasetInfo
-
-schema = CollectionSchema(name='code_index', datasets=[
-    DatasetInfo(name='mbpp', weight=2.0, task_type='code', tags=['python']),
-    DatasetInfo(name='mbpp_plus', weight=1.0, task_type='code', tags=['zh', 'finance'], args={'subset_list': ['v5'], 'review_timeout': 6, 'extra_params': {'start_date': '2024-08-01','end_date': '2025-02-28'},}),
-])
-```
-

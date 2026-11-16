@@ -154,11 +154,12 @@ evalscope benchmark-info gsm8k --format markdown   # full docs
 
 ## Workflow 6: Sandbox Evaluation
 
-For code-execution benchmarks (MBPP, etc.) with Docker isolation:
+For OmniDocBench v1.6 scoring with Docker isolation:
 
 ```bash
-evalscope eval --model qwen-plus --datasets mbpp \
-  --api-url http://localhost:8000/v1/chat/completions \
+evalscope eval --model qwen-plus --datasets omni_doc_bench_v1_6 \
+  --api-url http://localhost:8000/v1 \
+  --dataset-args '{"omni_doc_bench_v1_6":{"local_path":"/path/to/OmniDocBench"}}' \
   --sandbox '{"enabled": true, "engine": "docker"}'
 ```
 
@@ -171,7 +172,7 @@ For up-to-date results: `evalscope benchmark-info --list --tag <TAG>`
 | User Need | Tags | Typical Benchmarks |
 |-----------|------|--------------------|
 | Math / reasoning | Math, Reasoning | gsm8k, math_500, aime24, competition_math |
-| Coding | Coding | mbpp, mbpp_plus |
+| Coding | Coding | terminal_bench_v2 |
 | General knowledge | Knowledge, MCQ | mmlu, ceval, cmmlu, mmlu_pro |
 | Chinese | Chinese | ceval, cmmlu, chinese_simpleqa |
 | Multimodal / vision | MultiModal | mmmu, mm_bench, math_vista |
@@ -181,7 +182,7 @@ For up-to-date results: `evalscope benchmark-info --list --tag <TAG>`
 | Agent | Agent | tau_bench |
 
 Common suites:
-- **General LLM**: `mmlu gsm8k mbpp ifeval`
+- **General LLM**: `mmlu gsm8k ifeval`
 - **Chinese**: `ceval cmmlu chinese_simpleqa`
 - **Multimodal**: `mmmu mm_bench math_vista mm_star`
 

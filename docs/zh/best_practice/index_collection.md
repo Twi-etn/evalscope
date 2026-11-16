@@ -10,8 +10,6 @@
     
 *   AIME25：数学竞赛题，代表“数学推理”能力；
     
-*   MBPPPlus：Python 代码生成，代表“编程能力”。
-    
 
 这些榜单就像是模型的“高考成绩单”，它们当然重要，因为它们确立了模型在不同领域里的基准智力水平（SOTA）。但问题在于，能在不同学科考出高分的模型，是否就能胜任实际的“岗位工作”？在模型使用的过程中，可能很多人都会遇到过类似这样的困惑：
 
@@ -234,27 +232,7 @@ evalscope service
 
 EvalScope 的 Index 构建能力非常灵活，除了 RAG，你还可以构建各种垂直领域的指数。
 
-### 案例 A：代码补全与分析指数
-
-关注 Python 代码生成能力以及真实的 Issue 修复能力，且更看重 Python 能力。
-
-```python
-schema = CollectionSchema(name='code_index', datasets=[
-    # 基础 Python 代码生成，给予较高的权重（60%）
-    DatasetInfo(name='mbpp', weight=0.6, task_type='code', tags=['python']),
-    
-    # 真实场景代码竞赛题，包含特定时间段的数据，40% 权重
-    DatasetInfo(
-        name='mbpp_plus',
-        weight=0.4, 
-        task_type='code', 
-        tags=['complex']
-    ),
-])
-
-```
-
-### 案例 B：模型推理能力指数 (Reasoning Index)
+### 模型推理能力指数 (Reasoning Index)
 
 混合多种推理任务，并通过嵌套结构管理中英文数据集。
 

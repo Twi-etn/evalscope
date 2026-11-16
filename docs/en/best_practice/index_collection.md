@@ -10,8 +10,6 @@ In these charts, we often see those familiar benchmark names:
     
 *   AIME25: Math competition problems, representing "mathematical reasoning" capability;
     
-*   MBPPPlus: Python code generation, representing "programming ability".
-    
 
 These rankings are like the model's "college entrance exam report card." They are certainly important because they establish the model's baseline intelligence level (SOTA) across different domains. But the question is: can a model that scores high across different subjects handle actual "job requirements"? During model usage, many people may have encountered similar confusion:
 
@@ -237,27 +235,7 @@ Open your browser and visit `http://127.0.0.1:9000` to view the model score dist
 
 EvalScope's Index building capability is very flexible. Besides RAG, you can also build indices for various vertical domains.
 
-### Case A: Code Completion and Analysis Index
-
-Compare Python code generation on the basic and expanded MBPP test suites.
-
-```python
-schema = CollectionSchema(name='code_index', datasets=[
-    # Basic Python code generation, given higher weight (60%)
-    DatasetInfo(name='mbpp', weight=0.6, task_type='code', tags=['python']),
-    
-    # Code correctness with the expanded MBPPPlus tests (40%)
-    DatasetInfo(
-        name='mbpp_plus',
-        weight=0.4, 
-        task_type='code', 
-        tags=['complex']
-    ),
-])
-
-```
-
-### Case B: Model Reasoning Index
+### Model Reasoning Index
 
 Mix multiple reasoning tasks and manage Chinese and English datasets through nested structures.
 

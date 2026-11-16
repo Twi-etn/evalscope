@@ -118,17 +118,3 @@ schema = CollectionSchema(name='rag_index', datasets=[
     DatasetInfo(name='ifeval', weight=0.4, task_type='instruction_following', tags=['rag']),
 ])
 ```
-
-
-### Case B: Code Completion & Analysis Index
-- **Pain Point**: General leaderboards cannot comprehensively reflect code understanding and generation capabilities.
-- **Approach**: Code generation + real issues.
-- **Configuration Example**:
-```python
-from evalscope.collections import CollectionSchema, DatasetInfo
-
-schema = CollectionSchema(name='code_index', datasets=[
-    DatasetInfo(name='mbpp', weight=2.0, task_type='code', tags=['python']),
-    DatasetInfo(name='mbpp_plus', weight=1.0, task_type='code', tags=['zh', 'finance'], args={'subset_list': ['v5'], 'review_timeout': 6, 'extra_params': {'start_date': '2024-08-01','end_date': '2025-02-28'},}),
-])
-```

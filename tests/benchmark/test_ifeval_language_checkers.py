@@ -4,7 +4,7 @@ from typing import Set
 import langdetect.detector_factory as detector_factory
 import pytest
 
-from evalscope.benchmarks.ifeval import instructions
+from evalscope.benchmarks.instruction_following.ifeval import instructions
 
 LOWERCASE_ENGLISH_RESPONSE = '\n\nwhat are the boys holding?'
 

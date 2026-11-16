@@ -60,9 +60,9 @@ omnidoc_bench    = {file = ["evalscope/benchmarks/omnidoc_bench/legacy/requireme
 olmocr_bench     = {file = ["evalscope/benchmarks/olmocr_bench/requirements.txt"]}
 maritime_ocr_bench = {file = ["evalscope/benchmarks/maritime_ocr_bench/requirements.txt"]}
 miniwob          = {file = ["evalscope/benchmarks/miniwob/requirements.txt"]}
-ifeval           = {file = ["evalscope/benchmarks/ifeval/requirements.txt"]}
-ifbench          = {file = ["evalscope/benchmarks/ifbench/requirements.txt"]}
-multi_if         = {file = ["evalscope/benchmarks/multi_if/requirements.txt"]}
+ifeval           = {file = ["evalscope/benchmarks/instruction_following/ifeval/requirements.txt"]}
+ifbench          = {file = ["evalscope/benchmarks/instruction_following/ifbench/requirements.txt"]}
+multi_if         = {file = ["evalscope/benchmarks/instruction_following/multi_if/requirements.txt"]}
 olympiad_bench   = {file = ["evalscope/benchmarks/stem/olympiad_bench/requirements.txt"]}
 needle_haystack  = {file = ["evalscope/benchmarks/needle_haystack/requirements.txt"]}
 openai_mrcr      = {file = ["evalscope/benchmarks/openai_mrcr/requirements.txt"]}

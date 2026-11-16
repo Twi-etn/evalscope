@@ -164,7 +164,7 @@ def test_cross_sample_calibration_and_auc() -> None:
 
 
 def test_official_open_decisions_perfect_and_missing() -> None:
-    from evalscope.benchmarks.open_decisions.utils import score
+    from evalscope.benchmarks.decision.open_decisions.utils import score
 
     tasks, predictions = [], []
     for kind in ['choice', 'noul', 'score']:
@@ -227,7 +227,7 @@ def test_typed_dataset_native_pipeline(name: str, kind: str, tmp_path: Path, mon
 
 
 def test_pinned_official_reference_fixture() -> None:
-    from evalscope.benchmarks.open_decisions.utils import score
+    from evalscope.benchmarks.decision.open_decisions.utils import score
 
     fixture = json.loads((Path(__file__).parent / 'data/open_decisions_official.json').read_text())
     assert fixture['source_revision'] == '5026a13ad6e5a8606810a3a5c4e410d8d6638e71'
@@ -463,8 +463,8 @@ def test_average_precision_is_defined_for_all_positive_gold() -> None:
 def test_open_decisions_accepts_rounded_probability_boundary(kind: str, probabilities: dict[str, float]) -> None:
     from evalscope.api.evaluator import TaskState
     from evalscope.api.model import ModelOutput
-    from evalscope.benchmarks.open_decisions.utils import normalized
-    from evalscope.benchmarks.open_decisions.utils import score as official_score
+    from evalscope.benchmarks.decision.open_decisions.utils import normalized
+    from evalscope.benchmarks.decision.open_decisions.utils import score as official_score
 
     adapter = get_benchmark('open_decisions', TaskConfig(model='test', eval_type='systemone_api', datasets=['open_decisions']))
     q = question(kind)

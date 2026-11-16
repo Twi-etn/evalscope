@@ -5,7 +5,7 @@ model-generated code inside isolated sandboxes.  Two execution paths share
 the same service layer:
 
 * **Code execution pool** — a warm pool of long-lived sandboxes used by code
-  benchmarks (e.g. MBPP) through the
+  scorers such as OmniDocBench v1.6 through the
   `CodeExecutionSandboxMixin`.
 * **Per-sample** — one sandbox per sample created by Agent environments
   (e.g. `EnclaveAgentEnvironment`) for agent benchmarks.
@@ -36,18 +36,15 @@ from evalscope import TaskConfig
 from evalscope.config import SandboxTaskConfig
 
 task = TaskConfig(
-    datasets=['mbpp'],
+    datasets=['omni_doc_bench_v1_6'],
+    dataset_args={'omni_doc_bench_v1_6': {'local_path': '/path/to/OmniDocBench'}},
     sandbox=SandboxTaskConfig(
         enabled=True,
-        engine='docker',          # 'docker' | 'volcengine'
-        default_config={
-            'image': 'python:3.11-slim',
-            'working_dir': '/workspace',
-        },
+        engine='docker',
         manager_config={
             # e.g. 'base_url': 'unix:///var/run/docker.sock'
         },
-        pool_size=8,              # optional, defaults to eval_batch_size
+        pool_size=1,
     ),
 )
 ```

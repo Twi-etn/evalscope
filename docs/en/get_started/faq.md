@@ -123,7 +123,7 @@ task_config = TaskConfig(
 1.  Set `temperature=0` in `generation_config`.
 2.  Set a fixed `seed` parameter.
 
-**Q: When evaluating `mbpp` and other code generation tasks, scores are much lower than expected?**
+**Q: When evaluating code generation tasks, scores are much lower than expected?**
 
 **A:**
 1.  **Check model type**: Use Instruct or Chat models. Base models may have issues like repetition due to not following instructions.

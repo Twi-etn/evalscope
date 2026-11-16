@@ -1,8 +1,7 @@
 """FunctionCallAdapter: shared base for function-calling benchmarks.
 
-Function-calling benchmarks (k2_verifier, minimax_verifier, kimi_verifier,
-general_fc) test whether a model correctly invokes tools / function calls.
-They share:
+Function-calling benchmarks such as general_fc test whether a model correctly invokes tools.
+This adapter provides:
 
 - a thin OpenAI-compatible inference loop (``_on_inference``),
 - JSON-schema validation of tool calls (``validate_tool_call``),

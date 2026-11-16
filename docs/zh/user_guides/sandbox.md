@@ -11,7 +11,7 @@
 | [E2B 远端沙箱](#e2b) | 使用云端环境，无需本机 Docker 或自建服务器 | 准备官方 E2B 或阿里云的账号与沙箱 API key |
 | [VolcEngine SandboxFusion](#sandboxfusion) | 连接已有的 SandboxFusion 服务 | 准备可访问的服务地址 |
 
-以下示例需要 Python 3.11 或更高版本。代码评测基准（如 [MBPP](../benchmarks/mbpp.md)）通常已配置好运行镜像；[Agent 评测](agent/index.md) 的环境要求请查阅对应基准文档。
+以下示例需要 Python 3.11 或更高版本。[OmniDocBench v1.6](../benchmarks/omni_doc_bench_v1_6.md) 提供默认评分镜像，需要支持 amd64 的 Docker；[Agent 评测](agent/index.md) 的环境要求请查阅对应基准文档。
 
 (local-docker)=
 ## 快速开始：本地 Docker
@@ -23,7 +23,7 @@ pip install 'evalscope[sandbox]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 ```
 
-以下示例使用 Docker 在 MBPP 上评测 5 个样本：
+以下示例使用 Docker 对 OmniDocBench v1.6 的 5 个页面评分。
 
 ```python
 import os
@@ -35,7 +35,8 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['mbpp'],
+    datasets=['omni_doc_bench_v1_6'],
+    dataset_args={'omni_doc_bench_v1_6': {'local_path': '/path/to/OmniDocBench'}},
     limit=5,
     eval_batch_size=4,
     generation_config={'max_tokens': 4096, 'temperature': 0},
@@ -78,7 +79,7 @@ run_task(task_config)
 
 
 ```bash
-pip install -U 'evalscope[sandbox]'
+pip install -U 'evalscope[sandbox,wide_search]'
 export DASHSCOPE_API_KEY='<your-model-api-key>'
 export E2B_API_KEY='<your-sandbox-api-key>'
 ```
@@ -88,7 +89,7 @@ export E2B_API_KEY='<your-sandbox-api-key>'
 
 ### 运行评测
 
-以下示例在 E2B 上评测一条 MBPP 样本。
+以下示例在 E2B 上评测一条 WideSearch 任务。
 
 ```python
 import os
@@ -102,7 +103,16 @@ task_config = TaskConfig(
     eval_type='openai_api',
     api_url='https://dashscope.aliyuncs.com/compatible-mode/v1',
     api_key=os.environ['DASHSCOPE_API_KEY'],
-    datasets=['mbpp'],
+    datasets=['wide_search'],
+    dataset_args={'wide_search': {'local_path': '/path/to/WideSearch'}},
+    judge={
+        'strategy': 'llm',
+        'models': {
+            'model_id': 'qwen3.8-flash',
+            'api_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            'api_key': os.environ['DASHSCOPE_API_KEY'],
+        },
+    },
     limit=1,
     eval_batch_size=1,
     sandbox={
@@ -147,8 +157,6 @@ manager_config = {
 | 基准 | 官方 E2B | 阿里云 Agent Sandbox |
 | --- | --- | --- |
 | [WideSearch](../benchmarks/wide_search.md) | 支持 | 支持，自动选择 `base` 模板（Python 3.13） |
-| [MBPP](../benchmarks/mbpp.md) | 支持 | 支持，自动选择 `base` 模板（Python 3.13） |
-| [MBPPPlus](../benchmarks/mbpp_plus.md) | 需准备包含 NumPy 的镜像或模板 | 需准备包含 NumPy 的模板 |
 
 使用自备环境时，请按各基准文档准备依赖、测试数据和工作目录。WideSearch 还需要沙箱能够访问搜索服务和目标网站。Agent 评测请使用[原生 Agent 模式](agent/native.md)。
 
@@ -156,7 +164,7 @@ manager_config = {
 
 ### 调整并发和运行时长
 
-`eval_batch_size` 控制同时处理的样本数，`sandbox.manager_config.max_sandboxes` 限制同时存在的沙箱数。增加并发前，请确认服务商账号有足够配额。MBPP 等使用代码执行池的基准，还需保证 `sandbox.pool_size` 不超过 `max_sandboxes`；未设置 `pool_size` 时，取 `eval_batch_size`。
+`eval_batch_size` 控制同时处理的样本数，`sandbox.manager_config.max_sandboxes` 限制同时存在的沙箱数。增加并发前，请确认服务商账号有足够配额。使用代码执行池的基准还需保证 `sandbox.pool_size` 不超过 `max_sandboxes`；未设置 `pool_size` 时，取 `eval_batch_size`。
 
 `sandbox.default_config.sandbox_timeout` 控制沙箱从创建到回收的最长时长，默认 3600 秒。它与 Agent 单条命令的 `command_timeout`、基准测试脚本的超时不同，需要为整个任务预留足够时间。
 

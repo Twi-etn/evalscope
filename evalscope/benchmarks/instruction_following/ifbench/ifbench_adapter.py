@@ -84,7 +84,7 @@ class IFBenchAdapter(DefaultDataAdapter):
         """
         Calculate evaluation scores by comparing prediction with reference.
         """
-        from evalscope.benchmarks.ifbench.evaluation_lib import process_results
+        from .evaluation_lib import process_results
 
         # Initialize the score object with prediction details
         score = Score(

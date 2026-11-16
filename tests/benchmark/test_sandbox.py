@@ -46,65 +46,6 @@ class TestCodeBenchmark(TestBenchmark):
             'debug': True,
         }
 
-    def test_mbpp(self):
-        """Test MBPP dataset."""
-        dataset_args = {
-            # 'metric_list': ['Pass@1']
-        }
-        self._run_dataset_test('mbpp', dataset_args, limit=20, debug=False)
-
-    def test_multipl_e_mbpp(self):
-        """Test MultiPL-E MBPP dataset."""
-        dataset_args = {
-            'subset_list': [
-                'mbpp-cpp', # ok
-                'mbpp-ts', # ok
-                'mbpp-sh', # ok
-                # 'mbpp-cs', # need x86_64 docker image
-                'mbpp-go', # ok
-                'mbpp-java', # ok
-                'mbpp-lua', # ok
-                'mbpp-js', # ok
-                'mbpp-php', # ok
-                'mbpp-pl', # ok
-                'mbpp-rkt', # ok
-                'mbpp-r', # ok
-                'mbpp-rs', # ok
-                'mbpp-scala', # ok
-                'mbpp-swift', # ok
-                'mbpp-rb', # ok
-                'mbpp-d', # ok
-                'mbpp-jl', # ok
-        ],
-        }
-        self._run_dataset_test('multiple_mbpp', dataset_args, limit=10, use_cache='outputs/20251210_150606', rerun_review=True, debug=False, eval_batch_size=2)
-
-    def test_multipl_e_humaneval(self):
-        """Test MultiPL-E HumanEval dataset."""
-        dataset_args = {
-            'subset_list': [
-                'humaneval-cpp', # ok
-                'humaneval-ts', # ok
-                'humaneval-sh', # ok
-                'humaneval-cs', # need x86_64 docker image
-                'humaneval-go', # ok
-                'humaneval-java', # ok
-                'humaneval-lua', # ok
-                'humaneval-js', # ok
-                'humaneval-php', # ok
-                'humaneval-pl', # ok
-                'humaneval-rkt', # ok
-                'humaneval-r', # ok
-                'humaneval-rs', # ok
-                'humaneval-scala', # ok
-                'humaneval-swift', # ok
-                'humaneval-rb', # ok
-                'humaneval-d', # ok
-                'humaneval-jl', # ok
-        ],
-        }
-        self._run_dataset_test('multiple_humaneval', dataset_args, limit=10, use_cache='outputs/20251212_102548', rerun_review=True, debug=False, eval_batch_size=2)
-
     def test_terminal_bench_v2(self):
         """Test Terminal-Bench v2 dataset."""
         dataset_args = {
@@ -124,37 +65,3 @@ class TestCodeBenchmark(TestBenchmark):
             },
         }
         self._run_dataset_test('terminal_bench_v2_1', dataset_args, limit=5, use_sandbox=False, rerun_review=True, model='qwen3-coder-plus', eval_batch_size=2)
-
-    def test_mbpp_plus(self):
-        """Test MBPP+ dataset."""
-        self._run_dataset_test('mbpp_plus', limit=10)
-
-    def test_multipl_e_humaneval_volcengine_sandbox(self):
-        sandbox_type='volcengine'
-        use_sandbox=True
-        sandbox_manager_config={
-            'base_url': 'http://127.0.0.1:8080',
-        }
-        dataset_args = {
-            'subset_list': [
-                'humaneval-cpp', # ok
-                # 'humaneval-ts', # ok
-                # 'humaneval-sh', # ok
-                # 'humaneval-cs', # need x86_64 docker image
-                # 'humaneval-go', # ok
-                # 'humaneval-java', # ok
-                # 'humaneval-lua', # ok
-                # 'humaneval-js', # ok
-                # 'humaneval-php', # ok
-                # 'humaneval-pl', # ok
-                # 'humaneval-rkt', # ok
-                # 'humaneval-r', # ok
-                # 'humaneval-rs', # ok
-                # 'humaneval-scala', # ok
-                # 'humaneval-swift', # ok
-                # 'humaneval-rb', # ok
-                # 'humaneval-d', # ok
-                # 'humaneval-jl', # ok
-        ],
-        }
-        self._run_dataset_test('multiple_humaneval', dataset_args=dataset_args, limit=10, sandbox_type=sandbox_type, use_sandbox=use_sandbox, sandbox_manager_config=sandbox_manager_config)

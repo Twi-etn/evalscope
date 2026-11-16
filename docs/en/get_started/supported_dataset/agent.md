@@ -9,10 +9,7 @@ Below is the list of supported AGENT benchmarks. Click on a benchmark name for d
 | `browsecomp` | [BrowseComp](../../benchmarks/browsecomp.md) | `Agent`, `Knowledge`, `QA` |
 | `general_fc` | [General-FunctionCalling](../../benchmarks/general_fc.md) | `Agent`, `Custom`, `FunctionCalling` |
 | `job_bench` | [JobBench](../../benchmarks/job_bench.md) | `Agent`, `Knowledge`, `MultiTurn` |
-| `k2_verifier` | [K2-Vendor-Verifier](../../benchmarks/k2_verifier.md) | `Agent`, `FunctionCalling` |
-| `kimi_verifier` | [Kimi-Vendor-Verifier](../../benchmarks/kimi_verifier.md) | `Agent`, `FunctionCalling` |
 | `mcp_atlas` | [MCP-Atlas](../../benchmarks/mcp_atlas.md) | `Agent`, `MultiTurn` |
-| `minimax_verifier` | [MiniMax-Vendor-Verifier](../../benchmarks/minimax_verifier.md) | `Agent`, `FunctionCalling` |
 | `miniwob` | [MiniWoB](../../benchmarks/miniwob.md) | `Agent`, `FunctionCalling`, `MultiModal`, `MultiTurn` |
 | `researchrubrics` | [ResearchRubrics](../../benchmarks/researchrubrics.md) | `Agent`, `MultiTurn`, `Reasoning`, `Retrieval` |
 | `skillsbench` | [SkillsBench](../../benchmarks/skillsbench.md) | `Agent`, `MultiTurn` |
@@ -34,10 +31,7 @@ Below is the list of supported AGENT benchmarks. Click on a benchmark name for d
 ../../benchmarks/browsecomp.md
 ../../benchmarks/general_fc.md
 ../../benchmarks/job_bench.md
-../../benchmarks/k2_verifier.md
-../../benchmarks/kimi_verifier.md
 ../../benchmarks/mcp_atlas.md
-../../benchmarks/minimax_verifier.md
 ../../benchmarks/miniwob.md
 ../../benchmarks/researchrubrics.md
 ../../benchmarks/skillsbench.md

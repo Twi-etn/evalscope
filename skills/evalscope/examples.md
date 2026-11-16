@@ -25,7 +25,7 @@ evalscope eval \
 ```bash
 evalscope eval \
   --model qwen2.5-72b \
-  --datasets mmlu gsm8k mbpp ifeval \
+  --datasets mmlu gsm8k ifeval \
   --api-url http://localhost:8000/v1/chat/completions \
   --api-key EMPTY \
   --limit 50
